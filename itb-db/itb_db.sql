@@ -6,10 +6,10 @@ drop table sale_item_base;
 
 create table brand_base (
 id int auto_increment,
-name varchar(30) character set utf8 not null,
-websiteUrl varchar(40) character set utf8,
+name varchar(30) character set utf8mb4 not null,
+websiteUrl varchar(40) character set utf8mb4,
 isActive boolean,
-countryOfOrigin varchar(80) character set utf8,
+countryOfOrigin varchar(80) character set utf8mb4,
 createdOn datetime not null default current_timestamp,
 updatedOn datetime not null default current_timestamp on update current_timestamp,
 
@@ -21,14 +21,14 @@ check (countryOfOrigin is null or trim(countryOfOrigin) <> '')
 
 create table sale_item_base (
 id int,
-model varchar(60) character set utf8 not null,
-brand varchar(60) character set utf8 not null,
-description varchar(200) character set utf8 not null,
+model varchar(60) character set utf8mb4 not null,
+brand varchar(60) character set utf8mb4 not null,
+description varchar(200) character set utf8mb4 not null,
 price int not null,
 ramGb int,
 screenSizeInch decimal(10,2),
 storageGb int,
-color varchar(15) character set utf8,
+color varchar(15) character set utf8mb4,
 quantity int not null default 1,
 createdOn datetime not null default current_timestamp,
 updatedOn datetime not null default current_timestamp on update current_timestamp,
@@ -260,4 +260,3 @@ values (
 );
 
 select * from sale_item_base;
-
