@@ -1,8 +1,8 @@
 create database itb;
 use itb;
 
-drop table brand_base;
-drop table sale_item_base;
+drop table if exists brand_base;
+drop table if exists sale_item_base;
 
 create table brand_base (
 id int auto_increment,
