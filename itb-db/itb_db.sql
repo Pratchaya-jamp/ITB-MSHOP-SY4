@@ -1,10 +1,10 @@
-create database itb;
+create database if not exists itb;
 use itb;
 
 drop table if exists brand_base;
 drop table if exists sale_item_base;
 
-create table brand_base (
+create table if not exists brand_base (
 id int auto_increment,
 name varchar(30) character set utf8mb4 not null,
 websiteUrl varchar(40) character set utf8mb4,
@@ -19,8 +19,9 @@ check (websiteUrl is null or trim(websiteUrl) <> ''),
 check (countryOfOrigin is null or trim(countryOfOrigin) <> '')
 );
 
-create table sale_item_base (
+create table if not exists sale_item_base (
 id int,
+brand_id int,
 model varchar(60) character set utf8mb4 not null,
 brand varchar(60) character set utf8mb4 not null,
 description varchar(200) character set utf8mb4 not null,
@@ -34,6 +35,7 @@ createdOn datetime not null default current_timestamp,
 updatedOn datetime not null default current_timestamp on update current_timestamp,
 
 primary key sale_item_base(id),
+foreign key sale_item_base(brand_id) references brand_base(id),
 check (trim(model) <> ''),
 check (trim(description) <> ''),
 check (color is null or trim(color) <> '')
@@ -176,6 +178,7 @@ select * from brand_base;
 
 insert into sale_item_base (
 	id,
+    brand_id,
 	model, 
 	brand, 
     description, 
@@ -188,6 +191,7 @@ insert into sale_item_base (
 )
 values (
 	1,
+    2,
 	'iPhone 14 Pro Max', 
 	'Apple', 
 	'ไอโฟนเรือธงรุ่นล่าสุด มาพร้อม Dynamic Island จอใหญ่สุดในตระกูล กล้องระดับโปร',
@@ -200,6 +204,7 @@ values (
 ),
 (
 	2,
+    2,
 	'iPhone 14', 
 	'Apple', 
 	'ไอโฟนรุ่นใหม่ล่าสุด รองรับ 5G เร็วแรง ถ่ายภาพสวยทุกสภาพแสง',
@@ -212,6 +217,7 @@ values (
 ),
 (
 	3,
+    2,
 	'iPhone 13 Pro', 
 	'Apple', 
 	'ไอโฟนรุ่นโปร จอ ProMotion 120Hz กลอ้ งระดับมืออาชีพ',
@@ -224,6 +230,7 @@ values (
 ),
 (
 	7,
+    2,
 	'iPhone SE 2022', 
 	'Apple', 
 	'ไอโฟนรุ่นโปร จอ ProMotion 120Hz กลอ้ งระดับมืออาชีพ',
@@ -236,6 +243,7 @@ values (
 ),
 (
 	8,
+    2,
 	'iPhone 14 Plus', 
 	'Apple', 
 	'iPhone 14 Plus 128GB สี Starlight เครื่องศูนย์ไทยโมเดล TH แบต 100% มีกล่องครบ ประกันศูนย์ถึง พ.ย. 68 ส่งฟรี',
@@ -248,6 +256,7 @@ values (
 ),
 (
 	16,
+    1,
 	'Galaxy S23 Ultra', 
 	'Samsung', 
 	'Samsung Galaxy S23 Ultra 512GB สีดำาปีศาจ สภาพนางฟ้า 99% ไร้รอย แถมเคสแท้ แบตอึดสุดๆ รองรับปากกา S-Pen',
@@ -260,3 +269,9 @@ values (
 );
 
 select * from sale_item_base;
+
+
+-- test join relationship table
+select s.model from brand_base b
+join sale_item_base s on b.id = s.brand_id
+where b.id = 1;
