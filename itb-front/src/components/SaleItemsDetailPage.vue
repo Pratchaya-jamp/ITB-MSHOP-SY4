@@ -17,8 +17,8 @@ const product = ref({
   quantity: 0
 })
 
-const imageList = ref([])
-const mainImage = ref('')
+const imageList = ref(['../../public/phone/iPhone.jpg','../../public/phone/iPhone2.jpg','../../public/phone/iPhone3.jpg','../../public/phone/iPhone4.jpg'])
+const mainImage = ref('../../public/phone/iPhone.jpg')
 
 // ดึงข้อมูลจาก backend
 onMounted(async () => {
@@ -36,6 +36,7 @@ onMounted(async () => {
     console.error('Error fetching product:', err)
   }
 })
+
 </script>
 
 <template>
@@ -44,7 +45,7 @@ onMounted(async () => {
     <nav class="text-sm text-gray-500 mb-4 max-w-6xl mx-auto">
       <router-link to="/sale-items"><span class="hover:underline cursor-pointer">Home</span></router-link> ›
       <span class="text-gray-800 font-medium ml-1">
-        {{ product.model }} {{ product.ramGb }}/GB {{ product.color }}
+        {{ product.model || '-' }} {{ product.ramGb || '-' }}/GB {{ product.color || '-' }}
       </span>
     </nav>
 
@@ -53,7 +54,7 @@ onMounted(async () => {
       <!-- Image -->
       <div>
         <img
-          :src="'/phone/iPhone.jpg'"
+          :src="mainImage"
           alt="Product Image"
           class="ltbms-product-image rounded-lg w-full h-96 object-cover mb-4"
         />
@@ -66,44 +67,67 @@ onMounted(async () => {
             :class="{'border-blue-500': img === mainImage}"
             @click="mainImage = img"
           />
-        </div>
+        </div>w
       </div>
 
       <!-- Product details -->
       <div class="space-y-3 text-base text-black">
-        <div><strong>Brand:</strong> <span class="ltbms-brand">{{ product.brand }}</span></div>
-        <div><strong>Model:</strong> <span class="ltbms-model">{{ product.model }}</span></div>
+        <div>
+          <strong>Brand:</strong>
+          <span :class="{ 'text-gray-400': !product.brand }">{{ product.brand || '-' }}</span>
+        </div>
+        <div>
+          <strong>Model:</strong>
+          <span :class="{ 'text-gray-400': !product.model }">{{ product.model || '-' }}</span>
+        </div>
         <div>
           <strong>Price:</strong>
-          <span class="ltbms-price font-semibold">{{ product.price.toLocaleString() }}</span>
-          <span class="ltbms-price-unit">Baht</span>
+          <span
+            class="font-semibold"
+            :class="{ 'text-gray-400': product.price === null || product.price === undefined }"
+          >
+            {{ product.price !== null && product.price !== undefined ? product.price.toLocaleString() : '-' }}
+          </span>
+          <span>Baht</span>
         </div>
-        <div><strong>Description:</strong> <span class="ltbms-description">{{ product.description }}</span></div>
+        <div>
+          <strong>Description:</strong>
+          <span :class="{ 'text-gray-400': !product.description }">{{ product.description || '-' }}</span>
+        </div>
         <div>
           <strong>Ram:</strong>
-          <span class="ltbms-ramGb">{{ product.ramGb }}</span>
-          <span class="ltbms-ramGb-unit">GB</span>
+          <span :class="{ 'text-gray-400': !product.ramGb }">{{ product.ramGb || '-' }}</span>
+          <span>GB</span>
         </div>
         <div>
           <strong>Screen Size:</strong>
-          <span class="ltbms-screenSizeInch">{{ product.screenSizeInch }}</span>
-          <span class="ltbms-screenSizeInch-unit">inch</span>
+          <span :class="{ 'text-gray-400': !product.screenSizeInch }">{{ product.screenSizeInch || '-' }}</span>
+          <span>inch</span>
         </div>
         <div>
           <strong>Storage:</strong>
-          <span class="ltbms-storageGb">{{ product.storageGb }}</span>
-          <span class="ltbms-storageGb-unit">GB</span>
+          <span :class="{ 'text-gray-400': !product.storageGb }">{{ product.storageGb || '-' }}</span>
+          <span>GB</span>
         </div>
-        <div><strong>Color:</strong> <span class="ltbms-color">{{ product.color }}</span></div>
+        <div>
+          <strong>Color:</strong>
+          <span :class="{ 'text-gray-400': !product.color }">{{ product.color || '-' }}</span>
+        </div>
         <div>
           <strong>Available quantity:</strong>
-          <span class="ltbms-quantity text-green-600 font-medium">{{ product.quantity }}</span>
-          <span class="ltbms-quantity-unit">units</span>
+          <span
+            class="text-green-600 font-medium"
+            :class="{ 'text-gray-400 font-normal': product.quantity === null || product.quantity === undefined }"
+          >
+            {{ product.quantity !== null && product.quantity !== undefined ? product.quantity : '-' }}
+          </span>
+          <span>units</span>
         </div>
       </div>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 /* ปรับแต่ง class เพิ่มเติมได้ที่นี่ */
