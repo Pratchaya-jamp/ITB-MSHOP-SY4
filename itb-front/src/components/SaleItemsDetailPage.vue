@@ -24,11 +24,8 @@ const mainImage = ref('')
 onMounted(async () => {
   const id = route.params.id
   try {
-    const res = await getItemById(`http://jp24sy4.sit.kmutt.ac.th:8080/v1/sale-items/${id}`)
-    if (!res.ok) throw new Error('Failed to fetch product')
-    const data = await res.json()
+    product.value = await getItemById(`http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items`, id)
 
-    product.value = data
 
     imageList.value = data.imageList?.length
       ? data.imageList
@@ -56,7 +53,7 @@ onMounted(async () => {
       <!-- Image -->
       <div>
         <img
-          :src="mainImage"
+          :src="'/phone/iPhone.jpg'"
           alt="Product Image"
           class="ltbms-product-image rounded-lg w-full h-96 object-cover mb-4"
         />

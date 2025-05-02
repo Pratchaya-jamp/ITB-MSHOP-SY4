@@ -12,8 +12,7 @@ const goTophoneDetails = (id) => {
 
 onMounted(async () => {
   try {
-    const res = await getItems('http://jp24sy4.sit.kmutt.ac.th:8080/v1/sale-items')
-    const data = await res.json()
+    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items')
     items.value = data
   } catch (err) {
     console.error('Error loading items:', err)
@@ -64,7 +63,7 @@ const sortedItems = computed(() => {
           @click="goTophoneDetails(item.id)"
         >
           <img
-            :src="item.image"
+            :src="'/phone/iPhone.jpg'"
             alt="phone"
             class="w-full h-40 object-contain mb-4"
           />
