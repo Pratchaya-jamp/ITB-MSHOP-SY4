@@ -2,13 +2,19 @@
 </script>
 
 <template>
-  <div class="Itbms-sale-items-page bg-white min-h-screen">
-    <div class="Itbms-top-bar bg-red-500 text-white py-2 px-4 flex justify-end space-x-4">
-      <button class="Itbms-signin-button hover:underline focus:outline-none">Signin</button>
-      <button class="Itbms-register-button hover:underline focus:outline-none">Register</button>
-    </div>
+  <!-- <div class="Itbms-sale-items-page bg-white min-h-screen"> -->
+    <div class="Itbms-top-bar bg-red-500 text-white py-2 px-4 flex justify-between items-center">
+      <router-link to="/sale-items"><h1 class="text-3xl font-extrabold text-white drop-shadow-md tracking-wide">
+    ITB <span class="text-yellow-300">MShop</span>
+  </h1></router-link>
+  <div class="space-x-4">
+    <button class="Itbms-signin-button hover:underline focus:outline-none">Signin</button>
+    <button class="Itbms-register-button hover:underline focus:outline-none">Register</button>
+  </div>
+</div>
 
-    <div class="Itbms-header container mx-auto py-8 flex items-center justify-between">
+
+    <!-- <div class="Itbms-header container mx-auto py-8 flex items-center justify-between">
       <div class="Itbms-logo font-bold text-3xl text-black">ITB MShop</div>
       <div class="flex-grow flex justify-center">
         <div class="Itbms-search-bar flex items-center rounded-md border border-gray-300 focus-within:border-blue-500 w-full max-w-md">
@@ -25,8 +31,10 @@
     </div>
     <div class="Itbms-content container mx-auto py-8 text-center">
       <p class="Itbms-no-sale-item text-xl text-gray-600">NO DATA</p>
-    </div>
-  </div>
+    </div> -->
+  <!-- </div> -->
+
+  
 </template>
 
 <style scoped>
