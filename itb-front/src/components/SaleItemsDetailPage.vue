@@ -1,9 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute,useRouter } from 'vue-router'
 import { getItemById } from '@/libs/fetchUtilsOur';
 
 const route = useRoute()
+const router = useRouter()
 
 const product = ref({
   brand: '-',
@@ -33,7 +34,12 @@ onMounted(async () => {
 
     // mainImage.value = imageList.value[0]
   } catch (err) {
-    console.error('Error fetching product:', err)
+    if (err.response && err.response.status === 404) {
+      alert("The requested sale item does not exist or has been removed")
+      router.push('/sale-items') 
+    } else {
+      console.error('Error fetching product:', err)
+    }
   }
 })
 
