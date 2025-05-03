@@ -27,11 +27,11 @@ onMounted(async () => {
     product.value = await getItemById(`http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items`, id)
 
 
-    imageList.value = data.imageList?.length
-      ? data.imageList
-      : [new URL('/phone/iPhone.jpg', import.meta.url).href]
+    // imageList.value = data.imageList?.length
+    //   ? data.imageList
+    //   : [new URL('/phone/iPhone.jpg', import.meta.url).href]
 
-    mainImage.value = imageList.value[0]
+    // mainImage.value = imageList.value[0]
   } catch (err) {
     console.error('Error fetching product:', err)
   }
@@ -67,18 +67,18 @@ onMounted(async () => {
             :class="{'border-blue-500': img === mainImage}"
             @click="mainImage = img"
           />
-        </div>w
+        </div>
       </div>
 
       <!-- Product details -->
       <div class="space-y-3 text-base text-black">
         <div>
           <strong>Brand:</strong>
-          <span :class="{ 'text-gray-400': !product.brand }">{{ product.brand || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product.brand }">{{ product.brand || ' - ' }}</span>
         </div>
         <div>
           <strong>Model:</strong>
-          <span :class="{ 'text-gray-400': !product.model }">{{ product.model || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product.model }">{{ product.model || ' - ' }}</span>
         </div>
         <div>
           <strong>Price:</strong>
@@ -86,32 +86,32 @@ onMounted(async () => {
             class="font-semibold"
             :class="{ 'text-gray-400': product.price === null || product.price === undefined }"
           >
-            {{ product.price !== null && product.price !== undefined ? product.price.toLocaleString() : '-' }}
+            {{ product.price !== null && product.price !== undefined ? product.price.toLocaleString() : ' - ' }}
           </span>
           <span>Baht</span>
         </div>
         <div>
           <strong>Description:</strong>
-          <span :class="{ 'text-gray-400': !product.description }">{{ product.description || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product.description }">{{ product.description || ' - ' }}</span>
         </div>
         <div>
           <strong>Ram:</strong>
-          <span :class="{ 'text-gray-400': !product.ramGb }">{{ product.ramGb || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product.ramGb }">{{ product.ramGb || ' - ' }}</span>
           <span>GB</span>
         </div>
         <div>
           <strong>Screen Size:</strong>
-          <span :class="{ 'text-gray-400': !product.screenSizeInch }">{{ product.screenSizeInch || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product.screenSizeInch }">{{ product.screenSizeInch || ' - ' }}</span>
           <span>inch</span>
         </div>
         <div>
           <strong>Storage:</strong>
-          <span :class="{ 'text-gray-400': !product.storageGb }">{{ product.storageGb || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product.storageGb }">{{ product.storageGb || ' - ' }}</span>
           <span>GB</span>
         </div>
         <div>
           <strong>Color:</strong>
-          <span :class="{ 'text-gray-400': !product.color }">{{ product.color || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product.color }">{{ product.color || ' - ' }}</span>
         </div>
         <div>
           <strong>Available quantity:</strong>
@@ -119,7 +119,7 @@ onMounted(async () => {
             class="text-green-600 font-medium"
             :class="{ 'text-gray-400 font-normal': product.quantity === null || product.quantity === undefined }"
           >
-            {{ product.quantity !== null && product.quantity !== undefined ? product.quantity : '-' }}
+            {{ product.quantity !== null && product.quantity !== undefined ? product.quantity : ' - ' }}
           </span>
           <span>units</span>
         </div>
