@@ -17,8 +17,8 @@ const product = ref({
   quantity: 0
 })
 
-const imageList = ref(['../../public/phone/iPhone.jpg','../../public/phone/iPhone2.jpg','../../public/phone/iPhone3.jpg','../../public/phone/iPhone4.jpg'])
-const mainImage = ref('../../public/phone/iPhone.jpg')
+const imageList = ref(['/phone/iPhone.jpg','/phone/iPhone2.jpg','/phone/iPhone3.jpg','/phone/iPhone4.jpg'])
+const mainImage = ref('/phone/iPhone.jpg')
 
 // ดึงข้อมูลจาก backend
 onMounted(async () => {
@@ -29,7 +29,7 @@ onMounted(async () => {
 
     imageList.value = data.imageList?.length
       ? data.imageList
-      : [new URL('../../public/phone/iPhone.jpg', import.meta.url).href]
+      : [new URL('/phone/iPhone.jpg', import.meta.url).href]
 
     mainImage.value = imageList.value[0]
   } catch (err) {
