@@ -15,7 +15,6 @@ describe(`TC-FE-PBI1-VIEW-SALE-ITEM-GALLERY-1\n
     it('The sale item table shoud be empty and the page show "no sale item".',()=>{
         cy.intercept('GET',`${baseAPI}/v1/**`,{
             statusCode: 200,
-            data: []
         }).as('request')
 
         cy.visit(resource)
