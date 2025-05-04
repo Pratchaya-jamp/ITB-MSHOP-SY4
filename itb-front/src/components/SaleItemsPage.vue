@@ -67,9 +67,9 @@ const sortedItems = computed(() => {
             alt="phone"
             class="w-full h-40 object-contain mb-4"
           />
-          <div class="itbms-brand text-sm">{{ item.brand }}</div>
-          <div class="itbms-model font-semibold">{{ item.model }}</div>
-          <span class="itbms-ramGb text-sm">{{ item.ramGb }}</span>/<span class="itbms-storageGb text-sm">{{ item.storageGb }}</span> <span class="itbms-storageGb-unit text-sm">GB</span>
+          <div class="itbms-brand font-semibold">{{ item.brandName }}</div>
+          <div class="itbms-model text-sm">{{ item.model }}</div>
+          <span class="itbms-ramGb text-sm">{{ item.ramGb || '-' }}</span>/<span class="itbms-storageGb text-sm">{{ item.storageGb || '-' }}</span> <span class="itbms-storageGb-unit text-sm">GB</span>
           <div class="itbms-price mt-2 font-bold text-lg">{{ item.price.toLocaleString() }}</div> <div class="itbms-price-unit text-sm">Baht</div>
         </div>
       </div>

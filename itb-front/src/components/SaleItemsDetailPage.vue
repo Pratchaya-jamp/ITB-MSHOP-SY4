@@ -50,7 +50,7 @@ onMounted(async () => {
     <!-- Breadcrumb -->
     <nav class="text-sm text-gray-500 mb-4 max-w-6xl mx-auto">
       <router-link to="/sale-items"><span class="hover:underline cursor-pointer">Home</span></router-link> ›
-      <span class="text-gray-800 font-medium ml-1">
+      <span class="itbms-row text-gray-800 font-medium ml-1">
         {{ product.model || '-' }} {{ product.ramGb || '-' }}/GB {{ product.color || '-' }}
       </span>
     </nav>
@@ -79,55 +79,55 @@ onMounted(async () => {
       <!-- Product details -->
       <div class="itbms-row space-y-3 text-base text-black">
         <div class="itbms-brand">
-          <strong>Brand:</strong>
-          <span :class="{ 'text-gray-400': !product.brand }">{{ product.brand || ' - ' }}</span>
+          <strong>Brand: </strong>
+          <span :class="{ 'text-gray-400': !product.brandName }">{{ product.brandName || '-' }}</span>
         </div>
         <div class="itbms-model">
-          <strong>Model:</strong>
-          <span :class="{ 'text-gray-400': !product.model }">{{ product.model || ' - ' }}</span>
+          <strong>Model: </strong>
+          <span :class="{ 'text-gray-400': !product.model }">{{ product.model || '-' }}</span>
         </div>
         <div class="itbms-price">
-          <strong>Price:</strong>
+          <strong>Price: </strong>
           <span
             class="font-semibold"
             :class="{ 'text-gray-400': product.price === null || product.price === undefined }"
           >
-            {{ product.price !== null && product.price !== undefined ? product.price.toLocaleString() : ' - ' }}
+            {{ product.price !== null && product.price !== undefined ? product.price.toLocaleString() : '-' }}
           </span>
-          <span class="itbms-price-unit">Baht</span>
+          <span class="itbms-price-unit"> Baht</span>
         </div>
         <div class="itbms-description">
-          <strong>Description:</strong>
-          <span :class="{ 'text-gray-400': !product.description }">{{ product.description || ' - ' }}</span>
+          <strong>Description: </strong>
+          <span :class="{ 'text-gray-400': !product.description }">{{ product.description || '-' }}</span>
         </div>
         <div class="itbms-ramGb">
-          <strong>Ram:</strong>
-          <span :class="{ 'text-gray-400': !product.ramGb }">{{ product.ramGb || ' - ' }}</span>
-          <span class="itbms-ramGb-unit">GB</span>
+          <strong>Ram: </strong>
+          <span :class="{ 'text-gray-400': !product.ramGb }">{{ product.ramGb || '-' }}</span>
+          <span class="itbms-ramGb-unit"> GB</span>
         </div>
         <div class="itbms-screenSizeInch">
-          <strong>Screen Size:</strong>
-          <span :class="{ 'text-gray-400': !product.screenSizeInch }">{{ product.screenSizeInch || ' - ' }}</span>
-          <span class="itbms-screenSizeInch-unit">inch</span>
+          <strong>Screen Size: </strong>
+          <span :class="{ 'text-gray-400': !product.screenSizeInch }">{{ product.screenSizeInch || '-' }}</span>
+          <span class="itbms-screenSizeInch-unit"> Inches</span>
         </div>
         <div class="itbms-storageGb">
-          <strong>Storage:</strong>
-          <span :class="{ 'text-gray-400': !product.storageGb }">{{ product.storageGb || ' - ' }}</span>
-          <span class="itbms-storageGb-unit">GB</span>
+          <strong>Storage: </strong>
+          <span :class="{ 'text-gray-400': !product.storageGb }">{{ product.storageGb || '-' }}</span>
+          <span class="itbms-storageGb-unit"> GB</span>
         </div>
         <div class="itbms-color">
-          <strong>Color:</strong>
-          <span :class="{ 'text-gray-400': !product.color }">{{ product.color || ' - ' }}</span>
+          <strong>Color: </strong>
+          <span :class="{ 'text-gray-400': !product.color }">{{ product.color || '-' }}</span>
         </div>
         <div class="itbms-quantity">
-          <strong>Available quantity:</strong>
+          <strong>Available quantity: </strong>
           <span
             class="text-green-600 font-medium"
             :class="{ 'text-gray-400 font-normal': product.quantity === null || product.quantity === undefined }"
           >
-            {{ product.quantity !== null && product.quantity !== undefined ? product.quantity : ' - ' }}
+            {{ product.quantity !== null && product.quantity !== undefined ? product.quantity : '-' }}
           </span>
-          <span class="itbms-quantity-unit">units</span>
+          <span class="itbms-quantity-unit"> Units</span>
         </div>
       </div>
     </div>
