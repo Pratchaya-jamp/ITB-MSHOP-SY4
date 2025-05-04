@@ -6,40 +6,24 @@ import { getItemById } from '@/libs/fetchUtilsOur';
 const route = useRoute()
 const router = useRouter()
 
-const product = ref({
-  brand: '-',
-  model: '-',
-  price: 0,
-  description: '-',
-  ramGb: 0,
-  screenSizeInch: 0,
-  storageGb: 0,
-  color: '-',
-  quantity: 0
-})
+const product = ref(null)
+const id = route.params.id
 
 const imageList = ref(['/phone/iPhone.jpg','/phone/iPhone2.jpg','/phone/iPhone3.jpg','/phone/iPhone4.jpg'])
 const mainImage = ref('/phone/iPhone.jpg')
 
 // ดึงข้อมูลจาก backend
 onMounted(async () => {
-  const id = route.params.id
   try {
-    product.value = await getItemById(`http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items`, id)
-
-
-    // imageList.value = data.imageList?.length
-    //   ? data.imageList
-    //   : [new URL('/phone/iPhone.jpg', import.meta.url).href]
-
-    // mainImage.value = imageList.value[0]
-  } catch (err) {
-    if (err.response && err.response.status === 404) {
-      alert("The requested sale item does not exist or has been removed")
-      router.push('/sale-items') 
-    } else {
-      console.error('Error fetching product:', err)
+    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id)
+    if (!data || data?.status === 404) {
+      router.push('/sale-items')
+      alert('The requested sale item does not exist.')
+      return
     }
+    product.value = data;
+  } catch (error) {
+    console.error('Failed to fetch product:', error);
   }
 })
 
@@ -51,7 +35,7 @@ onMounted(async () => {
     <nav class="text-sm text-gray-500 mb-4 max-w-6xl mx-auto">
       <router-link to="/sale-items"><span class="hover:underline cursor-pointer">Home</span></router-link> ›
       <span class="itbms-row text-gray-800 font-medium ml-1">
-        {{ product.model || '-' }} {{ product.ramGb || '-' }}/GB {{ product.color || '-' }}
+        {{ product?.model || '-' }} {{ product?.ramGb || '-' }}/GB {{ product?.color || '-' }}
       </span>
     </nav>
 
@@ -80,52 +64,52 @@ onMounted(async () => {
       <div class="itbms-row space-y-3 text-base text-black">
         <div class="itbms-brand">
           <strong>Brand: </strong>
-          <span :class="{ 'text-gray-400': !product.brandName }">{{ product.brandName || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product?.brandName }">{{ product?.brandName || '-' }}</span>
         </div>
         <div class="itbms-model">
           <strong>Model: </strong>
-          <span :class="{ 'text-gray-400': !product.model }">{{ product.model || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product?.model }">{{ product?.model || '-' }}</span>
         </div>
         <div class="itbms-price">
           <strong>Price: </strong>
           <span
             class="font-semibold"
-            :class="{ 'text-gray-400': product.price === null || product.price === undefined }"
+            :class="{ 'text-gray-400': product?.price === null || product?.price === undefined }"
           >
-            {{ product.price !== null && product.price !== undefined ? product.price.toLocaleString() : '-' }}
+            {{ product?.price !== null && product?.price !== undefined ? product?.price.toLocaleString() : '-' }}
           </span>
           <span class="itbms-price-unit"> Baht</span>
         </div>
         <div class="itbms-description">
           <strong>Description: </strong>
-          <span :class="{ 'text-gray-400': !product.description }">{{ product.description || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product?.description }">{{ product?.description || '-' }}</span>
         </div>
         <div class="itbms-ramGb">
           <strong>Ram: </strong>
-          <span :class="{ 'text-gray-400': !product.ramGb }">{{ product.ramGb || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product?.ramGb }">{{ product?.ramGb || '-' }}</span>
           <span class="itbms-ramGb-unit"> GB</span>
         </div>
         <div class="itbms-screenSizeInch">
           <strong>Screen Size: </strong>
-          <span :class="{ 'text-gray-400': !product.screenSizeInch }">{{ product.screenSizeInch || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product?.screenSizeInch }">{{ product?.screenSizeInch || '-' }}</span>
           <span class="itbms-screenSizeInch-unit"> Inches</span>
         </div>
         <div class="itbms-storageGb">
           <strong>Storage: </strong>
-          <span :class="{ 'text-gray-400': !product.storageGb }">{{ product.storageGb || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product?.storageGb }">{{ product?.storageGb || '-' }}</span>
           <span class="itbms-storageGb-unit"> GB</span>
         </div>
         <div class="itbms-color">
           <strong>Color: </strong>
-          <span :class="{ 'text-gray-400': !product.color }">{{ product.color || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product?.color }">{{ product?.color || '-' }}</span>
         </div>
         <div class="itbms-quantity">
           <strong>Available quantity: </strong>
           <span
             class="text-green-600 font-medium"
-            :class="{ 'text-gray-400 font-normal': product.quantity === null || product.quantity === undefined }"
+            :class="{ 'text-gray-400 font-normal': product?.quantity === null || product?.quantity === undefined }"
           >
-            {{ product.quantity !== null && product.quantity !== undefined ? product.quantity : '-' }}
+            {{ product?.quantity !== null && product?.quantity !== undefined ? product?.quantity : '-' }}
           </span>
           <span class="itbms-quantity-unit"> Units</span>
         </div>
