@@ -52,14 +52,14 @@ const sortedItems = computed(() => {
       </div>
     </div>
 
-    <div class="itbms-row p-6">
+    <div class="p-6">
       <div v-if="items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
 
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         <div
           v-for="item in sortedItems"
           :key="item.id"
-          class="border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
+          class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
           @click="goTophoneDetails(item.id)"
         >
           <img
@@ -69,7 +69,7 @@ const sortedItems = computed(() => {
           />
           <div class="itbms-brand text-sm">{{ item.brand }}</div>
           <div class="itbms-model font-semibold">{{ item.model }}</div>
-          <div class="itbms-ramGb text-sm">{{ item.ramGb }}</div>/<div class="itbms-storageGb text-sm">{{ item.storageGb }}</div> <div class="itbms-storageGb-unit text-sm">GB</div>
+          <span class="itbms-ramGb text-sm">{{ item.ramGb }}</span>/<span class="itbms-storageGb text-sm">{{ item.storageGb }}</span> <span class="itbms-storageGb-unit text-sm">GB</span>
           <div class="itbms-price mt-2 font-bold text-lg">{{ item.price.toLocaleString() }}</div> <div class="itbms-price-unit text-sm">Baht</div>
         </div>
       </div>
