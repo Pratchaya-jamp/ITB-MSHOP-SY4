@@ -77,16 +77,16 @@ onMounted(async () => {
       </div>
 
       <!-- Product details -->
-      <div class="space-y-3 text-base text-black">
-        <div>
+      <div class="itbms-row space-y-3 text-base text-black">
+        <div class="itbms-brand">
           <strong>Brand:</strong>
           <span :class="{ 'text-gray-400': !product.brand }">{{ product.brand || ' - ' }}</span>
         </div>
-        <div>
+        <div class="itbms-model">
           <strong>Model:</strong>
           <span :class="{ 'text-gray-400': !product.model }">{{ product.model || ' - ' }}</span>
         </div>
-        <div>
+        <div class="itbms-price">
           <strong>Price:</strong>
           <span
             class="font-semibold"
@@ -94,32 +94,32 @@ onMounted(async () => {
           >
             {{ product.price !== null && product.price !== undefined ? product.price.toLocaleString() : ' - ' }}
           </span>
-          <span>Baht</span>
+          <span class="itbms-price-unit">Baht</span>
         </div>
-        <div>
+        <div class="itbms-description">
           <strong>Description:</strong>
           <span :class="{ 'text-gray-400': !product.description }">{{ product.description || ' - ' }}</span>
         </div>
-        <div>
+        <div class="itbms-ramGb">
           <strong>Ram:</strong>
           <span :class="{ 'text-gray-400': !product.ramGb }">{{ product.ramGb || ' - ' }}</span>
-          <span>GB</span>
+          <span class="itbms-ramGb-unit">GB</span>
         </div>
-        <div>
+        <div class="itbms-screenSizeInch">
           <strong>Screen Size:</strong>
           <span :class="{ 'text-gray-400': !product.screenSizeInch }">{{ product.screenSizeInch || ' - ' }}</span>
-          <span>inch</span>
+          <span class="itbms-screenSizeInch-unit">inch</span>
         </div>
-        <div>
+        <div class="itbms-storageGb">
           <strong>Storage:</strong>
           <span :class="{ 'text-gray-400': !product.storageGb }">{{ product.storageGb || ' - ' }}</span>
-          <span>GB</span>
+          <span class="itbms-storageGb-unit">GB</span>
         </div>
-        <div>
+        <div class="itbms-color">
           <strong>Color:</strong>
           <span :class="{ 'text-gray-400': !product.color }">{{ product.color || ' - ' }}</span>
         </div>
-        <div>
+        <div class="itbms-quantity">
           <strong>Available quantity:</strong>
           <span
             class="text-green-600 font-medium"
@@ -127,7 +127,7 @@ onMounted(async () => {
           >
             {{ product.quantity !== null && product.quantity !== undefined ? product.quantity : ' - ' }}
           </span>
-          <span>units</span>
+          <span class="itbms-quantity-unit">units</span>
         </div>
       </div>
     </div>

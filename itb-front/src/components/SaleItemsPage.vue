@@ -52,7 +52,7 @@ const sortedItems = computed(() => {
       </div>
     </div>
 
-    <div class="p-6">
+    <div class="itbms-row p-6">
       <div v-if="items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
 
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
@@ -67,11 +67,10 @@ const sortedItems = computed(() => {
             alt="phone"
             class="w-full h-40 object-contain mb-4"
           />
-          <div class="ltbms-brand text-sm">{{ item.brand }}</div>
-          <div class="ltbms-model font-semibold">{{ item.model }}</div>
-          <div class="ltbms-color text-sm">{{ item.color }}</div>
-          <div class="ltbms-ramGb text-sm">{{ item.ramGb }}/{{ item.storageGb }} GB</div>
-          <div class="ltbms-price mt-2 font-bold text-lg">{{ item.price.toLocaleString() }} Baht</div>
+          <div class="itbms-brand text-sm">{{ item.brand }}</div>
+          <div class="itbms-model font-semibold">{{ item.model }}</div>
+          <div class="itbms-ramGb text-sm">{{ item.ramGb }}</div>/<div class="itbms-storageGb text-sm">{{ item.storageGb }}</div> <div class="itbms-storageGb-unit text-sm">GB</div>
+          <div class="itbms-price mt-2 font-bold text-lg">{{ item.price.toLocaleString() }}</div> <div class="itbms-price-unit text-sm">Baht</div>
         </div>
       </div>
     </div>
