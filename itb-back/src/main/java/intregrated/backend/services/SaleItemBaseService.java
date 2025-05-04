@@ -21,7 +21,7 @@ public class SaleItemBaseService {
     public SaleItemBase getSaleItemBaseRepoById(Integer id) {
         return saleItemBaseRepo.findById(id).orElseThrow(
                 () -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,"BrandBase with id" + id + "not found"
+                        HttpStatus.NOT_FOUND,"BrandBase with id: " + id + " is not found"
                 )
         );
     }

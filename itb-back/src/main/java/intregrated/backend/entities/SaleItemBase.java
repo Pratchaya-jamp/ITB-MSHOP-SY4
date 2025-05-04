@@ -21,17 +21,16 @@ public class SaleItemBase {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id")
-    private BrandBase brand_id;
+    private BrandBase brand;
+
+    public String getBrandName() {
+        return brand != null ? brand.getName() : null;
+    }
 
     @Size(max = 60)
     @NotNull
     @Column(name = "model", nullable = false, length = 60)
     private String model;
-
-    @Size(max = 60)
-    @NotNull
-    @Column(name = "brand", nullable = false, length = 60)
-    private String brand;
 
     @Size(max = 200)
     @NotNull
