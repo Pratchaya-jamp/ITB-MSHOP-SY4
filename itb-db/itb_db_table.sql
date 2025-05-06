@@ -3,8 +3,8 @@ use itb;
 
 show databases;
 
-drop table if exists brand_base;
 drop table if exists sale_item_base;
+drop table if exists brand_base;
 
 create table if not exists brand_base (
 id int auto_increment,
