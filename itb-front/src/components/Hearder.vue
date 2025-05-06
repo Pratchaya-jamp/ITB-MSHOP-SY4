@@ -3,9 +3,9 @@
 
 <template>
   <!-- <div class="Itbms-sale-items-page bg-white min-h-screen"> -->
-    <div class="Itbms-top-bar bg-red-500 text-white py-2 px-4 flex justify-between items-center">
+    <div class="Itbms-top-bar bg-linear-to-r from-green-200 via-teal-400 to-cyan-600 text-white py-2 px-4 flex justify-between items-center">
       <router-link to="/sale-items"><h1 class="text-3xl font-extrabold text-white drop-shadow-md tracking-wide">
-    ITB <span class="text-yellow-300">MShop</span>
+    ITB <span class="bg-linear-to-b from-green-200 via-emerald-400 to-teal-600 bg-clip-text text-transparent">MShop</span>
   </h1></router-link>
   <div class="space-x-4">
     <button class="Itbms-signin-button hover:underline focus:outline-none">Signin</button>
