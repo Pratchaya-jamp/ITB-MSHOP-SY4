@@ -5,6 +5,8 @@ import { getItems } from '@/libs/fetchUtilsOur';
 
 const router = useRouter()
 const items = ref([])
+const searchQuery = ref('')
+const filterBy = ref('')
 
 const goTophoneDetails = (id) => {
   router.push(`/sale-items/${id}`)
@@ -19,10 +21,24 @@ onMounted(async () => {
   }
 })
 
-const sortedItems = computed(() => {
-  return [...items.value].sort(
-    (a, b) => new Date(a.createdTime) - new Date(b.createdTime)
-  )
+const filteredAndSortedItems = computed(() => {
+  let result = [...items.value]
+
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(item =>
+      item.brandName.toLowerCase().includes(query) ||
+      item.model.toLowerCase().includes(query)
+    )
+  }
+
+  if (filterBy.value === 'cheapest') {
+    result.sort((a, b) => a.price - b.price)
+  } else if (filterBy.value === 'expensive') {
+    result.sort((a, b) => b.price - a.price)
+  }
+
+  return result
 })
 </script>
 
@@ -32,7 +48,7 @@ const sortedItems = computed(() => {
       <div class="Itbms-logo font-bold text-3xl text-black">ITB MShop</div>
       <div class="flex-grow flex justify-center">
         <div class="Itbms-search-bar flex items-center rounded-md border border-gray-300 focus-within:border-blue-500 w-full max-w-md">
-          <input type="text" placeholder="Search..." class="Itbms-search-input py-2 px-3 w-full focus:outline-none rounded-l-md text-black" />
+          <input type="text" placeholder="Search..." v-model="searchQuery" class="Itbms-search-input py-2 px-3 w-full focus:outline-none rounded-l-md text-black" />
           <button class="Itbms-search-button bg-gray-100 hover:bg-gray-200 p-2 rounded-r-md focus:outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-6a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -57,7 +73,7 @@ const sortedItems = computed(() => {
 
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         <div
-          v-for="item in sortedItems"
+          v-for="item in filteredAndSortedItems"
           :key="item.id"
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
           @click="goTophoneDetails(item.id)"
