@@ -1,10 +1,14 @@
 <script setup>
 import Hearder from './components/Hearder.vue';
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+import { computed } from 'vue'
+
+const route = useRoute()
+const showHeader = computed(() => route.path !== '/')
 </script>
 
 <template>
-    <hearder></hearder>
+    <hearder v-if="showHeader"></hearder>
     <div>
         <router-view></router-view>
     </div>
