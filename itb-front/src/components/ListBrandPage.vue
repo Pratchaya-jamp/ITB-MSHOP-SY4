@@ -8,13 +8,11 @@ const items = ref([])
 const searchQuery = ref('')
 const filterBy = ref('')
 
-const goTophoneDetails = (id) => {
-  router.push(`/sale-items/${id}`)
-}
+
 
 onMounted(async () => {
   try {
-    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items')
+    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands')
     items.value = data
   } catch (err) {
     console.error('Error loading items:', err)
@@ -27,15 +25,8 @@ const filteredAndSortedItems = computed(() => {
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(item =>
-      item.brandName.toLowerCase().includes(query) ||
-      item.model.toLowerCase().includes(query)
+      item.brandName.toLowerCase().includes(query)
     )
-  }
-
-  if (filterBy.value === 'cheapest') {
-    result.sort((a, b) => a.price - b.price)
-  } else if (filterBy.value === 'expensive') {
-    result.sort((a, b) => b.price - a.price)
   }
 
   return result
@@ -76,7 +67,6 @@ const filteredAndSortedItems = computed(() => {
           v-for="item in filteredAndSortedItems"
           :key="item.id"
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
-          @click="goTophoneDetails(item.id)"
         >
           <img
             :src="'/phone/iPhone.jpg'"
@@ -84,9 +74,6 @@ const filteredAndSortedItems = computed(() => {
             class="w-full h-40 object-contain mb-4"
           />
           <div class="itbms-brand font-semibold">{{ item.brandName }}</div>
-          <div class="itbms-model text-sm">{{ item.model }}</div>
-          <span class="itbms-ramGb text-sm">{{ item.ramGb || '-' }}</span>/<span class="itbms-storageGb text-sm">{{ item.storageGb || '-' }}</span> <span class="itbms-storageGb-unit text-sm">GB</span>
-          <div class="itbms-price mt-2 font-bold text-lg">{{ item.price.toLocaleString() }}</div> <div class="itbms-price-unit text-sm">Baht</div>
         </div>
       </div>
     </div>

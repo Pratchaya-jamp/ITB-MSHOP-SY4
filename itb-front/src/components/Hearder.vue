@@ -8,6 +8,8 @@
     ITB <span class="bg-linear-to-b from-green-200 via-emerald-400 to-teal-600 bg-clip-text text-transparent">MShop</span>
   </h1></router-link>
   <div class="space-x-4">
+    <router-link to="/sale-items"><button class="Itbms-saleltems-button hover:underline focus:outline-none">saleltems</button></router-link>
+    <router-link to="/brand"><button class="Itbms-brand-button hover:underline focus:outline-none">brand</button></router-link>
     <button class="Itbms-signin-button hover:underline focus:outline-none">Signin</button>
     <button class="Itbms-register-button hover:underline focus:outline-none">Register</button>
   </div>
