@@ -41,7 +41,7 @@ const filteredAndSortedItems = computed(() => {
         <div class="Itbms-search-bar flex items-center rounded-md border border-gray-300 focus-within:border-blue-500 w-full max-w-md">
           <input type="text" placeholder="Search..." v-model="searchQuery" class="Itbms-search-input py-2 px-3 w-full focus:outline-none rounded-l-md text-black" />
           <button class="Itbms-search-button bg-gray-100 hover:bg-gray-200 p-2 rounded-r-md focus:outline-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gred-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-6a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
@@ -60,7 +60,7 @@ const filteredAndSortedItems = computed(() => {
     </div>
 
     <div class="p-6">
-      <div v-if="items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
+      <div v-if="items.length === 0" class="text-gray-500 text-center">No brand found.</div>
 
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         <div
