@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute,useRouter } from 'vue-router'
 import { getItemById } from '@/libs/fetchUtilsOur';
+import Footer from './Footer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -116,6 +117,8 @@ onMounted(async () => {
       </div>
     </div>
   </div>
+
+  <Footer />
 </template>
 
 

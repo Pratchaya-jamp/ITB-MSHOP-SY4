@@ -1,15 +1,32 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 
 const router = useRouter()
 
 const navigateToSaleItems = () => {
   router.push('/sale-items')
 }
+const services = ref(null)
+const contact = ref(null)
+const scrollTo = (target) => {
+  target?.scrollIntoView({ behavior: 'smooth' })
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-r from-teal-400 to-gray-800 text-white font-sans overflow-hidden">
+<header class="bg-gray-900 text-white px-6 md:px-20 py-4 flex justify-between items-center">
+  <div class="text-xl font-bold">🌟ITB MSHOP</div>
+  <nav class="space-x-6 hidden md:block">
+    <a href="#" class="hover:text-yellow-400">
+      <router-link to="/">Home</router-link>
+    </a>
+    <a href="#" @click.prevent="scrollTo(services)" class="hover:text-yellow-400 transition">Services</a>
+    <a href="#" @click.prevent="scrollTo(contact)" class="hover:text-yellow-400 transition">Contact</a>
+  </nav>
+  <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm hover:bg-yellow-300 transition">Login</button>
+</header>
+  <div class="max-h-screen bg-gradient-to-r from-teal-400 to-gray-800 text-white font-sans overflow-hidden">
     <!-- Hero Section -->
     <div class="flex flex-col-reverse md:flex-row items-center justify-between px-6 md:px-20 py-20 gap-10">
       <!-- Text Content -->
@@ -61,6 +78,40 @@ const navigateToSaleItems = () => {
       </div>
     </div>
   </div>
+
+  <div ref="services" class="bg-white text-gray-900 px-6 md:px-20 py-20 animate-fade-in-up">
+  <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Our Services</h2>
+  <div class="grid md:grid-cols-3 gap-8">
+    <div class="p-6 rounded-2xl bg-gradient-to-br from-indigo-100 to-white shadow-md transition-transform transform hover:-translate-y-2 hover:shadow-xl">
+      <h3 class="text-xl font-semibold mb-2">Expert Consultation</h3>
+      <p>Talk to our tech experts to find the right phone for your needs.</p>
+    </div>
+    <div class="p-6 rounded-2xl bg-gradient-to-br from-purple-100 to-white shadow-md transition-transform transform hover:-translate-y-2 hover:shadow-xl">
+      <h3 class="text-xl font-semibold mb-2">Device Protection Plans</h3>
+      <p>Affordable warranty and insurance plans for peace of mind.</p>
+    </div>
+    <div class="p-6 rounded-2xl bg-gradient-to-br from-pink-100 to-white shadow-md transition-transform transform hover:-translate-y-2 hover:shadow-xl">
+      <h3 class="text-xl font-semibold mb-2">Fast Delivery</h3>
+      <p>Same-day or next-day delivery in select areas!</p>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Section -->
+<div ref="contact" class="bg-gray-100 text-gray-900 px-6 md:px-20 py-20 animate-fade-in-up">
+  <h2 class="text-3xl md:text-4xl font-bold text-center mb-8">Contact Us</h2>
+  <form class="max-w-xl mx-auto space-y-4">
+    <input type="text" placeholder="Your Name" class="w-full p-3 rounded border border-gray-300" />
+    <input type="email" placeholder="Your Email" class="w-full p-3 rounded border border-gray-300" />
+    <textarea rows="4" placeholder="Your Message" class="w-full p-3 rounded border border-gray-300"></textarea>
+    <button class="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded font-semibold">Send Message</button>
+  </form>
+</div>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white px-6 md:px-20 py-10 text-center animate-fade-in-up">
+  <p class="text-sm">&copy; 2025 ITB MSHOP. All rights reserved.</p>
+</footer>
 </template>
 
 <style scoped>
@@ -92,5 +143,9 @@ const navigateToSaleItems = () => {
 
 .animate-fade-in-down {
   animation: fade-in-down 1s ease-out forwards;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 </style>

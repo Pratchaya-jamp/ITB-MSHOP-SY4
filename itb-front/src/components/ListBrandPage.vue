@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getItems } from '@/libs/fetchUtilsOur';
+import Footer from './Footer.vue'
 
 const router = useRouter()
 const items = ref([])
@@ -78,6 +79,24 @@ const filteredAndSortedItems = computed(() => {
       </div>
     </div>
   </div>
+
+  <Footer />
 </template>
 
+<style scoped>
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
+.itbms-row {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+</style>
