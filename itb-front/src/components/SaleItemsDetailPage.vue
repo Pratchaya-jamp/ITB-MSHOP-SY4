@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute,useRouter } from 'vue-router'
-import { getItemById } from '@/libs/fetchUtilsOur';
+import { getItemById,deleteItemById } from '@/libs/fetchUtilsOur';
 import Footer from './Footer.vue'
 
 const route = useRoute()
@@ -27,7 +27,24 @@ onMounted(async () => {
     console.error('Failed to fetch product:', error);
   }
 })
+const deleteproduct = async (productId) => {
+  const isConfirmed = confirm('คุณต้องการลบสินค้านี้ใช่หรือไม่?');
+  
+  if (!isConfirmed) {
+    return; // ถ้าไม่ยืนยันให้ยกเลิกการลบ
+  }
 
+  try {
+    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', productId);
+    if (statusCode === 200) {
+      alert('delete Success');
+      router.push('/sale-items');
+    }
+  } catch (error) {
+    console.error("delete Fall:", error);
+    alert("delete Fall");
+  }
+}
 </script>
 
 <template>
@@ -114,6 +131,20 @@ onMounted(async () => {
           </span>
           <span class="itbms-quantity-unit"> Units</span>
         </div>
+        <div class="flex gap-2 mt-3">
+        <button
+        @click="router.push(`/sale-items/edit/${product.id}`)"
+        class="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-2 py-1 rounded"
+        >
+          Edit
+        </button>
+        <button
+        @click="deleteproduct(product.id)"
+        class="bg-red-500 hover:bg-red-600 text-white text-sm px-2 py-1 rounded"
+        >
+          Delete
+        </button>
+      </div>
       </div>
     </div>
   </div>
