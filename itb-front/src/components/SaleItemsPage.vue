@@ -68,7 +68,15 @@ const filteredAndSortedItems = computed(() => {
         </svg>
       </div>
     </div>
-
+    <div class="ml-[8%]">
+    <button
+      class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow"
+      @click="router.push('/sale-items/add')"
+    >
+      + Add Sell Item
+    </button>
+  </div>
+  <!-- Product list -->
     <div class="p-6">
       <div v-if="items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
 
