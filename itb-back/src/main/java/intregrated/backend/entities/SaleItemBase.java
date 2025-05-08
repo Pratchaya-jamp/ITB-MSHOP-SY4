@@ -68,5 +68,4 @@ public class SaleItemBase {
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updatedOn", nullable = false)
     private Instant updatedOn;
-
 }

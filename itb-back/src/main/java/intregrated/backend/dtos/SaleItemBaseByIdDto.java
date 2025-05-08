@@ -5,11 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.Instant;
 
 @Getter
 @Setter
 @JsonPropertyOrder(
-        { "id", "model", "brandName", "description", "price", "ramGb", "screenSizeInch", "quantity", "storageGb", "color" }
+        { "id", "model", "brandName", "description", "price", "ramGb", "screenSizeInch", "quantity", "storageGb", "color", "createOn", "updateOn"}
 )
 public class SaleItemBaseByIdDto {
     private Integer id;
@@ -29,4 +30,6 @@ public class SaleItemBaseByIdDto {
     private Integer quantity;
     private Integer storageGb;
     private String color;
+    private Instant createdOn;
+    private Instant updatedOn;
 }

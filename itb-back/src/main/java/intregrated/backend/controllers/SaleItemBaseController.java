@@ -1,29 +1,28 @@
 package intregrated.backend.controllers;
 
+import intregrated.backend.dtos.NewSaleItemDto;
+import intregrated.backend.dtos.NewSaleItemResponseDto;
 import intregrated.backend.dtos.SaleItemBaseByIdDto;
 import intregrated.backend.dtos.SaleItemBaseDto;
 
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.services.SaleItemBaseService;
 import intregrated.backend.utils.ListMapper;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/v1/sale-items")
-@CrossOrigin(origins = "${app.cors.allowedOrigins}")
-
 public class SaleItemBaseController {
     @Autowired
     SaleItemBaseService saleItemBaseService;
+
     @Autowired
     private ModelMapper modelMapper;
 
@@ -41,5 +40,17 @@ public class SaleItemBaseController {
         SaleItemBase saleItemBase = saleItemBaseService.getSaleItemBaseRepoById(id);
 
         return ResponseEntity.ok(modelMapper.map(saleItemBase, SaleItemBaseByIdDto.class));
+    }
+
+    @PostMapping("")
+    public ResponseEntity<NewSaleItemResponseDto> createCustomer(@RequestBody @Valid NewSaleItemDto newSaleItem) {
+        NewSaleItemResponseDto created = saleItemBaseService.createSaleItem(newSaleItem);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteSaleItem(@PathVariable Integer id) {
+        saleItemBaseService.deleteSaleItem(id);
     }
 }

@@ -25,4 +25,14 @@ public class BrandBaseService {
                 )
         );
     }
+
+    public void deleteBrandBaseById(Integer id) {
+        if (!brandBaseRepo.existsById(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Brand with id " + id + " not found"
+            );
+        }
+        brandBaseRepo.deleteById(id);
+    }
 }
