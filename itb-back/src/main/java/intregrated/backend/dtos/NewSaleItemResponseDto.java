@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @Builder
@@ -18,5 +20,7 @@ public class NewSaleItemResponseDto {
     private Integer quantity;
     private Integer storageGb;
     private String color;
+    private Instant createdOn;
+    private Instant updatedOn;
 }
 

@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 
@@ -45,9 +44,17 @@ public class SaleItemBaseController {
     }
 
     @PostMapping("")
-    public ResponseEntity<NewSaleItemResponseDto> createCustomer(@RequestBody @Valid NewSaleItemDto newSaleItem) {
+    public ResponseEntity<NewSaleItemResponseDto> createSaleItem(@RequestBody @Valid NewSaleItemDto newSaleItem) {
         NewSaleItemResponseDto created = saleItemBaseService.createSaleItem(newSaleItem);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<NewSaleItemResponseDto> editSaleItem(@PathVariable Integer id, @RequestBody NewSaleItemDto newSaleItem) {
+        newSaleItem.setId(id);
+
+        NewSaleItemResponseDto editUpdated = saleItemBaseService.editSaleItem(newSaleItem);
+        return ResponseEntity.ok(editUpdated);
     }
 
     @DeleteMapping("/{id}")
