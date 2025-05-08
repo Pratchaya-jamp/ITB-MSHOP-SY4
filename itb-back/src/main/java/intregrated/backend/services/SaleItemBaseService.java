@@ -45,10 +45,10 @@ public class SaleItemBaseService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        BrandBase brand = brandBaseRepo.findByNameIgnoreCase(newSaleItem.getBrand().getName())
+        BrandBase brand = brandBaseRepo.findByNameIgnoreCase(newSaleItem.getBrand().getBrandName())
                 .orElseGet(() -> {
                     BrandBase newBrand = new BrandBase();
-                    newBrand.setName(newSaleItem.getBrand().getName());
+                    newBrand.setName(newSaleItem.getBrand().getBrandName());
                     newBrand.setIsActive(true);
                     newBrand.setCreatedOn(Instant.now());
                     newBrand.setUpdatedOn(Instant.now());
@@ -114,11 +114,11 @@ public class SaleItemBaseService {
         existing.setColor(newSaleItem.getColor() != null ? newSaleItem.getColor() : null);
         existing.setUpdatedOn(Instant.now());
 
-        if (newSaleItem.getBrand() != null && newSaleItem.getBrand().getName() != null) {
-            BrandBase brand = brandBaseRepo.findByNameIgnoreCase(newSaleItem.getBrand().getName())
+        if (newSaleItem.getBrand() != null && newSaleItem.getBrand().getBrandName() != null) {
+            BrandBase brand = brandBaseRepo.findByNameIgnoreCase(newSaleItem.getBrand().getBrandName())
                     .orElseGet(() -> {
                         BrandBase newBrand = new BrandBase();
-                        newBrand.setName(newSaleItem.getBrand().getName());
+                        newBrand.setName(newSaleItem.getBrand().getBrandName());
                         newBrand.setIsActive(true);
                         newBrand.setCreatedOn(Instant.now());
                         newBrand.setUpdatedOn(Instant.now());
