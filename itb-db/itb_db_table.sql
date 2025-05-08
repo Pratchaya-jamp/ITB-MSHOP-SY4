@@ -40,6 +40,7 @@ foreign key sale_item_base(brand_id) references brand_base(id),
 check (trim(model) <> ''),
 check (trim(description) <> ''),
 check (color is null or trim(color) <> '')
+check (quantity > 0)
 );
 
 show tables;
