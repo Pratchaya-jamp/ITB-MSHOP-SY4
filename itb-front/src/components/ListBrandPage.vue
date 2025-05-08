@@ -70,8 +70,8 @@ const filteredAndSortedItems = computed(() => {
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
         >
           <img
-            :src="'/phone/iPhone.jpg'"
-            alt="phone"
+            :src="`/brands/${item.id}.png`"
+            alt="brand"
             class="w-full h-40 object-contain mb-4"
           />
           <div class="itbms-brand font-semibold">{{ item.brandName }}</div>

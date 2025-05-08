@@ -53,7 +53,7 @@ const deleteproduct = async (productId) => {
     <nav class="text-sm text-gray-500 mb-4 max-w-6xl mx-auto">
       <router-link to="/sale-items"><span class="hover:underline cursor-pointer">Home</span></router-link> ›
       <span class="itbms-row text-gray-800 font-medium ml-1">
-        {{ product?.model || '-' }} {{ product?.ramGb || '-' }}/GB {{ product?.color || '-' }}
+        {{ product?.model || '-' }} {{ product?.ramGb || '-' }}/{{ product?.storageGb || '-' }}GB {{ product?.color || '-' }}
       </span>
     </nav>
 
