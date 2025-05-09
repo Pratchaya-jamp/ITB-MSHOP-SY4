@@ -1,3 +1,4 @@
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute,useRouter } from 'vue-router'
@@ -13,8 +14,10 @@ const id = route.params.id
 const imageList = ref(['/phone/iPhone.jpg','/phone/iPhone2.jpg','/phone/iPhone3.jpg','/phone/iPhone4.jpg'])
 const mainImage = ref('/phone/iPhone.jpg')
 const showNotFoundPopup = ref(false)
+const isDeleting = ref(false)
+const showDeleteConfirmationPopup = ref(false)
+const deleteResponseMessage = ref('')
 const countdown = ref(3)
-
 const startCountdown = () => {
   if (countdown.value > 0) {
     setTimeout(() => {
@@ -49,23 +52,31 @@ onMounted(async () => {
     }, 3000)
   }
 })
-const deleteproduct = async (productId) => {
-  const isConfirmed = confirm('คุณต้องการลบสินค้านี้ใช่หรือไม่?');
-  
-  if (!isConfirmed) {
-    return; // ถ้าไม่ยืนยันให้ยกเลิกการลบ
-  }
 
+const deleteproduct = async () => {
+  showDeleteConfirmationPopup.value = true
+}
+
+const confirmDelete = async () => {
+  showDeleteConfirmationPopup.value = false
+  isDeleting.value = true
   try {
-    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', productId);
-    if (statusCode === 200) {
-      alert('delete Success');
-      router.go('/sale-items');
+    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id);
+    if (statusCode === 204) {
+      setTimeout(() => {
+        isDeleting.value = false
+        router.push({ path: '/sale-items', query: { deleteSuccess: 'true' } })
+      }, 1000)
     }
   } catch (error) {
     console.error("delete Fall:", error);
-    alert("delete Fall");
+    deleteResponseMessage.value = ('เกิดข้อผิดพลาดในการลบสินค้า')
+    isDeleting.value = false
   }
+}
+
+const cancelDeleteItem = () => {
+  showDeleteConfirmationPopup.value = false
 }
 </script>
 
@@ -161,7 +172,7 @@ const deleteproduct = async (productId) => {
           Edit
         </button>
         <button
-        @click="deleteproduct(product.id)"
+        @click="deleteproduct"
         class="bg-red-500 hover:bg-red-600 text-white text-sm px-2 py-1 rounded"
         >
           Delete
@@ -169,6 +180,21 @@ const deleteproduct = async (productId) => {
       </div>
       </div>
     </div>
+    <transition name="bounce-popup">
+  <div
+    v-if="showDeleteConfirmationPopup"
+    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
+      <p class="mb-4">Do you want to delete this product?</p>
+      <div class="flex justify-center gap-4">
+        <button @click="confirmDelete" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
+        <button @click="cancelDeleteItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
+      </div>
+    </div>
+  </div>
+</transition>
     <transition name="bounce-popup">
   <div
     v-if="showNotFoundPopup"
@@ -181,6 +207,17 @@ const deleteproduct = async (productId) => {
     </div>
   </div>
 </transition>
+<transition name="fade-background">
+      <div v-if="isDeleting" class="fixed top-0 left-0 w-full h-full bg-black flex items-center justify-center z-50 loading-overlay">
+        <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
+          <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
+          </svg>
+          <p class="text-sm font-medium">Deleting product...</p>
+        </div>
+      </div>
+    </transition>
   </div>
 
   <Footer />
@@ -208,17 +245,36 @@ const deleteproduct = async (productId) => {
   opacity: 0;
 }
 
-/* Animation สำหรับ Fade In/Out ของพื้นหลัง */
+/* Animation สำหรับ Fade In/Out ของพื้นหลัง Loading */
 .fade-background-enter-active,
 .fade-background-leave-active {
-  transition: background-color 0.3s ease;
+  transition: opacity 0.3s ease; /* เปลี่ยนเป็น opacity */
 }
 
 .fade-background-enter-from {
-  background-color: rgba(0, 0, 0, 0); /* เริ่มจาก Opacity 0 */
+  opacity: 0; /* เริ่มจากโปร่งใส */
 }
 
 .fade-background-leave-to {
-  background-color: rgba(0, 0, 0, 0); /* จบที่ Opacity 0 */
+  opacity: 0; /* จบที่โปร่งใส */
 }
+
+/* สไตล์สำหรับพื้นหลัง Loading ที่จางลง */
+.fixed.bg-black.loading-overlay {
+  background-color: rgba(0, 0, 0, 0.2); /* ปรับ opacity เป็น 0.2 (จางลง) */
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+.loading-overlay {
+  background-color: rgba(0, 0, 0, 0.2); /* หรือค่าอื่น ๆ ที่คุณต้องการ */
+}
+
 </style>
