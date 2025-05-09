@@ -32,7 +32,8 @@ const isFormTouched = computed(() => {
 })
 
 const isValid = () => {
-  return Object.values(product.value).every(val => String(val).trim() !== '')
+  const { id, brandName, model, price, description, screenSizeInch, quantity } = product.value
+  return [id, brandName, model, price, description, screenSizeInch, quantity].every(val => String(val).trim() !== '')
 }
 
 const submitForm = async () => {
@@ -62,11 +63,11 @@ const confirmAddItem = async () => {
     description: product.value.description,
     image: mainImage.value,
     price: parseFloat(product.value.price),
-    ramGb: parseInt(product.value.ramGb),
+    ramGb: product.value.ramGb ? parseInt(product.value.ramGb) : null,
     screenSizeInch: parseFloat(product.value.screenSizeInch),
-    storageGb: parseInt(product.value.storageGb),
+    storageGb: product.value.storageGb ? parseInt(product.value.storageGb) : null,
     quantity: parseInt(product.value.quantity),
-    color: product.value.color,
+    color: product.value.color || null,
   }
 
   try {
