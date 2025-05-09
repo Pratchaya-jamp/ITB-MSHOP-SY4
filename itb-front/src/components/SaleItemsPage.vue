@@ -9,7 +9,8 @@ const items = ref([])
 const searchQuery = ref('')
 const filterBy = ref('')
 const route = useRoute()
-const showSuccessPopup = ref(false)
+const showAddSuccessPopup = ref(false)
+const showEditSuccessPopup = ref(false)
 
 const goTophoneDetails = (id) => {
   router.push(`/sale-items/${id}`)
@@ -25,15 +26,25 @@ onMounted(async () => {
 })
 
 watch(
-  () => route.query.success,
-  (success) => {
-    if (success === 'true') {
-      // รอ 0.5 วินาที (500 ms) ก่อนโชว์ popup
-      setTimeout(() => {
-        showSuccessPopup.value = true
+  () => route.query.addSuccess,
+  (addSuccess) => {
+    if (addSuccess === 'true') {
+      setTimeout (() => {
+	showAddSuccessPopup.value = true
       }, 200)
-      
-      // ล้าง query หลัง redirect
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => route.query.editSuccess,
+  (editSuccess) => {
+    if (editSuccess === 'true') {
+      setTimeout(() => {
+	showEditSuccessPopup.value = true
+      }, 200)
       router.replace({ path: route.path, query: {} })
     }
   },
@@ -61,7 +72,8 @@ const filteredAndSortedItems = computed(() => {
 })
 
 const closeSuccessPopup = () => {
-  showSuccessPopup.value = false
+  showAddSuccessPopup.value = false
+  showEditSuccessPopup.value = false
 }
 </script>
 
@@ -104,7 +116,7 @@ const closeSuccessPopup = () => {
 
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         <div
-          v-for="item in filteredAndSortedItems"
+          v-for="(item, index) in filteredAndSortedItems"
           :key="item.id"
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
 	  :style="{ animationDelay: (index * 50) + 'ms' }"
@@ -125,7 +137,7 @@ const closeSuccessPopup = () => {
   </div>
   <transition name="bounce-popup">
   <div
-    v-if="showSuccessPopup"
+    v-if="showAddSuccessPopup"
     class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
     <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
@@ -135,6 +147,19 @@ const closeSuccessPopup = () => {
     </div>
   </div>
 </transition>
+<transition name="bounce-popup">
+  <div
+    v-if="showEditSuccessPopup"
+    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Success!</h2>
+      <p class="mb-4">The sale item has been successfully updated!</p>
+      <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
+    </div>
+  </div>
+</transition>
+  
   
   <Footer />
 </template>
@@ -192,3 +217,4 @@ const closeSuccessPopup = () => {
 }
 
 </style>
+

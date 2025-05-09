@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed,onMounted } from 'vue'
 import { useRouter,useRoute } from 'vue-router'
-import { addItem,editItem } from '@/libs/fetchUtilsOur'
+import { addItem,editItem, getItems, getItemById } from '@/libs/fetchUtilsOur'
 import Footer from './Footer.vue'
 
 const router = useRouter()
@@ -25,10 +25,13 @@ const mainImage = ref('/phone/iPhone.jpg')
 const responseMessage = ref('')
 
 // State สำหรับควบคุมการแสดง Pop-up
-const showConfirmationPopup = ref(false)
+const showConfirmationAddPopup = ref(false)
+const showConfirmationEditPopup = ref(false)
 const isLoading = ref(false)
 const brandList = ref([])
 const id = route.params.id
+const isEditMode = ref(false)
+const isAdding = computed(() => !isEditMode.value)
 
 onMounted(async () => {
   try {
@@ -42,6 +45,7 @@ onMounted(async () => {
     const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id)
     if (data) {
       product.value = {
+        id: data.id,
         brandName: data.brandName,
         model: data.model,
         price: data.price,
@@ -52,7 +56,6 @@ onMounted(async () => {
         color: data.color,
         quantity: data.quantity,
       }
-      mainImage.value = data.image
     } else {
       alert('ไม่พบข้อมูลสินค้า')
       router.push('/sale-items')
@@ -80,11 +83,21 @@ const submitForm = async () => {
     return
   }
 
-  showConfirmationPopup.value = true
+  if (isEditMode.value) {
+    showConfirmationEditPopup.value = true
+  } else {
+    showConfirmationAddPopup.value = true
+  }
+
 }
 
 const confirmAddItem = async () => {
-  showConfirmationPopup.value = false
+  const isAdding = !isEditMode.value
+  if (isAdding) {
+    showConfirmationAddPopup.value = true
+  } else {
+    showConfirmationAddPopup.value = false
+  }
   isLoading.value = true
 
   const newProduct = {
@@ -108,13 +121,13 @@ const confirmAddItem = async () => {
       await editItem('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id, newProduct)
       setTimeout(() => {
       isLoading.value = false
-      router.push({ path: '/sale-items', query: { success: 'true' } })
+      router.push({ path: '/sale-items', query: { editSuccess: 'true' } })
     }, 1000)
     }else {
     await addItem('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', newProduct)
     setTimeout(() => {
       isLoading.value = false
-      router.push({ path: '/sale-items', query: { success: 'true' } })
+      router.push({ path: '/sale-items', query: { addSuccess: 'true' } })
     }, 1000)
     }
     } catch (err) {
@@ -125,7 +138,8 @@ const confirmAddItem = async () => {
 }
 
 const cancelAddItem = () => {
-  showConfirmationPopup.value = false // ปิด Pop-up ยืนยัน
+  showConfirmationAddPopup.value = false // ปิด Pop-up ยืนยัน
+  showConfirmationEditPopup.value = false
 }
 </script>
 
@@ -164,8 +178,9 @@ const cancelAddItem = () => {
           
           <label class="text-left font-medium">Brand:</label>
           <select v-if="brandList.length > 0" v-model="product.brandName" class="border p-2 rounded w-full">
-          <option v-for="brand in brandList" :key="brand.id" :value="brand.name">
-          {{ brand.name }}
+          <option value="" disabled selected> Select Brand</option>
+          <option v-for="brand in brandList" :key="brand.id" :value="brand.brandName">
+          {{ brand.brandName }}
           </option>
           </select>
           <div v-else class="border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div>
@@ -198,10 +213,10 @@ const cancelAddItem = () => {
         <div class="flex gap-2 mt-4 justify-end">
           <button
            @click="submitForm"
-           :disabled="!isFormTouched"
+           :disabled="!isFormTouched || (isAdding && !isValid())"
            :class="[
              'rounded-md px-4 py-2 transition-colors duration-300',
-             isFormTouched
+             isFormTouched && (!isAdding || isValid())
              ? 'bg-green-500 text-white border-2 border-green-500 cursor-pointer hover:bg-transparent hover:text-green-500'
              : 'bg-gray-300 text-gray-500 border-2 border-gray-300 cursor-not-allowed'
            ]"
@@ -221,31 +236,48 @@ const cancelAddItem = () => {
 
     <transition name="bounce-popup">
   <div
-    v-if="showConfirmationPopup"
+    v-if="showConfirmationAddPopup"
     class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
     <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
       <h2 class="text-xl font-semibold mb-4">Confirm adding the product</h2>
       <p class="mb-4">Do you want to add this product?</p>
       <div class="flex justify-center gap-4">
+          <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
+         <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>  
+      </div>
+    </div>
+  </div>
+</transition>
+
+<!-- Edit popup -->
+<transition name="bounce-popup">
+  <div
+    v-if="showConfirmationEditPopup"
+    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm editing the product</h2>
+      <p class="mb-4">Do you want to save changes to this product?</p>
+      <div class="flex justify-center gap-4">
         <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
-        <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>
+        <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
       </div>
     </div>
   </div>
 </transition>
 
 <transition name="fade-background">
-  <div v-if="isLoading" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
-      <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
-      </svg>
-      <p class="text-sm font-medium">Product being added...</p>
-    </div>
-  </div>
-</transition>
+      <div v-if="isLoading" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
+          <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
+          </svg>
+          <p class="text-sm font-medium">Saving product...</p>
+        </div>
+      </div>
+    </transition>
 
 </div>
   <Footer />
