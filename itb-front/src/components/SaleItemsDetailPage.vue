@@ -12,19 +12,40 @@ const id = route.params.id
 
 const imageList = ref(['/phone/iPhone.jpg','/phone/iPhone2.jpg','/phone/iPhone3.jpg','/phone/iPhone4.jpg'])
 const mainImage = ref('/phone/iPhone.jpg')
+const showNotFoundPopup = ref(false)
+const countdown = ref(3)
+const startCountdown = () => {
+  if (countdown.value > 0) {
+    setTimeout(() => {
+      countdown.value--
+      startCountdown() // เรียกตัวเองซ้ำ
+    }, 1000)
+  }
+}
 
 // ดึงข้อมูลจาก backend
 onMounted(async () => {
   try {
     const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id)
     if (!data || data?.status === 404) {
-      router.push('/sale-items')
-      alert('The requested sale item does not exist.')
+      showNotFoundPopup.value = true
+      startCountdown()
+
+      setTimeout(() => {
+        router.push('/sale-items')
+      }, 3000)
+      //alert('The requested sale item does not exist.')
       return
     }
     product.value = data;
   } catch (error) {
     console.error('Failed to fetch product:', error);
+    showNotFoundPopup.value = true
+    startCountdown()
+
+    setTimeout(() => {
+      router.push('/sale-items')
+    }, 3000)
   }
 })
 const deleteproduct = async (productId) => {
@@ -147,6 +168,18 @@ const deleteproduct = async (productId) => {
       </div>
       </div>
     </div>
+    <transition name="bounce-popup">
+  <div
+    v-if="showNotFoundPopup"
+    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50"
+  >
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
+      <h2 class="text-xl font-semibold mb-4">⚠️ Item not found.</h2>
+      <p class="mb-2">The requested sale item does not exist.</p>
+      <p class="text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
+    </div>
+  </div>
+</transition>
   </div>
 
   <Footer />
@@ -154,5 +187,37 @@ const deleteproduct = async (productId) => {
 
 
 <style scoped>
-/* ปรับแต่ง class เพิ่มเติมได้ที่นี่ */
+.itbms-message {
+  background-color: rgba(0, 0, 0, 0.3); /* opacity 0.3 = โปร่งนุ่มขึ้น */
+  backdrop-filter: blur(2px); /* เพิ่ม blur ด้านหลังให้หรู */
+}
+
+.bounce-popup-enter-active,
+.bounce-popup-leave-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* bounce effect */
+}
+
+.bounce-popup-enter-from {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.bounce-popup-leave-to {
+  transform: scale(1.2);
+  opacity: 0;
+}
+
+/* Animation สำหรับ Fade In/Out ของพื้นหลัง */
+.fade-background-enter-active,
+.fade-background-leave-active {
+  transition: background-color 0.3s ease;
+}
+
+.fade-background-enter-from {
+  background-color: rgba(0, 0, 0, 0); /* เริ่มจาก Opacity 0 */
+}
+
+.fade-background-leave-to {
+  background-color: rgba(0, 0, 0, 0); /* จบที่ Opacity 0 */
+}
 </style>

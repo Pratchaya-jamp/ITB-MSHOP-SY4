@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getItems } from '@/libs/fetchUtilsOur';
 import Footer from './Footer.vue'
 
@@ -8,6 +8,8 @@ const router = useRouter()
 const items = ref([])
 const searchQuery = ref('')
 const filterBy = ref('')
+const route = useRoute()
+const showSuccessPopup = ref(false)
 
 const goTophoneDetails = (id) => {
   router.push(`/sale-items/${id}`)
@@ -21,6 +23,22 @@ onMounted(async () => {
     console.error('Error loading items:', err)
   }
 })
+
+watch(
+  () => route.query.success,
+  (success) => {
+    if (success === 'true') {
+      // รอ 0.5 วินาที (500 ms) ก่อนโชว์ popup
+      setTimeout(() => {
+        showSuccessPopup.value = true
+      }, 200)
+      
+      // ล้าง query หลัง redirect
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
 
 const filteredAndSortedItems = computed(() => {
   let result = [...items.value]
@@ -41,6 +59,10 @@ const filteredAndSortedItems = computed(() => {
 
   return result
 })
+
+const closeSuccessPopup = () => {
+  showSuccessPopup.value = false
+}
 </script>
 
 <template>
@@ -101,6 +123,18 @@ const filteredAndSortedItems = computed(() => {
       </div>
     </div>
   </div>
+  <transition name="bounce-popup">
+  <div
+    v-if="showSuccessPopup"
+    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Success!</h2>
+      <p class="mb-4">The sale item has been successfully added!</p>
+      <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
+    </div>
+  </div>
+</transition>
   
   <Footer />
 </template>
@@ -121,5 +155,40 @@ const filteredAndSortedItems = computed(() => {
   opacity: 0;
   animation: fadeInUp 0.5s ease forwards;
 }
-</style>
 
+/* สไตล์พื้นหลัง popup overlay */
+.itbms-message {
+  background-color: rgba(0, 0, 0, 0.3); /* opacity 0.3 = โปร่งนุ่มขึ้น */
+  backdrop-filter: blur(2px); /* เพิ่ม blur ด้านหลังให้หรู */
+}
+
+.bounce-popup-enter-active,
+.bounce-popup-leave-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* bounce effect */
+}
+
+.bounce-popup-enter-from {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.bounce-popup-leave-to {
+  transform: scale(1.2);
+  opacity: 0;
+}
+
+/* Animation สำหรับ Fade In/Out ของพื้นหลัง */
+.fade-background-enter-active,
+.fade-background-leave-active {
+  transition: background-color 0.3s ease;
+}
+
+.fade-background-enter-from {
+  background-color: rgba(0, 0, 0, 0); /* เริ่มจาก Opacity 0 */
+}
+
+.fade-background-leave-to {
+  background-color: rgba(0, 0, 0, 0); /* จบที่ Opacity 0 */
+}
+
+</style>

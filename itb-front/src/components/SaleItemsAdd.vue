@@ -23,6 +23,10 @@ const imageList = ref(['/phone/iPhone.jpg', '/phone/iPhone2.jpg','/phone/iPhone3
 const mainImage = ref('/phone/iPhone.jpg')
 const responseMessage = ref('')
 
+// State สำหรับควบคุมการแสดง Pop-up
+const showConfirmationPopup = ref(false)
+const isLoading = ref(false)
+
 const isFormTouched = computed(() => {
   return Object.values(product.value).some(val => String(val).trim() !== '')
 })
@@ -42,6 +46,13 @@ const submitForm = async () => {
     return
   }
 
+  showConfirmationPopup.value = true
+}
+
+const confirmAddItem = async () => {
+  showConfirmationPopup.value = false
+  isLoading.value = true
+
   const newProduct = {
     id:product.value.id,
     brand: {
@@ -60,12 +71,19 @@ const submitForm = async () => {
 
   try {
     await addItem('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', newProduct)
-    responseMessage.value = 'เพิ่มสินค้าสำเร็จแล้ว!'
-    router.push('/sale-items')
+    setTimeout(() => {
+      isLoading.value = false
+      router.push({ path: '/sale-items', query: { success: 'true' } })
+    }, 1000)
   } catch (err) {
     console.error(err)
     responseMessage.value = 'เกิดข้อผิดพลาดในการเพิ่มสินค้า'
+    isLoading.value = false
   }
+}
+
+const cancelAddItem = () => {
+  showConfirmationPopup.value = false // ปิด Pop-up ยืนยัน
 }
 </script>
 
@@ -153,10 +171,113 @@ const submitForm = async () => {
         </div>
       </div>
     </div>
+
+    <transition name="bounce-popup">
+  <div
+    v-if="showConfirmationPopup"
+    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm adding the product</h2>
+      <p class="mb-4">Do you want to add this product?</p>
+      <div class="flex justify-center gap-4">
+        <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
+        <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>
+      </div>
+    </div>
   </div>
+</transition>
+
+<transition name="fade-background">
+  <div v-if="isLoading" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
+      <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
+      </svg>
+      <p class="text-sm font-medium">Product being added...</p>
+    </div>
+  </div>
+</transition>
+
+</div>
   <Footer />
 </template>
 
 <style scoped>
-/* ปรับแต่งเพิ่มเติมได้ที่นี่ */
+.bounce-popup-enter-active,
+.bounce-popup-leave-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* bounce effect */
+}
+
+.bounce-popup-enter-from {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.bounce-popup-leave-to {
+  transform: scale(1.2);
+  opacity: 0;
+}
+
+/* Animation สำหรับ Fade In/Out ของพื้นหลัง */
+.fade-background-enter-active,
+.fade-background-leave-active {
+  transition: background-color 0.3s ease;
+}
+
+.fade-background-enter-from {
+  background-color: rgba(0, 0, 0, 0); /* เริ่มจาก Opacity 0 */
+}
+
+.fade-background-leave-to {
+  background-color: rgba(0, 0, 0, 0); /* จบที่ Opacity 0 */
+}
+
+/* Animation สำหรับ Fade In/Out ของเนื้อหา Pop-up (ถ้าต้องการ) */
+.fade-in-out-enter-active,
+.fade-in-out-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease; /* เพิ่ม transform */
+}
+
+.fade-in-out-enter-from {
+  opacity: 0;
+  transform: scale(0.95); /* เริ่มจากขนาดเล็กลงเล็กน้อย */
+}
+
+.fade-in-out-leave-to {
+  opacity: 0;
+  transform: scale(1.05); /* จบที่ขนาดใหญ่ขึ้นเล็กน้อย */
+}
+
+/* Animation สำหรับ Slide Up ของเนื้อหา Pop-up (ถ้าต้องการ) */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.slide-up-enter-from {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.slide-up-leave-to {
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+/* สไตล์คงที่สำหรับพื้นหลัง (เพื่อให้ transition ทำงานได้) */
+.fixed.bg-black {
+  background-color: rgba(0, 0, 0, 0.5); /* กำหนด Opacity เริ่มต้น */
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
 </style>
