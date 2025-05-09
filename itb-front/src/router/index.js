@@ -36,7 +36,12 @@ const routes = [
     path: '/sale-items/add',
     name: 'SaleItemsAdd',
     component: SaleItemsAdd,
-  }
+  },
+  {
+  path: '/sale-items/edit/:id',
+  name: 'SaleItemsEdit',
+  component: SaleItemsAdd,
+},
 ]
 
 const router = createRouter({
