@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { addItem } from '@/libs/fetchUtilsOur'
+import { ref, computed,onMounted } from 'vue'
+import { useRouter,useRoute } from 'vue-router'
+import { addItem,editItem } from '@/libs/fetchUtilsOur'
 import Footer from './Footer.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 const product = ref({
   id: '',
@@ -26,6 +27,38 @@ const responseMessage = ref('')
 // State สำหรับควบคุมการแสดง Pop-up
 const showConfirmationPopup = ref(false)
 const isLoading = ref(false)
+const brandList = ref([])
+const id = route.params.id
+
+onMounted(async () => {
+  try {
+    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands')
+    brandList.value = data
+  } catch (err) {
+    console.error('Error loading items:', err)
+  }
+  if (id) {
+    isEditMode.value = true
+    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id)
+    if (data) {
+      product.value = {
+        brandName: data.brandName,
+        model: data.model,
+        price: data.price,
+        description: data.description,
+        ramGb: data.ramGb,
+        screenSizeInch: data.screenSizeInch,
+        storageGb: data.storageGb,
+        color: data.color,
+        quantity: data.quantity,
+      }
+      mainImage.value = data.image
+    } else {
+      alert('ไม่พบข้อมูลสินค้า')
+      router.push('/sale-items')
+    }
+  }
+})
 
 const isFormTouched = computed(() => {
   return Object.values(product.value).some(val => String(val).trim() !== '')
@@ -71,12 +104,20 @@ const confirmAddItem = async () => {
   }
 
   try {
+    if (isEditMode.value) {
+      await editItem('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id, newProduct)
+      setTimeout(() => {
+      isLoading.value = false
+      router.push({ path: '/sale-items', query: { success: 'true' } })
+    }, 1000)
+    }else {
     await addItem('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', newProduct)
     setTimeout(() => {
       isLoading.value = false
       router.push({ path: '/sale-items', query: { success: 'true' } })
     }, 1000)
-  } catch (err) {
+    }
+    } catch (err) {
     console.error(err)
     responseMessage.value = 'เกิดข้อผิดพลาดในการเพิ่มสินค้า'
     isLoading.value = false
@@ -122,7 +163,12 @@ const cancelAddItem = () => {
           <input v-model="product.id" type="number" class="border p-2 rounded w-full" />
           
           <label class="text-left font-medium">Brand:</label>
-          <input v-model="product.brandName" type="text" class="border p-2 rounded w-full" />
+          <select v-if="brandList.length > 0" v-model="product.brandName" class="border p-2 rounded w-full">
+          <option v-for="brand in brandList" :key="brand.id" :value="brand.name">
+          {{ brand.name }}
+          </option>
+          </select>
+          <div v-else class="border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div>
 
           <label class="text-left font-medium">Model:</label>
           <input v-model="product.model" type="text" class="border p-2 rounded w-full" />

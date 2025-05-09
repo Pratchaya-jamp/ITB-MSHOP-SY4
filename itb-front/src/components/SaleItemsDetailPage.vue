@@ -14,6 +14,7 @@ const imageList = ref(['/phone/iPhone.jpg','/phone/iPhone2.jpg','/phone/iPhone3.
 const mainImage = ref('/phone/iPhone.jpg')
 const showNotFoundPopup = ref(false)
 const countdown = ref(3)
+
 const startCountdown = () => {
   if (countdown.value > 0) {
     setTimeout(() => {
@@ -59,7 +60,7 @@ const deleteproduct = async (productId) => {
     const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', productId);
     if (statusCode === 200) {
       alert('delete Success');
-      router.push('/sale-items');
+      router.go('/sale-items');
     }
   } catch (error) {
     console.error("delete Fall:", error);
