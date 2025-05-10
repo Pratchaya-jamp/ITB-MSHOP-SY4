@@ -135,7 +135,7 @@ const confirmAddItem = async () => {
   isLoading.value = true
 
   const newProduct = {
-    id:product.value.id,
+    //id:product.value.id,
     brand: {
       brandName: product.value.brandName
     },
@@ -212,8 +212,8 @@ const cancelAddItem = () => {
 
       <div class="space-y-3 text-sm text-black">
         <div class="grid grid-cols-2 gap-2 items-center">
-          <label class="text-left font-medium">Product ID:</label>
-          <input v-model="product.id" type="number" class="border p-2 rounded w-full" />
+          <!-- <label class="text-left font-medium">Product ID:</label> -->
+          <!-- <input v-model="product.id" type="number" class="border p-2 rounded w-full" /> -->
           
           <label class="itbms-brand text-left font-medium">Brand:</label>
           <select v-if="brandList.length > 0" v-model="product.brandName" class="itbms-brand border p-2 rounded w-full">
