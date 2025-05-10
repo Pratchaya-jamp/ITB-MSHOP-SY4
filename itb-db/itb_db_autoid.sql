@@ -165,12 +165,4 @@ modify column model varchar(100) character set utf8mb4 not null;
 alter table sale_item_base
 modify column color varchar(50) character set utf8mb4;
 
-INSERT INTO sale_item_base (
-	brand_id, model, description, price, ramGb, screenSizeInch, storageGb, color, quantity
-) VALUES
-(1, 'iPhone 15 Pro Max', 'จอภาพ Super Retina XDR อัตรารีเฟรช ProMotion สูงสุด 120Hz จอภาพแบบติดตลอด Always-On Display ชิป A17 Pro พร้อม GPU แบบ 6-core ประสิทธิภาพ iOS 17 หน่วยความจำ 8GB', 57900, 8, 6.7, 512, 'Black Titanium', 5),
-(2, 'Galaxy S25 Ultra', 'ระบบปฏิบัติการ Android 15 One UI 7.0 กล้องหน้า 12MP กล้องหลัง UW50+W200+Tele 10+periscope telephoto 50', 44900, NULL, NULL, NULL, NULL, 10),
-(3, '1AR Pro 5G2AR Pro 5G3AR Pro 5G4AR Pro 5G5AR Pro 5G6AR Pro 5G7AR Pro 5G', 'ระบบปฏิบัติการ Android 15 รองรับ 2 ซิม', 7999, 6, 6.7, 128, 'Pink', 12),
-(4, 'V27', '     Aura Light Portrait System     ', 11684, 8, NULL, 256, '     Noble Black     ', 8);
-
 select * from sale_item_base;
