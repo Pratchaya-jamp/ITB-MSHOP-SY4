@@ -7,7 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NewSaleItemDto {
-    private Integer id;
     @NotNull
     private String model;
     @NotNull

@@ -38,10 +38,6 @@ public class SaleItemBaseService {
     }
 
     public NewSaleItemResponseDto createSaleItem(@Valid NewSaleItemDto newSaleItem) {
-        if (saleItemBaseRepo.existsById(newSaleItem.getId())) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Duplicate saleItem ID: " + newSaleItem.getId());
-        }
-
         BrandBase brand = brandBaseRepo.findByNameIgnoreCase(newSaleItem.getBrand().getBrandName())
                 .orElseGet(() -> {
                     BrandBase newBrand = new BrandBase();
@@ -93,11 +89,11 @@ public class SaleItemBaseService {
         saleItemBaseRepo.deleteById(id);
     }
 
-    public NewSaleItemResponseDto editSaleItem(NewSaleItemDto newSaleItem) {
-        SaleItemBase existing = saleItemBaseRepo.findById(newSaleItem.getId())
+    public NewSaleItemResponseDto editSaleItem(Integer id, @Valid NewSaleItemDto newSaleItem) {
+        SaleItemBase existing = saleItemBaseRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "SaleItem with id " + newSaleItem.getId() + " not found"
+                        "SaleItem with id " + id + " not found"
                 ));
 
         existing.setModel(newSaleItem.getModel().trim());

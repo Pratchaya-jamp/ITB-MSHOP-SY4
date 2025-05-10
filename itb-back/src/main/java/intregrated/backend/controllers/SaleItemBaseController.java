@@ -50,9 +50,7 @@ public class SaleItemBaseController {
 
     @PutMapping("/{id}")
     public ResponseEntity<NewSaleItemResponseDto> editSaleItem(@PathVariable Integer id, @RequestBody NewSaleItemDto newSaleItem) {
-        newSaleItem.setId(id);
-
-        NewSaleItemResponseDto editUpdated = saleItemBaseService.editSaleItem(newSaleItem);
+        NewSaleItemResponseDto editUpdated = saleItemBaseService.editSaleItem(id, newSaleItem);
         return ResponseEntity.ok(editUpdated);
     }
 
