@@ -23,6 +23,7 @@ const product = ref({
 const imageList = ref(['/phone/iPhone.jpg', '/phone/iPhone2.jpg','/phone/iPhone3.jpg','/phone/iPhone4.jpg'])
 const mainImage = ref('/phone/iPhone.jpg')
 const responseMessage = ref('')
+const originalProduct = ref(null)
 
 // State สำหรับควบคุมการแสดง Pop-up
 const showConfirmationAddPopup = ref(false)
@@ -44,7 +45,7 @@ onMounted(async () => {
     isEditMode.value = true
     const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id)
     if (data) {
-      product.value = {
+      const formattedProduct = {
         id: data.id,
         brandName: data.brandName,
         model: data.model,
@@ -56,11 +57,18 @@ onMounted(async () => {
         color: data.color,
         quantity: data.quantity,
       }
+      product.value = { ...formattedProduct }
+      originalProduct.value = { ...formattedProduct }
     } else {
       alert('ไม่พบข้อมูลสินค้า')
       router.push('/sale-items')
     }
   }
+})
+
+const isModified = computed(() => {
+  if (!originalProduct.value) return true // ในกรณีเพิ่มสินค้าใหม่
+  return Object.keys(product.value).some(key => String(product.value[key]) !== String(originalProduct.value[key]))
 })
 
 const isFormTouched = computed(() => {
@@ -218,10 +226,10 @@ const cancelAddItem = () => {
         <div class="flex gap-2 mt-4 justify-end">
           <button
            @click="submitForm"
-           :disabled="!isFormTouched"
+           :disabled="!isFormTouched || (isEditMode && !isModified)"
            :class="[
              'itbms-save-button rounded-md px-4 py-2 transition-colors duration-300',
-             isFormTouched
+             isFormTouched && (!isEditMode || isModified)
              ? 'bg-green-500 text-white border-2 border-green-500 cursor-pointer hover:bg-transparent hover:text-green-500'
              : 'bg-gray-300 text-gray-500 border-2 border-gray-300 cursor-not-allowed'
            ]"
