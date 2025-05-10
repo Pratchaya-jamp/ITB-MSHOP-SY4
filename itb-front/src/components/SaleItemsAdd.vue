@@ -33,11 +33,29 @@ const brandList = ref([])
 const id = route.params.id
 const isEditMode = ref(false)
 const isAdding = computed(() => !isEditMode.value)
+const countdown = ref(3)
+const startCountdown = () => {
+  if (countdown.value > 0) {
+    setTimeout(() => {
+      countdown.value--
+      startCountdown() // เรียกตัวเองซ้ำ
+    }, 1000)
+  }
+}
+const showNotFoundPopup = ref(false)
 
 onMounted(async () => {
   try {
     const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands')
-    brandList.value = data
+    brandList.value = data.sort((a, b) => {
+  if (a.brandName < b.brandName) {
+    return -1;
+  }
+  if (a.brandName > b.brandName) {
+    return 1;
+  }
+  return 0;
+});
   } catch (err) {
     console.error('Error loading items:', err)
   }
@@ -60,8 +78,16 @@ onMounted(async () => {
       product.value = { ...formattedProduct }
       originalProduct.value = { ...formattedProduct }
     } else {
-      alert('ไม่พบข้อมูลสินค้า')
-      router.push('/sale-items')
+      if (!data || data?.status === 404) {
+      showNotFoundPopup.value = true
+      startCountdown()
+
+      setTimeout(() => {
+        router.push('/sale-items')
+      }, 3000)
+      //alert('The requested sale item does not exist.')
+      return
+    }
     }
   }
 })
@@ -113,15 +139,15 @@ const confirmAddItem = async () => {
     brand: {
       brandName: product.value.brandName
     },
-    model: product.value.model,
-    description: product.value.description,
+    model: product.value.model.trim(),
+    description: product.value.description.trim(),
     image: mainImage.value,
     price: parseFloat(product.value.price),
     ramGb: product.value.ramGb ? parseInt(product.value.ramGb) : null,
     screenSizeInch: parseFloat(product.value.screenSizeInch),
     storageGb: product.value.storageGb ? parseInt(product.value.storageGb) : null,
     quantity: parseInt(product.value.quantity),
-    color: product.value.color || null,
+    color: product.value.color || null.trim(),
   }
 
   try {
@@ -129,7 +155,7 @@ const confirmAddItem = async () => {
       await editItem('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id, newProduct)
       setTimeout(() => {
       isLoading.value = false
-      router.push({ path: '/sale-items', query: { editSuccess: 'true' } })
+      router.push({ path: `/sale-items/${id}`, query: { editSuccess: 'true' } })
     }, 1000)
     }else {
     await addItem('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', newProduct)
@@ -236,7 +262,7 @@ const cancelAddItem = () => {
          >
            Save
          </button>
-          <router-link to="/sale-items">
+          <router-link :to="isEditMode ? `/sale-items/${product.id}` : '/sale-items'">
             <button
               class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
             >
@@ -291,7 +317,18 @@ const cancelAddItem = () => {
         </div>
       </div>
     </transition>
-
+    <transition name="bounce-popup">
+  <div
+    v-if="showNotFoundPopup"
+    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50"
+  >
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
+      <h2 class="text-xl font-semibold mb-4">⚠️ Item not found.</h2>
+      <p class="mb-2">The requested sale item does not exist.</p>
+      <p class="text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
+    </div>
+  </div>
+</transition>
 </div>
   <Footer />
 </template>

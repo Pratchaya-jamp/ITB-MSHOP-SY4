@@ -14,7 +14,15 @@ const filterBy = ref('')
 onMounted(async () => {
   try {
     const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands')
-    items.value = data
+    items.value = data.sort((a, b) => {
+  if (a.brandName < b.brandName) {
+    return -1;
+  }
+  if (a.brandName > b.brandName) {
+    return 1;
+  }
+  return 0;
+});
   } catch (err) {
     console.error('Error loading items:', err)
   }

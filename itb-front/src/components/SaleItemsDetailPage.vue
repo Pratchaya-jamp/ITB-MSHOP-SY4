@@ -1,6 +1,5 @@
-
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute,useRouter } from 'vue-router'
 import { getItemById,deleteItemById } from '@/libs/fetchUtilsOur';
 import Footer from './Footer.vue'
@@ -25,6 +24,11 @@ const startCountdown = () => {
       startCountdown() // เรียกตัวเองซ้ำ
     }, 1000)
   }
+}
+const showEditSuccessPopup = ref(false)
+
+const closeSuccessPopup = () => {
+  showEditSuccessPopup.value = false
 }
 
 // ดึงข้อมูลจาก backend
@@ -52,6 +56,19 @@ onMounted(async () => {
     }, 3000)
   }
 })
+
+watch(
+  () => route.query.editSuccess,
+  (editSuccess) => {
+    if (editSuccess === 'true') {
+      setTimeout(() => {
+	    showEditSuccessPopup.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
 
 const deleteproduct = async () => {
   showDeleteConfirmationPopup.value = true
@@ -187,7 +204,7 @@ const cancelDeleteItem = () => {
   >
     <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
       <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
-      <p class="mb-4">Do you want to delete this product?</p>
+      <p class="mb-4">Do you want to delete this sale item?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmDelete" class="itms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
         <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
@@ -218,6 +235,18 @@ const cancelDeleteItem = () => {
         </div>
       </div>
     </transition>
+    <transition name="bounce-popup">
+  <div
+    v-if="showEditSuccessPopup"
+    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Success!</h2>
+      <p class="mb-4">The sale item has been successfully updated!</p>
+      <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
+    </div>
+  </div>
+</transition>
   </div>
 
   <Footer />
