@@ -147,7 +147,7 @@ const confirmAddItem = async () => {
     screenSizeInch: parseFloat(product.value.screenSizeInch),
     storageGb: product.value.storageGb ? parseInt(product.value.storageGb) : null,
     quantity: parseInt(product.value.quantity),
-    color: product.value.color || null.trim(),
+    color: product.value.color.trim() || null,
   }
 
   try {
