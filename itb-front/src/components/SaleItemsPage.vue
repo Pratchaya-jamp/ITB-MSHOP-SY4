@@ -117,7 +117,7 @@ const closeSuccessPopup = () => {
         </svg>
       </div>
     </div>
-    <div class="ml-[8%]">
+    <div class="itbms-sale-item-add ml-[8%]">
     <button
       class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
       @click="router.push('/sale-items/add')"

@@ -146,10 +146,15 @@ const cancelAddItem = () => {
 <template>
   <div class="p-4 w-full min-h-screen bg-white">
     <nav class="text-sm text-gray-500 mb-4 max-w-6xl mx-auto">
-      <router-link to="/sale-items"><span class="hover:underline cursor-pointer">Home</span></router-link> ›
-      <span class="itbms-row text-gray-800 font-medium ml-1">
+      <router-link to="/sale-items"><span class="itbms-home-button hover:underline cursor-pointer">Home</span></router-link> ›
+      <span v-if="product?.id" class="itbms-row text-gray-800 font-medium ml-1">
+      <router-link :to="{ path: `/sale-items/${product.id}` }" class="itbms-back-button hover:underline cursor-pointer">
         {{ product?.model || '-' }} {{ product?.ramGb || '-' }}/{{ product?.storageGb || '-' }}GB {{ product?.color || '-' }}
-      </span>
+      </router-link>
+    </span>
+    <span v-else class="itbms-row text-gray-800 font-medium ml-1">
+      {{ product?.model || '-' }} {{ product?.ramGb || '-' }}/{{ product?.storageGb || '-' }}GB {{ product?.color || '-' }}
+    </span>
     </nav>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-lg shadow max-w-6xl mx-auto">
 
@@ -176,46 +181,46 @@ const cancelAddItem = () => {
           <label class="text-left font-medium">Product ID:</label>
           <input v-model="product.id" type="number" class="border p-2 rounded w-full" />
           
-          <label class="text-left font-medium">Brand:</label>
-          <select v-if="brandList.length > 0" v-model="product.brandName" class="border p-2 rounded w-full">
+          <label class="itbms-brand text-left font-medium">Brand:</label>
+          <select v-if="brandList.length > 0" v-model="product.brandName" class="itbms-brand border p-2 rounded w-full">
           <option value="" disabled selected> Select Brand</option>
           <option v-for="brand in brandList" :key="brand.id" :value="brand.brandName">
           {{ brand.brandName }}
           </option>
           </select>
-          <div v-else class="border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div>
+          <div v-else class="itbms-brand border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div>
 
-          <label class="text-left font-medium">Model:</label>
-          <input v-model="product.model" type="text" class="border p-2 rounded w-full" />
+          <label class="itbms-model text-left font-medium">Model:</label>
+          <input v-model="product.model" type="text" class="itbms-model border p-2 rounded w-full" />
 
-          <label class="text-left font-medium">Price (Baht):</label>
-          <input v-model="product.price" type="number" class="border p-2 rounded w-full" />
+          <label class="itbms-price text-left font-medium">Price (Baht):</label>
+          <input v-model="product.price" type="number" class="itbms-price border p-2 rounded w-full" />
 
-          <label class="text-left font-medium">Ram (GB):</label>
-          <input v-model="product.ramGb" type="number" class="border p-2 rounded w-full" />
+          <label class="itbms-ramGb text-left font-medium">Ram (GB):</label>
+          <input v-model="product.ramGb" type="number" class="itbms-ramGb border p-2 rounded w-full" />
 
-          <label class="text-left font-medium">Screen Size (in):</label>
-          <input v-model="product.screenSizeInch" type="number" class="border p-2 rounded w-full" />
+          <label class="itbms-screenSizeInch text-left font-medium">Screen Size (in):</label>
+          <input v-model="product.screenSizeInch" type="number" class="itbms-screenSizeInch border p-2 rounded w-full" />
 
-          <label class="text-left font-medium">Storage (GB):</label>
-          <input v-model="product.storageGb" type="number" class="border p-2 rounded w-full" />
+          <label class="itbms-storageGb text-left font-medium">Storage (GB):</label>
+          <input v-model="product.storageGb" type="number" class="itbms-storageGb border p-2 rounded w-full" />
 
-          <label class="text-left font-medium">Color:</label>
-          <input v-model="product.color" type="text" class="border p-2 rounded w-full" />
+          <label class="itbms-color text-left font-medium">Color:</label>
+          <input v-model="product.color" type="text" class="itbms-color border p-2 rounded w-full" />
 
-          <label class="text-left font-medium">Quantity:</label>
-          <input v-model="product.quantity" type="number" class="border p-2 rounded w-full" />
+          <label class="itbms-quantity text-left font-medium">Quantity:</label>
+          <input v-model="product.quantity" type="number" class="itbms-quantity border p-2 rounded w-full" />
         </div>
 
-        <label class="block font-medium mt-4">Description:</label>
-        <textarea v-model="product.description" rows="3" class="border p-2 rounded w-full"></textarea>
+        <label class="itbms-description block font-medium mt-4">Description:</label>
+        <textarea v-model="product.description" rows="3" class="itbms-description border p-2 rounded w-full"></textarea>
 
         <div class="flex gap-2 mt-4 justify-end">
           <button
            @click="submitForm"
            :disabled="!isFormTouched"
            :class="[
-             'rounded-md px-4 py-2 transition-colors duration-300',
+             'itbms-save-button rounded-md px-4 py-2 transition-colors duration-300',
              isFormTouched
              ? 'bg-green-500 text-white border-2 border-green-500 cursor-pointer hover:bg-transparent hover:text-green-500'
              : 'bg-gray-300 text-gray-500 border-2 border-gray-300 cursor-not-allowed'
@@ -225,7 +230,7 @@ const cancelAddItem = () => {
          </button>
           <router-link to="/sale-items">
             <button
-              class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
+              class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
             >
               Cancel
             </button>

@@ -84,7 +84,7 @@ const cancelDeleteItem = () => {
   <div class="p-4 w-full min-h-screen bg-white">
     <!-- Breadcrumb -->
     <nav class="text-sm text-gray-500 mb-4 max-w-6xl mx-auto">
-      <router-link to="/sale-items"><span class="hover:underline cursor-pointer">Home</span></router-link> ›
+      <router-link to="/sale-items"><span class="itbms-home-button hover:underline cursor-pointer">Home</span></router-link> ›
       <span class="itbms-row text-gray-800 font-medium ml-1">
         {{ product?.model || '-' }} {{ product?.ramGb || '-' }}/{{ product?.storageGb || '-' }}GB {{ product?.color || '-' }}
       </span>
@@ -166,14 +166,14 @@ const cancelDeleteItem = () => {
         </div>
         <div class="flex gap-2 mt-3">
         <button
-        @click="router.push(`/sale-items/edit/${product.id}`)"
-        class="bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500"
+        @click="router.push(`/sale-items/${product.id}/edit`)"
+        class="itbms-edit-button bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500"
         >
           Edit
         </button>
         <button
         @click="deleteproduct"
-        class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
+        class="itbms-delete-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
         >
           Delete
         </button>
@@ -189,8 +189,8 @@ const cancelDeleteItem = () => {
       <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
       <p class="mb-4">Do you want to delete this product?</p>
       <div class="flex justify-center gap-4">
-        <button @click="confirmDelete" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
-        <button @click="cancelDeleteItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
+        <button @click="confirmDelete" class="itms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
+        <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
       </div>
     </div>
   </div>
