@@ -4,7 +4,6 @@ import intregrated.backend.dtos.NewSaleItemDto;
 import intregrated.backend.dtos.NewSaleItemResponseDto;
 import intregrated.backend.dtos.SaleItemBaseByIdDto;
 import intregrated.backend.dtos.SaleItemBaseDto;
-
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.services.SaleItemBaseService;
 import intregrated.backend.utils.ListMapper;

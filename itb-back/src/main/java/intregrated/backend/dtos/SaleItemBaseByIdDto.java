@@ -15,14 +15,7 @@ import java.time.Instant;
 public class SaleItemBaseByIdDto {
     private Integer id;
     private String model;
-    @JsonIgnore
-    private String name;
-
-    @JsonProperty("brandName")
-    public String getBrandName() {
-        return name;
-    }
-
+    private String brandName;
     private String description;
     private Integer price;
     private Integer ramGb;

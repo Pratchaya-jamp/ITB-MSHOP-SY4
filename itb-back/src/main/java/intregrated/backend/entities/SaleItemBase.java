@@ -16,6 +16,7 @@ import java.time.Instant;
 @Table(name = "sale_item_base")
 public class SaleItemBase {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -23,13 +24,9 @@ public class SaleItemBase {
     @JoinColumn(name = "brand_id")
     private BrandBase brand;
 
-    public String getBrandName() {
-        return brand != null ? brand.getName() : null;
-    }
-
-    @Size(max = 60)
+    @Size(max = 100)
     @NotNull
-    @Column(name = "model", nullable = false, length = 60)
+    @Column(name = "model", nullable = false, length = 100)
     private String model;
 
     @Size(max = 200)
@@ -50,8 +47,8 @@ public class SaleItemBase {
     @Column(name = "storageGb")
     private Integer storageGb;
 
-    @Size(max = 15)
-    @Column(name = "color", length = 15)
+    @Size(max = 50)
+    @Column(name = "color", length = 50)
     private String color;
 
     @NotNull
@@ -68,4 +65,5 @@ public class SaleItemBase {
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updatedOn", nullable = false)
     private Instant updatedOn;
+
 }
