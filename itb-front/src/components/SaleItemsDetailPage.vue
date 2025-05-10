@@ -202,9 +202,9 @@ const cancelDeleteItem = () => {
     v-if="showDeleteConfirmationPopup"
     class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
-      <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
-      <p class="mb-4">Do you want to delete this sale item?</p>
+    <div class="itbms-message bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="itbms-message text-xl font-semibold mb-4">Confirm delete the product</h2>
+      <p class="itbms-message mb-4">Do you want to delete this sale item?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmDelete" class="itms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
         <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
@@ -225,13 +225,13 @@ const cancelDeleteItem = () => {
   </div>
 </transition>
 <transition name="fade-background">
-      <div v-if="isDeleting" class="fixed top-0 left-0 w-full h-full bg-black flex items-center justify-center z-50 loading-overlay">
-        <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
+      <div v-if="isDeleting" class="itbms-message fixed top-0 left-0 w-full h-full bg-black flex items-center justify-center z-50 loading-overlay">
+        <div class="itbms-message bg-white text-black p-6 rounded-lg shadow-lg text-center">
           <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
           </svg>
-          <p class="text-sm font-medium">Deleting product...</p>
+          <p class="itbms-message text-sm font-medium">Deleting product...</p>
         </div>
       </div>
     </transition>
@@ -240,9 +240,9 @@ const cancelDeleteItem = () => {
     v-if="showEditSuccessPopup"
     class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="text-xl font-semibold mb-4">Success!</h2>
-      <p class="mb-4">The sale item has been successfully updated!</p>
+    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="itbms-message text-xl font-semibold mb-4">Success!</h2>
+      <p class="itbms-message mb-4">The sale item has been successfully updated!</p>
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
   </div>
