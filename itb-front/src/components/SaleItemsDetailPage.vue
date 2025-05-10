@@ -167,13 +167,13 @@ const cancelDeleteItem = () => {
         <div class="flex gap-2 mt-3">
         <button
         @click="router.push(`/sale-items/edit/${product.id}`)"
-        class="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-2 py-1 rounded"
+        class="bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500"
         >
           Edit
         </button>
         <button
         @click="deleteproduct"
-        class="bg-red-500 hover:bg-red-600 text-white text-sm px-2 py-1 rounded"
+        class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
         >
           Delete
         </button>
