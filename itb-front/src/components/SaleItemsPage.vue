@@ -103,9 +103,9 @@ const filteredAndSortedItems = computed(() => {
 
 const closeSuccessPopup = () => {
   showAddSuccessPopup.value = false
-  showEditSuccessPopup.value = false
+  //showEditSuccessPopup.value = false
   showDeleteSuccessPopup.value = false
-showfallPopup.value =false
+  showfallPopup.value =false
 }
 </script>
 
