@@ -10,8 +10,11 @@ const searchQuery = ref('')
 const filterBy = ref('')
 const route = useRoute()
 const showAddSuccessPopup = ref(false)
-//const showEditSuccessPopup = ref(false)
+const showEditSuccessPopup = ref(false)
 const showDeleteSuccessPopup = ref(false)
+const showfallPopup = ref(false)
+
+console.log('Query:', route.query.addSuccess)
 
 const goTophoneDetails = (id) => {
   router.push(`/sale-items/${id}`)
@@ -39,18 +42,18 @@ watch(
   { immediate: true }
 )
 
-// watch(
-//   () => route.query.editSuccess,
-//   (editSuccess) => {
-//     if (editSuccess === 'true') {
-//       setTimeout(() => {
-// 	    showEditSuccessPopup.value = true
-//       }, 200)
-//       router.replace({ path: route.path, query: {} })
-//     }
-//   },
-//   { immediate: true }
-// )
+watch(
+  () => route.query.editSuccess,
+  (editSuccess) => {
+    if (editSuccess === 'true') {
+      setTimeout(() => {
+	    showEditSuccessPopup.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
 
 watch(
   () => route.query.deleteSuccess,
@@ -58,6 +61,19 @@ watch(
     if (deleteSuccess === 'true') {
       setTimeout(() => {
 	    showDeleteSuccessPopup.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => route.query.addFail,
+  (addFail) => {
+    if (addFail === 'true') {
+      setTimeout(() => {
+	    showfallPopup.value = true
       }, 200)
       router.replace({ path: route.path, query: {} })
     }
@@ -89,6 +105,7 @@ const closeSuccessPopup = () => {
   showAddSuccessPopup.value = false
   showEditSuccessPopup.value = false
   showDeleteSuccessPopup.value = false
+showfallPopup.value =false
 }
 </script>
 
@@ -155,14 +172,14 @@ const closeSuccessPopup = () => {
     v-if="showAddSuccessPopup"
     class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-message text-xl font-semibold mb-4">Success!</h2>
-      <p class="itbms-message mb-4">The sale item has been successfully added!</p>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Success!</h2>
+      <p class="mb-4">The sale item has been successfully added!</p>
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
   </div>
 </transition>
-<!-- <transition name="bounce-popup">
+<transition name="bounce-popup">
   <div
     v-if="showEditSuccessPopup"
     class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
@@ -173,21 +190,33 @@ const closeSuccessPopup = () => {
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
   </div>
-</transition> -->
+</transition>
 
 <transition name="bounce-popup">
   <div
     v-if="showDeleteSuccessPopup"
     class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-message text-xl font-semibold mb-4">Success!</h2>
-      <p class="itbms-message mb-4">The sale item has been successfully deleted!</p>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Success!</h2>
+      <p class="mb-4">The sale item has been successfully deleted!</p>
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
   </div>
 </transition>
   
+<transition name="bounce-popup">
+  <div
+    v-if="showfallPopup"
+    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="itbms-message text-xl font-semibold mb-4">Error 500!</h2>
+      <p class="itbms-message mb-4">The sale item has been Fall added!</p>
+      <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
+    </div>
+  </div>
+</transition>
   
   <Footer />
 </template>

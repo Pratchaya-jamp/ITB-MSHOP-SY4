@@ -24,6 +24,7 @@ const imageList = ref(['/phone/iPhone.jpg', '/phone/iPhone2.jpg','/phone/iPhone3
 const mainImage = ref('/phone/iPhone.jpg')
 const responseMessage = ref('')
 const originalProduct = ref(null)
+const addnewitemMessage = ref('New Sale ltem')
 
 // State สำหรับควบคุมการแสดง Pop-up
 const showConfirmationAddPopup = ref(false)
@@ -149,28 +150,64 @@ const confirmAddItem = async () => {
     quantity: parseInt(product.value.quantity),
     color: product.value.color.trim() || null,
   }
-
+if (isEditMode.value) {
   try {
-    if (isEditMode.value) {
-      await editItem('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id, newProduct)
-      setTimeout(() => {
-      isLoading.value = false
-      router.push({ path: `/sale-items/${id}`, query: { editSuccess: 'true' } })
-    }, 1000)
-    }else {
-    await addItem('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', newProduct)
-    setTimeout(() => {
-      isLoading.value = false
-      router.push({ path: '/sale-items', query: { addSuccess: 'true' } })
-    }, 1000)
+    const result = await editItem(
+      'http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items',
+      id,
+      newProduct
+    );
+
+    if (!result || result.status === 'error' || !result.id) {
+      throw new Error('Edit failed or invalid data returned');
     }
-    } catch (err) {
-    console.error(err)
-    responseMessage.value = 'เกิดข้อผิดพลาดในการเพิ่มสินค้า'
-    isLoading.value = false
+
+    setTimeout(() => {
+      isLoading.value = false;
+      router.push({
+        path: `/sale-items/${id}`,
+        query: { editSuccess: 'true' },
+      });
+    }, 1000);
+  } catch (err) {
+    console.error(err);
+    responseMessage.value = 'เกิดข้อผิดพลาดในการแก้ไขสินค้า';
+    isLoading.value = false;
+    router.push({
+      path: `/sale-items/${id}`,
+      query: { editFail: 'true' },
+    });
+  }
+} else {
+  try {
+    const result = await addItem(
+      'http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items',
+      newProduct
+    );
+
+    if (!result || result.status === 'error' || !result.id) {
+      throw new Error('Add failed or invalid data returned');
+    }
+
+    setTimeout(() => {
+      isLoading.value = false;
+      router.push({
+        path: '/sale-items',
+        query: { addSuccess: 'true' },
+      });
+    }, 1000);
+  } catch (err) {
+    console.error(err);
+    responseMessage.value = 'เกิดข้อผิดพลาดในการเพิ่มสินค้า';
+    isLoading.value = false;
+    router.push({
+      path: '/sale-items',
+      query: { addFail: 'true' },
+    });
   }
 }
 
+}
 const cancelAddItem = () => {
   showConfirmationAddPopup.value = false // ปิด Pop-up ยืนยัน
   showConfirmationEditPopup.value = false
@@ -187,7 +224,7 @@ const cancelAddItem = () => {
       </router-link>
     </span>
     <span v-else class="itbms-row text-gray-800 font-medium ml-1">
-      {{ product?.model || '-' }} {{ product?.ramGb || '-' }}/{{ product?.storageGb || '-' }}GB {{ product?.color || '-' }}
+      {{ addnewitemMessage }}
     </span>
     </nav>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-lg shadow max-w-6xl mx-auto">
@@ -295,9 +332,9 @@ const cancelAddItem = () => {
     v-if="showConfirmationEditPopup"
     class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-message bg-white text-black  rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-message text-xl font-semibold mb-4">Confirm editing the product</h2>
-      <p class="itbms-message mb-4">Do you want to save changes to this product?</p>
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm editing the product</h2>
+      <p class="mb-4">Do you want to save changes to this product?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
         <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
@@ -307,13 +344,13 @@ const cancelAddItem = () => {
 </transition>
 
 <transition name="fade-background">
-      <div v-if="isLoading" class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="itbms-message bg-white text-black p-6 rounded-lg shadow-lg text-center">
+      <div v-if="isLoading" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
           <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
           </svg>
-          <p class="itbms-message text-sm font-medium">Saving product...</p>
+          <p class="text-sm font-medium">Saving product...</p>
         </div>
       </div>
     </transition>
@@ -322,10 +359,10 @@ const cancelAddItem = () => {
     v-if="showNotFoundPopup"
     class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50"
   >
-    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
-      <h2 class="itbms-message text-xl font-semibold mb-4">⚠️ Item not found.</h2>
-      <p class="itbms-message mb-2">The requested sale item does not exist.</p>
-      <p class="itbms-message text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
+      <h2 class="text-xl font-semibold mb-4">⚠️ Item not found.</h2>
+      <p class="mb-2">The requested sale item does not exist.</p>
+      <p class="text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
     </div>
   </div>
 </transition>
