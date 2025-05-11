@@ -313,11 +313,11 @@ const cancelAddItem = () => {
     <transition name="bounce-popup">
   <div
     v-if="showConfirmationAddPopup"
-    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
-      <h2 class="text-xl font-semibold mb-4">Confirm adding the product</h2>
-      <p class="mb-4">Do you want to add this product?</p>
+    <div class="itbms-message bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="itbms-message text-xl font-semibold mb-4">Confirm adding the product</h2>
+      <p class="itbms-message mb-4">Do you want to add this product?</p>
       <div class="flex justify-center gap-4">
           <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
          <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>  
@@ -330,11 +330,11 @@ const cancelAddItem = () => {
 <transition name="bounce-popup">
   <div
     v-if="showConfirmationEditPopup"
-    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
-      <h2 class="text-xl font-semibold mb-4">Confirm editing the product</h2>
-      <p class="mb-4">Do you want to save changes to this product?</p>
+    <div class="itbms-message bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="itbms-message text-xl font-semibold mb-4">Confirm editing the product</h2>
+      <p class="itbms-message mb-4">Do you want to save changes to this product?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
         <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
@@ -345,24 +345,24 @@ const cancelAddItem = () => {
 
 <transition name="fade-background">
       <div v-if="isLoading" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
+        <div class="itbms-message bg-white text-black p-6 rounded-lg shadow-lg text-center">
           <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
           </svg>
-          <p class="text-sm font-medium">Saving product...</p>
+          <p class="itbms-message text-sm font-medium">Saving product...</p>
         </div>
       </div>
     </transition>
     <transition name="bounce-popup">
   <div
     v-if="showNotFoundPopup"
-    class="itbms-message fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50"
+    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50"
   >
-    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
-      <h2 class="text-xl font-semibold mb-4">⚠️ Item not found.</h2>
-      <p class="mb-2">The requested sale item does not exist.</p>
-      <p class="text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
+    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
+      <h2 class="itbms-message text-xl font-semibold mb-4">⚠️ Item not found.</h2>
+      <p class="itbms-message mb-2">The requested sale item does not exist.</p>
+      <p class="itbms-message text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
     </div>
   </div>
 </transition>
