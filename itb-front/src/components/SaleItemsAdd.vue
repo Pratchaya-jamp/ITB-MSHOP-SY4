@@ -252,7 +252,7 @@ const cancelAddItem = () => {
           <!-- <label class="text-left font-medium">Product ID:</label> -->
           <!-- <input v-model="product.id" type="number" class="border p-2 rounded w-full" /> -->
           
-          <label class="itbms-brand text-left font-medium">Brand:</label>
+          <label class="text-left font-medium">Brand:</label>
           <select v-if="brandList.length > 0" v-model="product.brandName" class="itbms-brand border p-2 rounded w-full">
           <option value="" disabled selected> Select Brand</option>
           <option v-for="brand in brandList" :key="brand.id" :value="brand.brandName">
@@ -261,29 +261,29 @@ const cancelAddItem = () => {
           </select>
           <div v-else class="itbms-brand border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div>
 
-          <label class="itbms-model text-left font-medium">Model:</label>
-          <input v-model="product.model" type="text" class="itbms-model border p-2 rounded w-full" />
+          <label class="text-left font-medium">Model:</label>
+          <input v-model="product.model" type="text" class="itbms-model border p-2 rounded w-full" maxlength="60" />
 
-          <label class="itbms-price text-left font-medium">Price (Baht):</label>
+          <label class="text-left font-medium">Price (Baht):</label>
           <input v-model="product.price" type="number" class="itbms-price border p-2 rounded w-full" />
 
-          <label class="itbms-ramGb text-left font-medium">Ram (GB):</label>
+          <label class="text-left font-medium">Ram (GB):</label>
           <input v-model="product.ramGb" type="number" class="itbms-ramGb border p-2 rounded w-full" />
 
-          <label class="itbms-screenSizeInch text-left font-medium">Screen Size (in):</label>
+          <label class="text-left font-medium">Screen Size (in):</label>
           <input v-model="product.screenSizeInch" type="number" class="itbms-screenSizeInch border p-2 rounded w-full" />
 
-          <label class="itbms-storageGb text-left font-medium">Storage (GB):</label>
+          <label class="text-left font-medium">Storage (GB):</label>
           <input v-model="product.storageGb" type="number" class="itbms-storageGb border p-2 rounded w-full" />
 
-          <label class="itbms-color text-left font-medium">Color:</label>
+          <label class="text-left font-medium">Color:</label>
           <input v-model="product.color" type="text" class="itbms-color border p-2 rounded w-full" />
 
-          <label class="itbms-quantity text-left font-medium">Quantity:</label>
+          <label class="text-left font-medium">Quantity:</label>
           <input v-model="product.quantity" type="number" class="itbms-quantity border p-2 rounded w-full" />
         </div>
 
-        <label class="itbms-description block font-medium mt-4">Description:</label>
+        <label class="block font-medium mt-4">Description:</label>
         <textarea v-model="product.description" rows="3" class="itbms-description border p-2 rounded w-full"></textarea>
 
         <div class="flex gap-2 mt-4 justify-end">
@@ -294,7 +294,7 @@ const cancelAddItem = () => {
              'itbms-save-button rounded-md px-4 py-2 transition-colors duration-300',
              isFormTouched && isValid() && (!isEditMode || isModified)
              ? 'bg-green-500 text-white border-2 border-green-500 cursor-pointer hover:bg-transparent hover:text-green-500'
-             : 'bg-gray-300 text-gray-500 border-2 border-gray-300 cursor-not-allowed'
+             : 'bg-gray-300 text-gray-500 border-2 border-gray-300'
            ]"
          >
            Save
@@ -315,8 +315,8 @@ const cancelAddItem = () => {
     v-if="showConfirmationAddPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-message bg-white text-black  rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-message text-xl font-semibold mb-4">Confirm adding the product</h2>
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm adding the product</h2>
       <p class="itbms-message mb-4">Do you want to add this product?</p>
       <div class="flex justify-center gap-4">
           <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
@@ -332,8 +332,8 @@ const cancelAddItem = () => {
     v-if="showConfirmationEditPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-message bg-white text-black  rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-message text-xl font-semibold mb-4">Confirm editing the product</h2>
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm editing the product</h2>
       <p class="itbms-message mb-4">Do you want to save changes to this product?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
@@ -345,7 +345,7 @@ const cancelAddItem = () => {
 
 <transition name="fade-background">
       <div v-if="isLoading" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="itbms-message bg-white text-black p-6 rounded-lg shadow-lg text-center">
+        <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
           <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
@@ -359,10 +359,10 @@ const cancelAddItem = () => {
     v-if="showNotFoundPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50"
   >
-    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
-      <h2 class="itbms-message text-xl font-semibold mb-4">⚠️ Item not found.</h2>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
+      <h2 class="text-xl font-semibold mb-4">⚠️ Item not found.</h2>
       <p class="itbms-message mb-2">The requested sale item does not exist.</p>
-      <p class="itbms-message text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
+      <p class="text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
     </div>
   </div>
 </transition>

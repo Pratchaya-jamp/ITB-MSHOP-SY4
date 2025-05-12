@@ -13,6 +13,9 @@ const showAddSuccessPopup = ref(false)
 //const showEditSuccessPopup = ref(false)
 const showDeleteSuccessPopup = ref(false)
 const showfallPopup = ref(false)
+const addSaleItemButton = () => {
+  router.push('/sale-items/add')
+}
 
 console.log('Query:', route.query.addSuccess)
 
@@ -106,6 +109,7 @@ const closeSuccessPopup = () => {
   //showEditSuccessPopup.value = false
   showDeleteSuccessPopup.value = false
   showfallPopup.value =false
+  router.replace('/sale-items')
 }
 </script>
 
@@ -134,10 +138,10 @@ const closeSuccessPopup = () => {
         </svg>
       </div>
     </div>
-    <div class="itbms-sale-item-add ml-[8%]">
+    <div class="ml-[8%]">
     <button
-      class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
-      @click="router.push('/sale-items/add')"
+      class="itbms-sale-item-add bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
+      @click="addSaleItemButton"
     >
       + Add Sell Item
     </button>
@@ -172,9 +176,9 @@ const closeSuccessPopup = () => {
     v-if="showAddSuccessPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-messag text-xl font-semibold mb-4">Success!</h2>
-      <p class="itbms-messag mb-4">The sale item has been successfully added!</p>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Success!</h2>
+      <p class="itbms-message mb-4">The sale item has been successfully added!</p>
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
   </div>
@@ -184,9 +188,9 @@ const closeSuccessPopup = () => {
     v-if="showEditSuccessPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-messag bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-messag text-xl font-semibold mb-4">Success!</h2>
-      <p class="itbms-messag mb-4">The sale item has been successfully updated!</p>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Success!</h2>
+      <p class="itbms-message mb-4">The sale item has been successfully updated!</p>
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
   </div>
@@ -197,9 +201,9 @@ const closeSuccessPopup = () => {
     v-if="showDeleteSuccessPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-messag bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-messag text-xl font-semibold mb-4">Success!</h2>
-      <p class="itbms-messag mb-4">The sale item has been successfully deleted!</p>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Success!</h2>
+      <p class="itbms-message mb-4">The sale item has been successfully deleted!</p>
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
   </div>
@@ -210,9 +214,9 @@ const closeSuccessPopup = () => {
     v-if="showfallPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-messag bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-messag text-xl font-semibold mb-4">Error 500!</h2>
-      <p class="itbms-messag mb-4">The sale item has been Fall added!</p>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Error 500!</h2>
+      <p class="itbms-message mb-4">The sale item has been Fall added!</p>
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
   </div>

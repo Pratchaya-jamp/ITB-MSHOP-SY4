@@ -159,7 +159,7 @@ const cancelDeleteItem = () => {
         </div>
         <div class="itbms-model">
           <strong>Model: </strong>
-          <span :class="{ 'text-gray-400': !product?.model }">{{ product?.model || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product?.model }" :maxlength="60">{{ product?.model || '-' }}</span>
         </div>
         <div class="itbms-price">
           <strong>Price: </strong>
@@ -225,8 +225,8 @@ const cancelDeleteItem = () => {
     v-if="showDeleteConfirmationPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-message bg-white text-black  rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-message text-xl font-semibold mb-4">Confirm delete the product</h2>
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
       <p class="itbms-message mb-4">Do you want to delete this sale item?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmDelete" class="itms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
@@ -242,13 +242,13 @@ const cancelDeleteItem = () => {
   >
     <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
       <h2 class="text-xl font-semibold mb-4">⚠️ Item not found.</h2>
-      <p class="mb-2">The requested sale item does not exist.</p>
+      <p class="itbms-message mb-2">The requested sale item does not exist.</p>
       <p class="text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
     </div>
   </div>
 </transition>
 <transition name="fade-background">
-      <div v-if="isDeleting" class="itbms-message fixed top-0 left-0 w-full h-full bg-black flex items-center justify-center z-50 loading-overlay">
+      <div v-if="isDeleting" class="fixed top-0 left-0 w-full h-full bg-black flex items-center justify-center z-50 loading-overlay">
         <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
           <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -263,8 +263,8 @@ const cancelDeleteItem = () => {
     v-if="showEditSuccessPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-message ext-xl font-semibold mb-4">Success!</h2>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="ext-xl font-semibold mb-4">Success!</h2>
       <p class="itbms-message mb-4">The sale item has been successfully updated!</p>
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
@@ -276,8 +276,8 @@ const cancelDeleteItem = () => {
     v-if="showEditFallPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="itbms-message bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="itbms-message text-xl font-semibold mb-4">Error 500!</h2>
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Error 500!</h2>
       <p class="itbms-message mb-4">The sale item has been fail to updated!</p>
       <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
     </div>
