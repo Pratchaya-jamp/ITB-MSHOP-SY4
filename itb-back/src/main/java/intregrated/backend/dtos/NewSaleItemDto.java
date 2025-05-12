@@ -1,5 +1,6 @@
 package intregrated.backend.dtos;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +13,7 @@ public class NewSaleItemDto {
     @NotNull
     private BrandBaseDto brand;
     @NotNull
+    @NotBlank
     private String description;
     @NotNull
     private Integer price;

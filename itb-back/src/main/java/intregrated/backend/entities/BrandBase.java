@@ -22,7 +22,6 @@ public class BrandBase {
     private Integer id;
 
     @Size(max = 30)
-    @NotNull
     @Column(name = "name", nullable = false, length = 30)
     private String name;
 

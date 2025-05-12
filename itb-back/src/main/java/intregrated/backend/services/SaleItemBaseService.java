@@ -2,12 +2,10 @@ package intregrated.backend.services;
 
 import intregrated.backend.dtos.NewSaleItemDto;
 import intregrated.backend.dtos.NewSaleItemResponseDto;
-import intregrated.backend.dtos.SaleItemBaseDto;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.repositories.BrandBaseRepo;
 import intregrated.backend.repositories.SaleItemBaseRepo;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -37,31 +35,119 @@ public class SaleItemBaseService {
         );
     }
 
-    public NewSaleItemResponseDto createSaleItem(@Valid NewSaleItemDto newSaleItem) {
-        BrandBase brand = brandBaseRepo.findByNameIgnoreCase(newSaleItem.getBrand().getBrandName())
-                .orElseGet(() -> {
-                    BrandBase newBrand = new BrandBase();
-                    newBrand.setName(newSaleItem.getBrand().getBrandName());
-                    newBrand.setIsActive(true);
-                    newBrand.setCreatedOn(Instant.now());
-                    newBrand.setUpdatedOn(Instant.now());
-                    return brandBaseRepo.saveAndFlush(newBrand);
-                });
+    public NewSaleItemResponseDto createSaleItem(NewSaleItemDto newSaleItem) {
+        BrandBase brand;
+
+        if (newSaleItem.getBrand().getId() != null) {
+            brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
+        }
+
+        else if (newSaleItem.getBrand().getBrandName() != null && !newSaleItem.getBrand().getBrandName().trim().isEmpty()) {
+            String trimmedBrandName = newSaleItem.getBrand().getBrandName().trim();
+            brand = brandBaseRepo.findByNameIgnoreCase(trimmedBrandName)
+                    .orElseGet(() -> {
+                        BrandBase newBrand = new BrandBase();
+                        newBrand.setName(trimmedBrandName);
+                        newBrand.setIsActive(true);
+                        newBrand.setCreatedOn(Instant.now());
+                        newBrand.setUpdatedOn(Instant.now());
+                        return brandBaseRepo.saveAndFlush(newBrand);
+                    });
+        }
+        else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand must contain either ID or name.");
+        }
 
         SaleItemBase saleItem = new SaleItemBase();
         saleItem.setModel(newSaleItem.getModel().trim());
         saleItem.setDescription(newSaleItem.getDescription().trim());
         saleItem.setPrice(newSaleItem.getPrice());
-        saleItem.setRamGb(newSaleItem.getRamGb() != null ? newSaleItem.getRamGb() : null);
+        saleItem.setRamGb(newSaleItem.getRamGb());
         saleItem.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch()) : null);
-        saleItem.setQuantity(newSaleItem.getQuantity() != null ? newSaleItem.getQuantity() : 1);
+        if (newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0) {
+            saleItem.setQuantity(1);
+        } else {
+            saleItem.setQuantity(newSaleItem.getQuantity());
+        }
         saleItem.setStorageGb(newSaleItem.getStorageGb() != null ? newSaleItem.getStorageGb() : null);
-        saleItem.setColor(newSaleItem.getColor() != null ? newSaleItem.getColor().trim() : null);
+        if (newSaleItem.getColor() == null || newSaleItem.getColor().trim().isEmpty()) {
+            saleItem.setColor(null);
+        } else {
+            saleItem.setColor(newSaleItem.getColor().trim());
+        }
         saleItem.setCreatedOn(Instant.now());
         saleItem.setUpdatedOn(Instant.now());
         saleItem.setBrand(brand);
 
         SaleItemBase saved = saleItemBaseRepo.saveAndFlush(saleItem);
+
+        return NewSaleItemResponseDto.builder()
+                .id(saved.getId())
+                .model(saved.getModel())
+                .brandName(saved.getBrand().getName())
+                .description(saved.getDescription())
+                .price(saved.getPrice())
+                .ramGb(saved.getRamGb())
+                .screenSizeInch(saved.getScreenSizeInch() != null ? saved.getScreenSizeInch().doubleValue() : null)
+                .quantity(saved.getQuantity())
+                .storageGb(saved.getStorageGb())
+                .color(saved.getColor())
+                .createdOn(saved.getCreatedOn())
+                .updatedOn(saved.getUpdatedOn())
+                .build();
+    }
+
+    public NewSaleItemResponseDto editSaleItem(Integer id, NewSaleItemDto newSaleItem) {
+        SaleItemBase existing = saleItemBaseRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "SaleItem with id " + id + " not found"
+                ));
+
+        existing.setModel(newSaleItem.getModel().trim());
+        existing.setDescription(newSaleItem.getDescription().trim());
+        existing.setPrice(newSaleItem.getPrice());
+        existing.setRamGb(newSaleItem.getRamGb() != null ? newSaleItem.getRamGb() : null);
+        existing.setStorageGb(newSaleItem.getStorageGb() != null ? newSaleItem.getStorageGb() : null);
+        existing.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch()) : null);
+        if (newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0) {
+            existing.setQuantity(1);
+        } else {
+            existing.setQuantity(newSaleItem.getQuantity());
+        }
+        if (newSaleItem.getColor() == null || newSaleItem.getColor().trim().isEmpty()) {
+            existing.setColor(null);
+        } else {
+            existing.setColor(newSaleItem.getColor().trim());
+        }
+        existing.setUpdatedOn(Instant.now());
+
+        if (newSaleItem.getBrand() != null) {
+            if (newSaleItem.getBrand().getId() != null) {
+                // Find brand by ID
+                BrandBase brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
+                existing.setBrand(brand);
+            } else if (newSaleItem.getBrand().getBrandName() != null && !newSaleItem.getBrand().getBrandName().trim().isEmpty()) {
+                // Find or create brand by name
+                String trimmedBrandName = newSaleItem.getBrand().getBrandName().trim();
+                BrandBase brand = brandBaseRepo.findByNameIgnoreCase(trimmedBrandName)
+                        .orElseGet(() -> {
+                            BrandBase newBrand = new BrandBase();
+                            newBrand.setName(trimmedBrandName);
+                            newBrand.setIsActive(true);
+                            newBrand.setCreatedOn(Instant.now());
+                            newBrand.setUpdatedOn(Instant.now());
+                            return brandBaseRepo.saveAndFlush(newBrand);
+                        });
+                existing.setBrand(brand);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand must contain either ID or name.");
+            }
+        }
+
+        SaleItemBase saved = saleItemBaseRepo.saveAndFlush(existing);
 
         return NewSaleItemResponseDto.builder()
                 .id(saved.getId())
@@ -87,54 +173,6 @@ public class SaleItemBaseService {
             );
         }
         saleItemBaseRepo.deleteById(id);
-    }
-
-    public NewSaleItemResponseDto editSaleItem(Integer id, @Valid NewSaleItemDto newSaleItem) {
-        SaleItemBase existing = saleItemBaseRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "SaleItem with id " + id + " not found"
-                ));
-
-        existing.setModel(newSaleItem.getModel().trim());
-        existing.setDescription(newSaleItem.getDescription().trim());
-        existing.setPrice(newSaleItem.getPrice());
-        existing.setRamGb(newSaleItem.getRamGb() != null ? newSaleItem.getRamGb() : null);
-        existing.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch()) : null);
-        existing.setQuantity(newSaleItem.getQuantity() != null ? newSaleItem.getQuantity() : 1);
-        existing.setStorageGb(newSaleItem.getStorageGb() != null ? newSaleItem.getStorageGb() : null);
-        existing.setColor(newSaleItem.getColor() != null ? newSaleItem.getColor().trim() : null);
-        existing.setUpdatedOn(Instant.now());
-
-        if (newSaleItem.getBrand() != null && newSaleItem.getBrand().getBrandName() != null) {
-            BrandBase brand = brandBaseRepo.findByNameIgnoreCase(newSaleItem.getBrand().getBrandName())
-                    .orElseGet(() -> {
-                        BrandBase newBrand = new BrandBase();
-                        newBrand.setName(newSaleItem.getBrand().getBrandName());
-                        newBrand.setIsActive(true);
-                        newBrand.setCreatedOn(Instant.now());
-                        newBrand.setUpdatedOn(Instant.now());
-                        return brandBaseRepo.saveAndFlush(newBrand);
-                    });
-            existing.setBrand(brand);
-        }
-
-        SaleItemBase saved = saleItemBaseRepo.saveAndFlush(existing);
-
-        return NewSaleItemResponseDto.builder()
-                .id(saved.getId())
-                .model(saved.getModel().trim())
-                .brandName(saved.getBrand().getName())
-                .description(saved.getDescription().trim())
-                .price(saved.getPrice())
-                .ramGb(saved.getRamGb())
-                .screenSizeInch(saved.getScreenSizeInch() != null ? saved.getScreenSizeInch().doubleValue() : null)
-                .quantity(saved.getQuantity())
-                .storageGb(saved.getStorageGb())
-                .color(saved.getColor())
-                .createdOn(saved.getCreatedOn())
-                .updatedOn(saved.getUpdatedOn())
-                .build();
     }
 }
 
