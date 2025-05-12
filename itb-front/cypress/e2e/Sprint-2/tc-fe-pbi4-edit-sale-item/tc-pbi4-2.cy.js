@@ -124,7 +124,7 @@ describe(`TC-FE-PBI4-ADD-SALE-ITEM-2\n
         cy.get('@save').click({force:true})
         cy.wait(100)
 
-        cy.get('.itbms-message').contains('The sale item has been updated.').should('exist')
+        cy.get('.itbms-message').contains('The sale item has been successfully updated!').should('exist')
         cy.url().should('include', '/sale-items')
         cy.get('.itbms-model').contains('Galaxy S25 Ultra (2025)')
         cy.get('.itbms-price').contains('46,900')

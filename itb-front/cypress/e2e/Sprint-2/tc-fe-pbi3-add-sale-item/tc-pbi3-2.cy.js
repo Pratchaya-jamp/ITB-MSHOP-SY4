@@ -109,7 +109,7 @@ describe(`TC-FE-PBI3-ADD-SALE-ITEM-2\n
             expect(response.statusCode).to.equal(201)
         })
 
-        cy.get('.itbms-message').contains('The sale item has been added.')
+        cy.get('.itbms-message').contains('The sale item has been successfully added!')
 
         cy.url().should('contain','/sale-items') ;
     })
