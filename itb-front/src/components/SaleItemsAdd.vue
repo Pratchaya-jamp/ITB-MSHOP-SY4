@@ -103,8 +103,8 @@ const isFormTouched = computed(() => {
 })
 
 const isValid = () => {
-  const { brandName, model, price, description, quantity } = product.value
-  return [brandName, model, price, description, quantity].every(val => String(val).trim() !== '')
+  const { brandName, model, price, description } = product.value
+  return [brandName, model, price, description].every(val => String(val).trim() !== '')
 }
 
 const submitForm = async () => {
@@ -259,7 +259,7 @@ const cancelAddItem = () => {
           {{ brand.brandName }}
           </option>
           </select>
-          <div v-else class="itbms-brand border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div>
+          <div v-else class="border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div>
 
           <label class="text-left font-medium">Model:</label>
           <input v-model="product.model" type="text" class="itbms-model border p-2 rounded w-full" maxlength="60" />
