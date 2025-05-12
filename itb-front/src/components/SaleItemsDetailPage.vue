@@ -229,7 +229,7 @@ const cancelDeleteItem = () => {
       <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
       <p class="itbms-message mb-4">Do you want to delete this sale item?</p>
       <div class="flex justify-center gap-4">
-        <button @click="confirmDelete" class="itms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
+        <button @click="confirmDelete" class="itbms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
         <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
       </div>
     </div>
