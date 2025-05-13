@@ -22,5 +22,6 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     allowedHosts: ['ip24sy4.sit.kmutt.ac.th'],
-  }
+  },
+  base: '/sy4/',
 })
