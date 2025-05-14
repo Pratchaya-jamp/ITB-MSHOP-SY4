@@ -1,7 +1,6 @@
 package intregrated.backend.controllers;
 
 import intregrated.backend.dtos.NewSaleItemDto;
-import intregrated.backend.dtos.NewSaleItemResponseDto;
 import intregrated.backend.dtos.SaleItemBaseByIdDto;
 import intregrated.backend.dtos.SaleItemBaseDto;
 import intregrated.backend.entities.SaleItemBase;
@@ -43,14 +42,14 @@ public class SaleItemBaseController {
     }
 
     @PostMapping("")
-    public ResponseEntity<NewSaleItemResponseDto> createSaleItem(@RequestBody @Valid NewSaleItemDto newSaleItem) {
-        NewSaleItemResponseDto created = saleItemBaseService.createSaleItem(newSaleItem);
+    public ResponseEntity<SaleItemBaseByIdDto> createSaleItem(@RequestBody @Valid NewSaleItemDto newSaleItem) {
+        SaleItemBaseByIdDto created = saleItemBaseService.createSaleItem(newSaleItem);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<NewSaleItemResponseDto> editSaleItem(@PathVariable Integer id, @RequestBody NewSaleItemDto newSaleItem) {
-        NewSaleItemResponseDto editUpdated = saleItemBaseService.editSaleItem(id, newSaleItem);
+    public ResponseEntity<SaleItemBaseByIdDto> editSaleItem(@PathVariable Integer id, @RequestBody NewSaleItemDto newSaleItem) {
+        SaleItemBaseByIdDto editUpdated = saleItemBaseService.editSaleItem(id, newSaleItem);
         return ResponseEntity.ok(editUpdated);
     }
 
