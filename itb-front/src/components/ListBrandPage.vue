@@ -13,7 +13,7 @@ const filterBy = ref('')
 
 onMounted(async () => {
   try {
-    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands')
+    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands')
     items.value = data.sort((a, b) => {
   if (a.brandName < b.brandName) {
     return -1;
@@ -40,6 +40,7 @@ const filteredAndSortedItems = computed(() => {
 
   return result
 })
+
 </script>
 
 <template>
@@ -78,7 +79,7 @@ const filteredAndSortedItems = computed(() => {
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
         >
           <img
-            :src="`/brands/${item.id}.png`"
+            :src="`brands/${item.id}.png`"
             alt="brand"
             class="w-full h-40 object-contain mb-4"
           />

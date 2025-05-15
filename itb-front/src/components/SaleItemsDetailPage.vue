@@ -10,8 +10,8 @@ const router = useRouter()
 const product = ref(null)
 const id = route.params.id
 
-const imageList = ref(['/phone/iPhone.jpg','/phone/iPhone2.jpg','/phone/iPhone3.jpg','/phone/iPhone4.jpg'])
-const mainImage = ref('/phone/iPhone.jpg')
+const imageList = ref(['/sy4/phone/iPhone.jpg','/sy4/phone/iPhone2.jpg','/sy4/phone/iPhone3.jpg','/sy4/phone/iPhone4.jpg'])
+const mainImage = ref('/sy4/phone/iPhone.jpg')
 const showNotFoundPopup = ref(false)
 const isDeleting = ref(false)
 const showDeleteConfirmationPopup = ref(false)
@@ -36,7 +36,7 @@ showEditFallPopup.value = false
 // ดึงข้อมูลจาก backend
 onMounted(async () => {
   try {
-    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id)
+    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/sale-items', id)
     if (!data || data?.status === 404) {
       showNotFoundPopup.value = true
       startCountdown()
@@ -93,7 +93,7 @@ const confirmDelete = async () => {
   showDeleteConfirmationPopup.value = false
   isDeleting.value = true
   try {
-    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id);
+    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/sale-items', id);
     if (statusCode === 204) {
       setTimeout(() => {
         isDeleting.value = false
