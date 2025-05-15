@@ -1,7 +1,7 @@
 package intregrated.backend.services;
 
 import intregrated.backend.dtos.NewSaleItemDto;
-import intregrated.backend.dtos.NewSaleItemResponseDto;
+import intregrated.backend.dtos.SaleItemBaseByIdDto;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.repositories.BrandBaseRepo;
@@ -35,7 +35,7 @@ public class SaleItemBaseService {
         );
     }
 
-    public NewSaleItemResponseDto createSaleItem(NewSaleItemDto newSaleItem) {
+    public SaleItemBaseByIdDto createSaleItem(NewSaleItemDto newSaleItem) {
         BrandBase brand;
 
         if (newSaleItem.getBrand().getId() != null) {
@@ -82,7 +82,7 @@ public class SaleItemBaseService {
 
         SaleItemBase saved = saleItemBaseRepo.saveAndFlush(saleItem);
 
-        return NewSaleItemResponseDto.builder()
+        return SaleItemBaseByIdDto.builder()
                 .id(saved.getId())
                 .model(saved.getModel())
                 .brandName(saved.getBrand().getName())
@@ -98,7 +98,7 @@ public class SaleItemBaseService {
                 .build();
     }
 
-    public NewSaleItemResponseDto editSaleItem(Integer id, NewSaleItemDto newSaleItem) {
+    public SaleItemBaseByIdDto editSaleItem(Integer id, NewSaleItemDto newSaleItem) {
         SaleItemBase existing = saleItemBaseRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -149,7 +149,7 @@ public class SaleItemBaseService {
 
         SaleItemBase saved = saleItemBaseRepo.saveAndFlush(existing);
 
-        return NewSaleItemResponseDto.builder()
+        return SaleItemBaseByIdDto.builder()
                 .id(saved.getId())
                 .model(saved.getModel().trim())
                 .brandName(saved.getBrand().getName())
