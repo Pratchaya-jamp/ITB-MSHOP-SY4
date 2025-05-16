@@ -8,21 +8,20 @@ const router = useRouter()
 const items = ref([])
 const searchQuery = ref('')
 const filterBy = ref('')
-
-
+const isGridView = ref(true) // เพิ่ม state สำหรับควบคุม View Mode
 
 onMounted(async () => {
   try {
     const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands')
     items.value = data.sort((a, b) => {
-  if (a.brandName < b.brandName) {
-    return -1;
-  }
-  if (a.brandName > b.brandName) {
-    return 1;
-  }
-  return 0;
-});
+      if (a.brandName < b.brandName) {
+        return -1;
+      }
+      if (a.brandName > b.brandName) {
+        return 1;
+      }
+      return 0;
+    });
   } catch (err) {
     console.error('Error loading items:', err)
   }
@@ -44,12 +43,12 @@ const filteredAndSortedItems = computed(() => {
 </script>
 
 <template>
-  <div class="Itbms-sale-items-page bg-white min-h-screen">
+  <div class="Itbms-brands-page bg-white min-h-screen">
     <div class="Itbms-header container mx-auto py-8 flex items-center justify-between">
       <div class="Itbms-logo font-bold text-3xl text-black">ITB MShop</div>
       <div class="flex-grow flex justify-center">
         <div class="Itbms-search-bar flex items-center rounded-md border border-gray-300 focus-within:border-blue-500 w-full max-w-md">
-          <input type="text" placeholder="Search..." v-model="searchQuery" class="Itbms-search-input py-2 px-3 w-full focus:outline-none rounded-l-md text-black" />
+          <input type="text" placeholder="Search Brand..." v-model="searchQuery" class="Itbms-search-input py-2 px-3 w-full focus:outline-none rounded-l-md text-black" />
           <button class="Itbms-search-button bg-gray-100 hover:bg-gray-200 p-2 rounded-r-md focus:outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-6a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -57,21 +56,38 @@ const filteredAndSortedItems = computed(() => {
           </button>
         </div>
       </div>
-      <div class="Itbms-icons flex items-center space-x-4">
-        <!-- Icons -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-black cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" class="h-8 w-8 text-black cursor-pointer" viewBox="0 0 128 128">
-          <g><path d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z"/>
-          </g>
-        </svg>
+      <div class="Itbms-icons flex flex-col items-end space-y-2">
+        <div class="flex items-center space-x-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-black cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" class="h-8 w-8 text-black cursor-pointer" viewBox="0 0 128 128">
+            <g><path d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z"/></g>
+          </svg>
+        </div>
+        <div class="bg-gray-200 text-sm text-gray-500 leading-none border-2 border-gray-200 rounded-full inline-flex">
+          <button
+            :class="['inline-flex items-center transition-colors duration-300 ease-in focus:outline-none hover:text-gray-900 focus:text-gray-900 rounded-l-full px-4 py-2', { 'active': isGridView }]"
+            id="grid"
+            @click="isGridView = true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="fill-current w-4 h-4 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Grid</span>
+          </button>
+          <button
+            :class="['inline-flex items-center transition-colors duration-300 ease-in focus:outline-none hover:text-gray-900 focus:text-gray-900 rounded-r-full px-4 py-2', { 'active': !isGridView }]"
+            id="list"
+            @click="isGridView = false"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="fill-current w-4 h-4 mr-2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            <span>List</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="p-6">
+    <div class="p-6" v-if="isGridView">
       <div v-if="items.length === 0" class="text-gray-500 text-center">No brand found.</div>
-
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         <div
           v-for="item in filteredAndSortedItems"
@@ -83,9 +99,27 @@ const filteredAndSortedItems = computed(() => {
             alt="brand"
             class="w-full h-40 object-contain mb-4"
           />
-          <div class="itbms-brand font-semibold">{{ item.brandName }}</div>
+          <div class="itbms-brand font-semibold text-center">{{ item.brandName }}</div>
         </div>
       </div>
+    </div>
+
+    <div class="p-6" v-else>
+      <div v-if="items.length === 0" class="text-gray-500 text-center">No brand found.</div>
+      <ul v-else class="space-y-4">
+        <li
+          v-for="item in filteredAndSortedItems"
+          :key="item.id"
+          class="itbms-list-item border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer flex items-center transition duration-300"
+        >
+          <img
+            :src="`brands/${item.id}.png`"
+            alt="brand"
+            class="w-24 h-24 object-contain mr-4 rounded"
+          />
+          <div class="font-semibold">{{ item.brandName }}</div>
+        </li>
+      </ul>
     </div>
   </div>
 
@@ -93,6 +127,12 @@ const filteredAndSortedItems = computed(() => {
 </template>
 
 <style scoped>
+.active {
+  background: white;
+  border-radius: 9999px;
+  color: #1D232A;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -105,6 +145,36 @@ const filteredAndSortedItems = computed(() => {
 }
 
 .itbms-row {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Style for the list view item */
+.itbms-list-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); 
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+}
+
+.itbms-list-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+}
+
+.itbms-list-item img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-right: 1rem;
+  border-radius: 0.5rem;
+}
+
+.itbms-list-item {
   opacity: 0;
   animation: fadeInUp 0.5s ease forwards;
 }

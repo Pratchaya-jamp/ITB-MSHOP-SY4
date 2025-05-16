@@ -19,10 +19,16 @@ const addSaleItemButton = () => {
   router.push('/sale-items/add')
 }
 
-console.log('Query:', route.query.addSuccess)
-
-const goTophoneDetails = (id) => {
+const goToPhoneDetails = (id) => {
   router.push(`/sale-items/${id}`)
+}
+
+const goToEditItem = (id) => {
+  router.push(`/sale-items/${id}/edit`)
+}
+
+const deleteItem = async (id) => {
+  router.push({ path: `/sale-items/${id}`, query: { confirmDelete: 'true' } })
 }
 
 onMounted(async () => {
@@ -142,7 +148,7 @@ const closeSuccessPopup = () => {
     </div>
     <div class="ml-[8%] flex items-start justify-between mb-4">
       <button
-        class="itbms-sale-item-add bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
+        class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
         @click="addSaleItemButton"
       >
         + Add Sell Item
@@ -179,7 +185,7 @@ const closeSuccessPopup = () => {
           :key="item.id"
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
           :style="{ animationDelay: (index * 50) + 'ms' }"
-          @click="goTophoneDetails(item.id)"
+          @click="goToPhoneDetails(item.id)"
         >
           <img
             :src="'phone/iPhone.jpg'"
@@ -200,19 +206,34 @@ const closeSuccessPopup = () => {
         <li
           v-for="item in filteredAndSortedItems"
           :key="item.id"
-          class="itbms-list-item border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer flex items-center transition duration-300"
-          @click="goTophoneDetails(item.id)"
+          class="itbms-list-item border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer flex items-center justify-between transition duration-300"
         >
-          <img
-            :src="'phone/iPhone.jpg'"
-            alt="phone"
-            class="w-24 h-24 object-contain mr-4 rounded"
-          />
-          <div class="flex-grow">
-            <div class="font-semibold">{{ item.brandName }} {{ item.model }}</div>
-            <div class="text-sm text-gray-600">{{ item.ramGb || '-' }}GB / {{ item.storageGb || '-' }}GB</div>
+          <div class="flex items-center" @click="goToPhoneDetails(item.id)" style="flex-grow: 1;">
+            <img
+              :src="'phone/iPhone.jpg'"
+              alt="phone"
+              class="w-24 h-24 object-contain mr-4 rounded"
+            />
+            <div class="flex-grow">
+              <div class="font-semibold">{{ item.brandName }} {{ item.model }}</div>
+              <div class="text-sm text-gray-600">{{ item.ramGb || '-' }}GB / {{ item.storageGb || '-' }}GB</div>
+            </div>
+            <div class="font-bold text-lg ml-4">{{ item.price.toLocaleString() }} Baht</div>
           </div>
-          <div class="font-bold text-lg">{{ item.price.toLocaleString() }} Baht</div>
+          <div class="flex space-x-2">
+            <button
+              @click.stop="goToEditItem(item.id)"
+              class="bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500 text-sm"
+            >
+              Edit
+            </button>
+            <button
+              @click.stop="deleteItem(item.id)"
+              class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500 text-sm"
+            >
+              Delete
+            </button>
+          </div>
         </li>
       </ul>
     </div>
