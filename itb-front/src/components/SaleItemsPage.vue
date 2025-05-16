@@ -13,6 +13,8 @@ const showAddSuccessPopup = ref(false)
 //const showEditSuccessPopup = ref(false)
 const showDeleteSuccessPopup = ref(false)
 const showfallPopup = ref(false)
+const isGridView = ref(true)
+
 const addSaleItemButton = () => {
   router.push('/sale-items/add')
 }
@@ -37,7 +39,7 @@ watch(
   (addSuccess) => {
     if (addSuccess === 'true') {
       setTimeout (() => {
-	    showAddSuccessPopup.value = true
+      showAddSuccessPopup.value = true
       }, 200)
       router.replace({ path: route.path, query: {} })
     }
@@ -50,7 +52,7 @@ watch(
 //   (editSuccess) => {
 //     if (editSuccess === 'true') {
 //       setTimeout(() => {
-// 	    showEditSuccessPopup.value = true
+//       showEditSuccessPopup.value = true
 //       }, 200)
 //       router.replace({ path: route.path, query: {} })
 //     }
@@ -63,7 +65,7 @@ watch(
   (deleteSuccess) => {
     if (deleteSuccess === 'true') {
       setTimeout(() => {
-	    showDeleteSuccessPopup.value = true
+      showDeleteSuccessPopup.value = true
       }, 200)
       router.replace({ path: route.path, query: {} })
     }
@@ -76,7 +78,7 @@ watch(
   (addFail) => {
     if (addFail === 'true') {
       setTimeout(() => {
-	    showfallPopup.value = true
+      showfallPopup.value = true
       }, 200)
       router.replace({ path: route.path, query: {} })
     }
@@ -108,7 +110,7 @@ const closeSuccessPopup = () => {
   showAddSuccessPopup.value = false
   //showEditSuccessPopup.value = false
   showDeleteSuccessPopup.value = false
-  showfallPopup.value =false
+  showfallPopup.value = false
   router.replace('/sale-items')
 }
 </script>
@@ -127,35 +129,56 @@ const closeSuccessPopup = () => {
           </button>
         </div>
       </div>
-      <div class="Itbms-icons flex items-center space-x-4">
-        <!-- Icons -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-black cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" class="h-8 w-8 text-black cursor-pointer" viewBox="0 0 128 128">
-          <g><path d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z"/>
-          </g>
-        </svg>
+      <div class="Itbms-icons flex flex-col items-end space-y-2">
+        <div class="flex items-center space-x-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-black cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" class="h-8 w-8 text-black cursor-pointer" viewBox="0 0 128 128">
+            <g><path d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z"/></g>
+          </svg>
+        </div>
       </div>
     </div>
-    <div class="ml-[8%]">
-    <button
-      class="itbms-sale-item-add bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
-      @click="addSaleItemButton"
-    >
-      + Add Sell Item
-    </button>
-  </div>
-  <!-- Product list -->
-    <div class="p-6">
-      <div v-if="items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
+    <div class="ml-[8%] flex items-start justify-between mb-4">
+      <button
+        class="itbms-sale-item-add bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
+        @click="addSaleItemButton"
+      >
+        + Add Sell Item
+      </button>
+      <div class="flex flex-col items-end">
+        <div class="mb-2">
+          </div>
+        <div class="bg-gray-200 text-sm text-gray-500 leading-none border-2 border-gray-200 rounded-full inline-flex">
+          <button
+            :class="['inline-flex items-center transition-colors duration-300 ease-in focus:outline-none hover:text-gray-900 focus:text-gray-900 rounded-l-full px-4 py-2', { 'active': isGridView }]"
+            id="grid"
+            @click="isGridView = true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="fill-current w-4 h-4 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Grid</span>
+          </button>
+          <button
+            :class="['inline-flex items-center transition-colors duration-300 ease-in focus:outline-none hover:text-gray-900 focus:text-gray-900 rounded-r-full px-4 py-2', { 'active': !isGridView }]"
+            id="list"
+            @click="isGridView = false"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="fill-current w-4 h-4 mr-2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            <span>List</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
+    <div v-if="isGridView" class="p-6">
+      <div v-if="items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         <div
           v-for="(item, index) in filteredAndSortedItems"
           :key="item.id"
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
-	  :style="{ animationDelay: (index * 50) + 'ms' }"
+          :style="{ animationDelay: (index * 50) + 'ms' }"
           @click="goTophoneDetails(item.id)"
         >
           <img
@@ -170,62 +193,80 @@ const closeSuccessPopup = () => {
         </div>
       </div>
     </div>
-  </div>
-  <transition name="bounce-popup">
-  <div
-    v-if="showAddSuccessPopup"
-    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
-  >
-    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="text-xl font-semibold mb-4">Success!</h2>
-      <p class="itbms-message mb-4">The sale item has been successfully added!</p>
-      <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
-    </div>
-  </div>
-</transition>
-<!-- <transition name="bounce-popup">
-  <div
-    v-if="showEditSuccessPopup"
-    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
-  >
-    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="text-xl font-semibold mb-4">Success!</h2>
-      <p class="itbms-message mb-4">The sale item has been successfully updated!</p>
-      <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
-    </div>
-  </div>
-</transition> -->
 
-<transition name="bounce-popup">
-  <div
-    v-if="showDeleteSuccessPopup"
-    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
-  >
-    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="text-xl font-semibold mb-4">Success!</h2>
-      <p class="itbms-message mb-4">The sale item has been successfully deleted!</p>
-      <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
+    <div v-else class="p-6">
+      <div v-if="items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
+      <ul v-else class="space-y-4">
+        <li
+          v-for="item in filteredAndSortedItems"
+          :key="item.id"
+          class="itbms-list-item border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer flex items-center transition duration-300"
+          @click="goTophoneDetails(item.id)"
+        >
+          <img
+            :src="'phone/iPhone.jpg'"
+            alt="phone"
+            class="w-24 h-24 object-contain mr-4 rounded"
+          />
+          <div class="flex-grow">
+            <div class="font-semibold">{{ item.brandName }} {{ item.model }}</div>
+            <div class="text-sm text-gray-600">{{ item.ramGb || '-' }}GB / {{ item.storageGb || '-' }}GB</div>
+          </div>
+          <div class="font-bold text-lg">{{ item.price.toLocaleString() }} Baht</div>
+        </li>
+      </ul>
     </div>
+
+    <transition name="bounce-popup">
+      <div
+        v-if="showAddSuccessPopup"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+      >
+        <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+          <h2 class="text-xl font-semibold mb-4">Success!</h2>
+          <p class="itbms-message mb-4">The sale item has been successfully added!</p>
+          <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
+        </div>
+      </div>
+    </transition>
+    <transition name="bounce-popup">
+      <div
+        v-if="showDeleteSuccessPopup"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+      >
+        <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+          <h2 class="text-xl font-semibold mb-4">Success!</h2>
+          <p class="itbms-message mb-4">The sale item has been successfully deleted!</p>
+          <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="bounce-popup">
+      <div
+        v-if="showfallPopup"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+      >
+        <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+          <h2 class="text-xl font-semibold mb-4">Error 500!</h2>
+          <p class="itbms-message mb-4">The sale item has been Fall added!</p>
+          <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
+        </div>
+      </div>
+    </transition>
+
+    <Footer />
   </div>
-</transition>
-  
-<transition name="bounce-popup">
-  <div
-    v-if="showfallPopup"
-    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
-  >
-    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
-      <h2 class="text-xl font-semibold mb-4">Error 500!</h2>
-      <p class="itbms-message mb-4">The sale item has been Fall added!</p>
-      <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
-    </div>
-  </div>
-</transition>
-  
-  <Footer />
 </template>
 
 <style scoped>
+/*@apply bg-white text-blue-400 rounded-full;*/
+.active {
+  background: white;
+  border-radius: 9999px;
+  color: #1D232A;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -238,6 +279,20 @@ const closeSuccessPopup = () => {
 }
 
 .itbms-row {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Style for the list view item */
+.itbms-list-item {
+  transition: transform 0.2s ease-in-out;
+}
+
+.itbms-list-item:hover {
+  transform: scale(1.02);
+}
+
+.itbms-list-item {
   opacity: 0;
   animation: fadeInUp 0.5s ease forwards;
 }
@@ -276,6 +331,4 @@ const closeSuccessPopup = () => {
 .fade-background-leave-to {
   background-color: rgba(0, 0, 0, 0); /* จบที่ Opacity 0 */
 }
-
 </style>
-
