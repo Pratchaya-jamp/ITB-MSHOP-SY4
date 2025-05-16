@@ -34,11 +34,12 @@ public class BrandBaseController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BrandBaseByIdDto> getBrandBaseById(@PathVariable Integer id) {
-        BrandBase brandBase = brandBaseService.getBrandBaseById(id);
+        BrandBaseByIdDto brandBase = brandBaseService.getBrandBaseById(id);
         return ResponseEntity.ok(modelMapper.map(brandBase, BrandBaseByIdDto.class));
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBrandBaseById(@PathVariable Integer id) {
         brandBaseService.deleteBrandBaseById(id);
     }
@@ -47,5 +48,11 @@ public class BrandBaseController {
     public ResponseEntity<BrandBaseByIdDto> createBrandBase(@RequestBody NewBrandBaseDto newBrandBase) {
         BrandBaseByIdDto created = brandBaseService.createBrandBase(newBrandBase);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BrandBaseByIdDto> editBrandBaseById(@PathVariable Integer id, @RequestBody NewBrandBaseDto updatedBrandBase) {
+        BrandBaseByIdDto editUpdated = brandBaseService.editBrandBase(id, updatedBrandBase);
+        return ResponseEntity.ok(editUpdated);
     }
 }

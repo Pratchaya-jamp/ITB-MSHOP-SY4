@@ -2,6 +2,8 @@ package intregrated.backend.dtos;
 
 import lombok.*;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @Builder
@@ -13,4 +15,5 @@ public class BrandBaseByIdDto {
     private String websiteUrl;
     private String countryOfOrigin;
     private Boolean isActive;
+    private Integer noOfSaleItems;
 }

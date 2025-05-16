@@ -38,25 +38,25 @@ public class SaleItemBaseService {
     public SaleItemBaseByIdDto createSaleItem(NewSaleItemDto newSaleItem) {
         BrandBase brand;
 
-        if (newSaleItem.getBrand().getId() != null) {
-            brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
-        }
-
-        else if (newSaleItem.getBrand().getBrandName() != null && !newSaleItem.getBrand().getBrandName().trim().isEmpty()) {
-            String trimmedBrandName = newSaleItem.getBrand().getBrandName().trim();
-            brand = brandBaseRepo.findByNameIgnoreCase(trimmedBrandName)
-                    .orElseGet(() -> {
-                        BrandBase newBrand = new BrandBase();
-                        newBrand.setName(trimmedBrandName);
-                        newBrand.setIsActive(true);
-                        newBrand.setCreatedOn(Instant.now());
-                        newBrand.setUpdatedOn(Instant.now());
-                        return brandBaseRepo.saveAndFlush(newBrand);
-                    });
-        }
-        else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand must contain either ID or name.");
+        if (newSaleItem.getBrand() != null) {
+            if (newSaleItem.getBrand().getId() != null) {
+                brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
+                        .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Brand with id " + newSaleItem.getBrand().getId() + " not found"
+                        ));
+            } else if (newSaleItem.getBrand().getBrandName() != null && !newSaleItem.getBrand().getBrandName().trim().isEmpty()) {
+                String trimmedBrandName = newSaleItem.getBrand().getBrandName().trim();
+                brand = brandBaseRepo.findByNameIgnoreCase(trimmedBrandName)
+                        .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Brand with name \"" + trimmedBrandName + "\" not found"
+                        ));
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand must contain either valid ID or name.");
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand is required.");
         }
 
         SaleItemBase saleItem = new SaleItemBase();
@@ -123,28 +123,14 @@ public class SaleItemBaseService {
         }
         existing.setUpdatedOn(Instant.now());
 
-        if (newSaleItem.getBrand() != null) {
-            if (newSaleItem.getBrand().getId() != null) {
-                // Find brand by ID
-                BrandBase brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
-                existing.setBrand(brand);
-            } else if (newSaleItem.getBrand().getBrandName() != null && !newSaleItem.getBrand().getBrandName().trim().isEmpty()) {
-                // Find or create brand by name
-                String trimmedBrandName = newSaleItem.getBrand().getBrandName().trim();
-                BrandBase brand = brandBaseRepo.findByNameIgnoreCase(trimmedBrandName)
-                        .orElseGet(() -> {
-                            BrandBase newBrand = new BrandBase();
-                            newBrand.setName(trimmedBrandName);
-                            newBrand.setIsActive(true);
-                            newBrand.setCreatedOn(Instant.now());
-                            newBrand.setUpdatedOn(Instant.now());
-                            return brandBaseRepo.saveAndFlush(newBrand);
-                        });
-                existing.setBrand(brand);
-            } else {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand must contain either ID or name.");
-            }
+        if (newSaleItem.getBrand() != null && newSaleItem.getBrand().getId() != null) {
+            BrandBase brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
+            existing.setBrand(brand);
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Brand id must be provided.");
         }
 
         SaleItemBase saved = saleItemBaseRepo.saveAndFlush(existing);
