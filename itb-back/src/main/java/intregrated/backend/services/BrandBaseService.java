@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BrandBaseService {
@@ -21,12 +22,21 @@ public class BrandBaseService {
         return brandBaseRepo.findAll();
     }
 
-    public BrandBase getBrandBaseById(Integer id) {
-        return brandBaseRepo.findById(id).orElseThrow(
+    public BrandBaseByIdDto getBrandBaseById(Integer id) {
+        BrandBase brandBase = brandBaseRepo.findById(id).orElseThrow(
                 () -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,"BrandBase with id" + id + "not found"
+                        HttpStatus.NOT_FOUND,"BrandBase with id " + id + " not found"
                 )
         );
+
+        return BrandBaseByIdDto.builder()
+                .id(brandBase.getId())
+                .name(brandBase.getName())
+                .websiteUrl(brandBase.getWebsiteUrl())
+                .countryOfOrigin(brandBase.getCountryOfOrigin())
+                .isActive(brandBase.getIsActive())
+                .noOfSaleItems(brandBase.getSaleItemBases() != null ? brandBase.getSaleItemBases().size() : 0)
+                .build();
     }
 
     public void deleteBrandBaseById(Integer id) {
@@ -40,14 +50,16 @@ public class BrandBaseService {
     }
 
     public BrandBaseByIdDto createBrandBase(NewBrandBaseDto newBrandBase) {
+        String trimmedName = newBrandBase.getName() != null ? newBrandBase.getName().trim() : null;
+
         BrandBase brandBase = new BrandBase();
 
-        if (brandBaseRepo.findByNameIgnoreCase(newBrandBase.getName()).isPresent()) {
+        if (brandBaseRepo.findByNameIgnoreCase(trimmedName).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Duplicate brand name");
         }
 
-        if (newBrandBase.getName() == null || newBrandBase.getName().trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Brand name cannot be null or empty");
+        if (trimmedName == null || trimmedName.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand name cannot be null or empty");
         }
 
         if (newBrandBase.getWebsiteUrl() == null || newBrandBase.getWebsiteUrl().isEmpty()) {
@@ -62,8 +74,8 @@ public class BrandBaseService {
             brandBase.setCountryOfOrigin(newBrandBase.getCountryOfOrigin());
         }
 
-        brandBase.setName(newBrandBase.getName());
-        brandBase.setIsActive(newBrandBase.getIsActive());
+        brandBase.setName(trimmedName);
+        brandBase.setIsActive(newBrandBase.getIsActive() != null ? newBrandBase.getIsActive() : true);
         brandBase.setCreatedOn(Instant.now());
         brandBase.setUpdatedOn(Instant.now());
 
@@ -74,7 +86,54 @@ public class BrandBaseService {
                 .name(saved.getName())
                 .websiteUrl(saved.getWebsiteUrl())
                 .countryOfOrigin(saved.getCountryOfOrigin())
+                .isActive(saved.getIsActive() != null ? saved.getIsActive() : true)
+                .noOfSaleItems(brandBase.getSaleItemBases() != null ? brandBase.getSaleItemBases().size() : 0)
+                .build();
+    }
+
+    public BrandBaseByIdDto editBrandBase(Integer id, NewBrandBaseDto updatedBrandBase) {
+        String trimmedName = updatedBrandBase.getName() != null ? updatedBrandBase.getName().trim() : null;
+
+        BrandBase existing = brandBaseRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Brand with id " + id + " not found"
+                ));
+
+        Optional<BrandBase> duplicate = brandBaseRepo.findByNameIgnoreCase(updatedBrandBase.getName().trim());
+        if (duplicate.isPresent() && !duplicate.get().getId().equals(id)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Duplicate brand name");
+        }
+
+        if (trimmedName == null || trimmedName.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand name cannot be null or empty");
+        }
+
+        if (updatedBrandBase.getWebsiteUrl() == null || updatedBrandBase.getWebsiteUrl().isEmpty()) {
+            existing.setWebsiteUrl(null);
+        } else {
+            existing.setWebsiteUrl(updatedBrandBase.getWebsiteUrl());
+        }
+
+        if (updatedBrandBase.getCountryOfOrigin() == null || updatedBrandBase.getCountryOfOrigin().isEmpty()) {
+            existing.setCountryOfOrigin(null);
+        } else {
+            existing.setCountryOfOrigin(updatedBrandBase.getCountryOfOrigin());
+        }
+
+        existing.setName(trimmedName);
+        existing.setIsActive(updatedBrandBase.getIsActive() != null ? updatedBrandBase.getIsActive() : true);
+        existing.setUpdatedOn(Instant.now());
+
+        BrandBase saved = brandBaseRepo.saveAndFlush(existing);
+
+        return BrandBaseByIdDto.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .websiteUrl(saved.getWebsiteUrl())
+                .countryOfOrigin(saved.getCountryOfOrigin())
                 .isActive(saved.getIsActive())
+                .noOfSaleItems(existing.getSaleItemBases() != null ? existing.getSaleItemBases().size() : 0)
                 .build();
     }
 }
