@@ -6,6 +6,8 @@ import SaleItemsDetailPage from '@/components/SaleItemsDetailPage.vue'
 import PageNotFound from '@/components/Page404.vue'
 import ListingPage from '../components/ListBrandPage.vue'
 import SaleItemsAdd from '@/components/SaleItemsAdd.vue'
+import BrandAdd from '@/components/BrandAdd.vue'
+
 const routes = [
   {
     path: '/',
@@ -42,6 +44,16 @@ const routes = [
   name: 'SaleItemsEdit',
   component: SaleItemsAdd,
 },
+{
+  path: '/brand/add',
+  name: 'BrandAdd',
+  component: BrandAdd,
+},
+{
+  path: '/brand/:id/edit',
+  name: 'BrandEdit',
+  component: BrandAdd,
+}
 ]
 
 const router = createRouter({

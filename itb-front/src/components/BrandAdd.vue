@@ -1,0 +1,319 @@
+<script setup>
+import { ref, reactive, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { addItem,editItem, getItems, getItemById } from '@/libs/fetchUtilsOur'
+
+const route = useRoute();
+const router = useRouter();
+ 
+const isEdit = computed(() => !!route.query.edit);
+ 
+const defaultImage = '/sy4/brands/1.png'; // โลโก้ default
+const brandLogo = ref('/sy4/brands/1.png');
+ 
+// State สำหรับควบคุมการแสดง Pop-up
+const originalBrand = ref(null)
+const showConfirmationAddPopup = ref(false)
+const showConfirmationEditPopup = ref(false)
+const brandList = ref([])
+const id = route.params.id
+const isEditMode = ref(false)
+const countdown = ref(3)
+const isLoading = ref(false)
+
+const startCountdown = () => {
+  if (countdown.value > 0) {
+    setTimeout(() => {
+      countdown.value--
+      startCountdown() // เรียกตัวเองซ้ำ
+    }, 1000)
+  }
+}
+const showNotFoundPopup = ref(false)
+ 
+const brand = ref({
+  name: '',
+  website: '',
+  status: '',
+  originCountry: '',
+});
+
+ 
+ onMounted(async () => {
+    if (id) {
+    isEditMode.value = true
+    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands', id)
+
+    if (data) {
+      const formattedBrand = {
+        name: data.name,
+        website: data.website,
+        status: data.status,
+        originCountry: data.originCountry,
+      }
+      brand.value = { ...formattedBrand }
+      originalBrand.value = { ...formattedBrand }
+
+    } else {
+      if (!data || data?.status === 404) {
+        showNotFoundPopup.value = true
+        startCountdown()
+
+        setTimeout(() => {
+          router.push('/brand')
+        }, 3000)
+      }
+    }
+}
+})
+
+const isModified = computed(() => {
+  if (!originalBrand.value) return true // ในกรณีเพิ่มสินค้าใหม่
+  return Object.keys(brand.value).some(key => String(brand.value[key]) !== String(originalBrand.value[key]))
+})
+
+const isFormTouched = computed(() => {
+  return Object.values(brand.value).some(val => String(val).trim() !== '')
+})
+
+const isValid = () => {
+  const { name } = brand.value
+  return [name].every(val => String(val).trim() !== '')
+}
+
+const submitForm = async () => {
+  if (!isFormTouched.value) {
+    responseMessage.value = 'กรุณากรอกข้อมูลอย่างน้อยหนึ่งช่อง'
+    return
+  }
+
+  if (!isValid()) {
+    responseMessage.value = 'กรุณากรอกข้อมูลให้ครบถ้วน'
+    return
+  }
+
+  if (isEditMode.value) {
+    showConfirmationEditPopup.value = true
+  } else {
+    showConfirmationAddPopup.value = true
+  }
+
+}
+
+const confirmAddItem = async () => {
+  const isAdding = !isEditMode.value
+  if (isAdding) {
+    showConfirmationAddPopup.value = true
+  } else {
+    showConfirmationAddPopup.value = false
+  }
+  isLoading.value = true
+
+  const newbrand = {
+    name: brand.value.name.trim(),
+  website: brand.value.website?.trim() || null,
+  status: brand.value.status?.trim() || null,
+  originCountry: brand.value.originCountry?.trim() || null,
+  }
+
+if (isEditMode.value) {
+  try {
+    const result = await editItem(
+      'http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands',
+      id,
+      newbrand
+    );
+
+    if (!result || result.status === 'error' || !result.id) {
+      throw new Error('Edit failed or invalid data returned');
+    }
+
+    setTimeout(() => {
+      isLoading.value = false;
+      router.push({
+        path: `/brand`,
+        query: { editSuccess: 'true' },
+      });
+    }, 1000);
+  } catch (err) {
+    console.error(err);
+    responseMessage.value = 'เกิดข้อผิดพลาดในการแก้ไขสินค้า';
+    isLoading.value = false;
+    router.push({
+      path: `/brand`,
+      query: { editFail: 'true' },
+    });
+  }
+} else {
+  try {
+    const result = await addItem(
+      'http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands',
+      newbrand
+    );
+
+    if (!result || result.status === 'error' || !result.id) {
+      throw new Error('Add failed or invalid data returned');
+    }
+
+    setTimeout(() => {
+      isLoading.value = false;
+      router.push({
+        path: '/brand',
+        query: { addSuccess: 'true' },
+      });
+    }, 1000);
+  } catch (err) {
+    console.error(err);
+    responseMessage.value = 'เกิดข้อผิดพลาดในการเพิ่มสินค้า';
+    isLoading.value = false;
+    router.push({
+      path: '/brand',
+      query: { addFail: 'true' },
+    });
+  }
+}
+
+}
+
+ const cancelAddItem = () => {
+  showConfirmationAddPopup.value = false // ปิด Pop-up ยืนยัน
+  showConfirmationEditPopup.value = false
+}
+</script>
+ 
+<template>
+  <div class="min-h-screen bg-white px-4 py-8">
+    <!-- Breadcrumb อยู่ด้านนอก -->
+    <div class="max-w-6xl mx-auto text-gray-600 text-sm mb-4">
+      <router-link to="/brand"><span class="itbms-home-button hover:underline cursor-pointer">Home</span></router-link> ›
+      <span v-if="brand?.id" class="itbms-row text-gray-800 font-medium ml-1">
+        {{ brand?.name || '-' }}
+        </span>
+      <span v-else
+      class="text-indigo-600 font-medium">New Brand</span>
+    </div>
+ 
+    <!-- กล่องฟอร์ม -->
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-6xl mx-auto p-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+       
+        <!-- ซ้าย: แสดงโลโก้และอัปโหลด -->
+        <div class="flex flex-col items-center justify-center border border-gray-300 rounded-lg p-4">
+          <img :src="brandLogo" alt="Brand Logo" class="w-48 h-48 object-contain mb-4" />
+        </div>
+ 
+        <!-- ขวา: ฟอร์มกรอกข้อมูล -->
+        <div>
+          <div class="mb-4">
+            <label class="block text-gray-800 font-medium mb-1">Name:<span class="text-red-500">*</span></label>
+            <input v-model="brand.name" type="text"
+              class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+          </div>
+ 
+          <div class="mb-4">
+            <label class="block text-gray-800 font-medium mb-1">WebsiteUrl:</label>
+            <input v-model="brand.website" type="url"
+              class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+          </div>
+ 
+          <div class="mb-4">
+            <label class="block text-gray-800 font-medium mb-1">isActive:</label>
+            <select v-model="brand.status"
+              class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900">
+              <option value="">-</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+          </div>
+ 
+          <div class="mb-6">
+            <label class="block text-gray-800 font-medium mb-1">countryOfOrigin:</label>
+            <input v-model="brand.originCountry" type="text"
+              class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+          </div>
+ 
+          <!-- ปุ่ม -->
+          <div class="flex gap-2 mt-4 justify-end">
+          <button
+           @click="submitForm"
+           :disabled="!isFormTouched || !isValid() || (isEditMode && !isModified)"
+           :class="[
+             'itbms-save-button rounded-md px-4 py-2 transition-colors duration-300',
+             isFormTouched && isValid() && (!isEditMode || isModified)
+             ? 'bg-green-500 text-white border-2 border-green-500 cursor-pointer hover:bg-transparent hover:text-green-500'
+             : 'bg-gray-300 text-gray-500 border-2 border-gray-300'
+           ]"
+         >
+           Save
+         </button>
+          <router-link to="/brand">
+            <button
+              class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
+            >
+              Cancel
+            </button>
+          </router-link>
+        </div>
+        </div>
+ 
+      </div>
+    </div>
+  </div>
+  <transition name="bounce-popup">
+  <div
+    v-if="showConfirmationAddPopup"
+    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm adding the brand</h2>
+      <p class="itbms-message mb-4">Do you want to add this brand?</p>
+      <div class="flex justify-center gap-4">
+          <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
+         <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>  
+      </div>
+    </div>
+  </div>
+</transition>
+ 
+<!-- Edit popup -->
+<transition name="bounce-popup">
+  <div
+    v-if="showConfirmationEditPopup"
+    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm editing the brand</h2>
+      <p class="itbms-message mb-4">Do you want to save changes to this brand?</p>
+      <div class="flex justify-center gap-4">
+        <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
+        <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>    
+      </div>
+    </div>
+  </div>
+</transition>
+ 
+<transition name="fade-background">
+      <div v-if="isLoading" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
+          <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
+          </svg>
+          <p class="itbms-message text-sm font-medium">Saving brand...</p>
+        </div>
+      </div>
+    </transition>
+    <transition name="bounce-popup">
+  <div
+    v-if="showNotFoundPopup"
+    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50"
+  >
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
+      <h2 class="text-xl font-semibold mb-4">⚠️ Item not found.</h2>
+      <p class="itbms-message mb-2">The requested sale item does not exist.</p>
+      <p class="text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
+    </div>
+  </div>
+</transition>
+</template>
+ 

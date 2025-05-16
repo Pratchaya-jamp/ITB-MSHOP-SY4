@@ -219,10 +219,10 @@ const cancelAddItem = () => {
     <nav class="text-sm text-gray-500 mb-4 max-w-6xl mx-auto">
       <router-link to="/sale-items"><span class="itbms-home-button hover:underline cursor-pointer">Home</span></router-link> ›
       <span v-if="product?.id" class="itbms-row text-gray-800 font-medium ml-1">
-      <router-link :to="{ path: `/sale-items/${product.id}` }" class="itbms-back-button hover:underline cursor-pointer">
+        <router-link :to="{ path: `/sale-items/${product.id}` }" class="itbms-back-button hover:underline cursor-pointer">
         {{ product?.model || '-' }} {{ product?.ramGb || '-' }}/{{ product?.storageGb || '-' }}GB {{ product?.color || '-' }}
-      </router-link>
-    </span>
+        </router-link>
+      </span>
     <span v-else class="itbms-row text-gray-800 font-medium ml-1">
       {{ addnewitemMessage }}
     </span>
@@ -252,7 +252,7 @@ const cancelAddItem = () => {
           <!-- <label class="text-left font-medium">Product ID:</label> -->
           <!-- <input v-model="product.id" type="number" class="border p-2 rounded w-full" /> -->
           
-          <label class="text-left font-medium">Brand:</label>
+          <label class="text-left font-medium">Brand:<span class="text-red-500">*</span></label>
           <select v-if="brandList.length > 0" v-model="product.brandName" class="itbms-brand border p-2 rounded w-full">
           <option value="" disabled selected> Select Brand</option>
           <option v-for="brand in brandList" :key="brand.id" :value="brand.brandName">
@@ -261,10 +261,10 @@ const cancelAddItem = () => {
           </select>
           <div v-else class="border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div>
 
-          <label class="text-left font-medium">Model:</label>
+          <label class="text-left font-medium">Model:<span class="text-red-500">*</span></label>
           <input v-model="product.model" type="text" class="itbms-model border p-2 rounded w-full" maxlength="60" />
 
-          <label class="text-left font-medium">Price (Baht):</label>
+          <label class="text-left font-medium">Price (Baht):<span class="text-red-500">*</span></label>
           <input v-model="product.price" type="number" class="itbms-price border p-2 rounded w-full" />
 
           <label class="text-left font-medium">Ram (GB):</label>
@@ -283,7 +283,7 @@ const cancelAddItem = () => {
           <input v-model="product.quantity" type="number" class="itbms-quantity border p-2 rounded w-full" />
         </div>
 
-        <label class="block font-medium mt-4">Description:</label>
+        <label class="block font-medium mt-4">Description:<span class="text-red-500">*</span></label>
         <textarea v-model="product.description" rows="3" class="itbms-description border p-2 rounded w-full"></textarea>
 
         <div class="flex gap-2 mt-4 justify-end">

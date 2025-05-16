@@ -12,7 +12,7 @@ const route = useRoute()
 const showAddSuccessPopup = ref(false)
 //const showEditSuccessPopup = ref(false)
 const showDeleteSuccessPopup = ref(false)
-const showfallPopup = ref(false)
+const showfailPopup = ref(false)
 const isGridView = ref(true)
 
 const addSaleItemButton = () => {
@@ -31,6 +31,7 @@ const deleteItem = async (id) => {
   router.push({ path: `/sale-items/${id}`, query: { confirmDelete: 'true' } })
 }
 
+
 onMounted(async () => {
   try {
     const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/sale-items')
@@ -39,6 +40,7 @@ onMounted(async () => {
     console.error('Error loading items:', err)
   }
 })
+
 
 watch(
   () => route.query.addSuccess,
@@ -84,7 +86,7 @@ watch(
   (addFail) => {
     if (addFail === 'true') {
       setTimeout(() => {
-      showfallPopup.value = true
+      showfailPopup.value = true
       }, 200)
       router.replace({ path: route.path, query: {} })
     }
@@ -116,7 +118,7 @@ const closeSuccessPopup = () => {
   showAddSuccessPopup.value = false
   //showEditSuccessPopup.value = false
   showDeleteSuccessPopup.value = false
-  showfallPopup.value = false
+  showfailPopup.value = false
   router.replace('/sale-items')
 }
 </script>
@@ -153,7 +155,7 @@ const closeSuccessPopup = () => {
       >
         + Add Sell Item
       </button>
-      <div class="flex flex-col items-end">
+      <div class="flex flex-col items-end mr-[5%]">
         <div class="mb-2">
           </div>
         <div class="bg-gray-200 text-sm text-gray-500 leading-none border-2 border-gray-200 rounded-full inline-flex">
@@ -178,7 +180,7 @@ const closeSuccessPopup = () => {
     </div>
 
     <div v-if="isGridView" class="p-6">
-      <div v-if="items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
+      <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">No sale items found.</div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         <div
           v-for="(item, index) in filteredAndSortedItems"
@@ -201,7 +203,7 @@ const closeSuccessPopup = () => {
     </div>
 
     <div v-else class="p-6">
-      <div v-if="items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
+      <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">No sale items found.</div>
       <ul v-else class="space-y-4">
         <li
           v-for="item in filteredAndSortedItems"
@@ -218,7 +220,7 @@ const closeSuccessPopup = () => {
               <div class="font-semibold">{{ item.brandName }} {{ item.model }}</div>
               <div class="text-sm text-gray-600">{{ item.ramGb || '-' }}GB / {{ item.storageGb || '-' }}GB</div>
             </div>
-            <div class="font-bold text-lg ml-4">{{ item.price.toLocaleString() }} Baht</div>
+            <div class="font-bold text-lg ml-4 mr-[5%]">{{ item.price.toLocaleString() }} Baht</div>
           </div>
           <div class="flex space-x-2">
             <button
@@ -265,19 +267,20 @@ const closeSuccessPopup = () => {
 
     <transition name="bounce-popup">
       <div
-        v-if="showfallPopup"
+        v-if="showfailPopup"
         class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
       >
         <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
           <h2 class="text-xl font-semibold mb-4">Error 500!</h2>
-          <p class="itbms-message mb-4">The sale item has been Fall added!</p>
+          <p class="itbms-message mb-4">The sale item has been Fail added!</p>
           <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
         </div>
       </div>
     </transition>
 
-    <Footer />
+    
   </div>
+  <Footer />
 </template>
 
 <style scoped>
