@@ -22,6 +22,15 @@ const showfailPopup = ref(false)
 const showNotFoundPopup = ref(false)
 const deleteId = ref(null)
 
+const startCountdown = () => {
+  if (countdown.value > 0) {
+    setTimeout(() => {
+      countdown.value--
+      startCountdown() // เรียกตัวเองซ้ำ
+    }, 1000)
+  }
+}
+
 const addBrandtemButton = () => {
   router.push('/brand/add')
 }
