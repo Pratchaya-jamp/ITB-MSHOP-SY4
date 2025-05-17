@@ -33,9 +33,9 @@ const showNotFoundPopup = ref(false)
  
 const brand = ref({
   name: '',
-  website: '',
-  status: '',
-  originCountry: '',
+  websiteUrl: '',
+  isActive: '',
+  countryOfOrigin: '',
 });
 
  
@@ -47,9 +47,9 @@ const brand = ref({
     if (data) {
       const formattedBrand = {
         name: data.name,
-        website: data.website,
-        status: data.status,
-        originCountry: data.originCountry,
+        websiteUrl: data.websiteUrl,
+        isActive: data.isActive,
+        countryOfOrigin: data.countryOfOrigin,
       }
       brand.value = { ...formattedBrand }
       originalBrand.value = { ...formattedBrand }
@@ -60,7 +60,7 @@ const brand = ref({
         startCountdown()
 
         setTimeout(() => {
-          router.push('/brand')
+          router.push('/brands')
         }, 3000)
       }
     }
@@ -111,16 +111,15 @@ const confirmAddItem = async () => {
 
   const newbrand = {
     name: brand.value.name.trim(),
-  website: brand.value.website?.trim() || null,
-  status: brand.value.status?.trim() || null,
-  originCountry: brand.value.originCountry?.trim() || null,
+  websiteUrl: brand.value.websiteUrl?.trim() || null,
+  isActive: brand.value.isActive?.trim() || null,
+  countryOfOrigin: brand.value.countryOfOrigin?.trim() || null,
   }
 
 if (isEditMode.value) {
   try {
     const result = await editItem(
       'http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands',
-      id,
       newbrand
     );
 
@@ -131,7 +130,7 @@ if (isEditMode.value) {
     setTimeout(() => {
       isLoading.value = false;
       router.push({
-        path: `/brand`,
+        path: `/brands`,
         query: { editSuccess: 'true' },
       });
     }, 1000);
@@ -140,7 +139,7 @@ if (isEditMode.value) {
     responseMessage.value = 'เกิดข้อผิดพลาดในการแก้ไขสินค้า';
     isLoading.value = false;
     router.push({
-      path: `/brand`,
+      path: `/brands`,
       query: { editFail: 'true' },
     });
   }
@@ -158,7 +157,7 @@ if (isEditMode.value) {
     setTimeout(() => {
       isLoading.value = false;
       router.push({
-        path: '/brand',
+        path: '/brands',
         query: { addSuccess: 'true' },
       });
     }, 1000);
@@ -167,7 +166,7 @@ if (isEditMode.value) {
     responseMessage.value = 'เกิดข้อผิดพลาดในการเพิ่มสินค้า';
     isLoading.value = false;
     router.push({
-      path: '/brand',
+      path: '/brands',
       query: { addFail: 'true' },
     });
   }
@@ -185,7 +184,7 @@ if (isEditMode.value) {
   <div class="min-h-screen bg-white px-4 py-8">
     <!-- Breadcrumb อยู่ด้านนอก -->
     <div class="max-w-6xl mx-auto text-gray-600 text-sm mb-4">
-      <router-link to="/brand"><span class="itbms-home-button hover:underline cursor-pointer">Home</span></router-link> ›
+      <router-link to="/brands"><span class="itbms-home-button hover:underline cursor-pointer">Home</span></router-link> ›
       <span v-if="brand?.id" class="itbms-row text-gray-800 font-medium ml-1">
         {{ brand?.name || '-' }}
         </span>
@@ -212,23 +211,23 @@ if (isEditMode.value) {
  
           <div class="mb-4">
             <label class="block text-gray-800 font-medium mb-1">WebsiteUrl:</label>
-            <input v-model="brand.website" type="url"
+            <input v-model="brand.websiteUrl" type="url"
               class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
           </div>
  
           <div class="mb-4">
             <label class="block text-gray-800 font-medium mb-1">isActive:</label>
-            <select v-model="brand.status"
+            <select v-model="brand.isActive"
               class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900">
-              <option value="">-</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+              <option value="" disabled selected>Choose your status</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
             </select>
-          </div>
- 
+          </div>  
+    
           <div class="mb-6">
             <label class="block text-gray-800 font-medium mb-1">countryOfOrigin:</label>
-            <input v-model="brand.originCountry" type="text"
+            <input v-model="brand.countryOfOrigin" type="text"
               class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
           </div>
  
@@ -246,7 +245,7 @@ if (isEditMode.value) {
          >
            Save
          </button>
-          <router-link to="/brand">
+          <router-link to="/brands">
             <button
               class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
             >

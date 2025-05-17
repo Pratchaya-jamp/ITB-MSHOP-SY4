@@ -32,7 +32,7 @@ const startCountdown = () => {
 }
 
 const addBrandtemButton = () => {
-  router.push('/brand/add')
+  router.push('/brands/add')
 }
 
 
@@ -127,7 +127,7 @@ const confirmDelete = async () => {
   showDeleteConfirmationPopup.value = false
   isDeleting.value = true
   try {
-    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brand', deleteId.value);
+    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands', deleteId.value);
     if (statusCode === 204) {
       setTimeout(() => {
         isDeleting.value = false
@@ -234,7 +234,7 @@ const closeSuccessPopup = () => {
           <div class="font-semibold text-center">{{ item.brandName }}</div>
           <div class="flex space-x-2 justify-center items-center mt-[8%]">
             <button
-              @click="router.push(`/brand/${item.id}/edit`)"
+              @click="router.push(`/brands/${item.id}/edit`)"
               class="bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500 text-sm"
             >
               Edit
@@ -262,7 +262,7 @@ const closeSuccessPopup = () => {
           <div class="font-semibold flex-grow">{{ item.brandName }}</div>
           <div class="flex space-x-2">
             <button
-              @click="router.push(`/brand/${item.id}/edit`)"
+              @click="router.push(`/brands/${item.id}/edit`)"
               class="bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500 text-sm"
             >
               Edit

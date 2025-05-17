@@ -12,7 +12,7 @@
       <router-link to="/sale-items">Phones</router-link>
     </a>
     <a href="#" class="hover:text-yellow-400">
-      <router-link to="/brand">Deals</router-link>
+      <router-link to="/brands">Deals</router-link>
     </a>
     <a href="#" class="hover:text-yellow-400">Services</a>
     <a href="#" class="hover:text-yellow-400">Contact</a>

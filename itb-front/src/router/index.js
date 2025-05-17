@@ -30,7 +30,7 @@ const routes = [
     component: SaleItemsDetailPage,
   },
   {
-    path: '/brand',
+    path: '/brands',
     name: 'ListingPage',
     component: ListingPage
   },
@@ -45,12 +45,12 @@ const routes = [
   component: SaleItemsAdd,
 },
 {
-  path: '/brand/add',
+  path: '/brands/add',
   name: 'BrandAdd',
   component: BrandAdd,
 },
 {
-  path: '/brand/:id/edit',
+  path: '/brands/:id/edit',
   name: 'BrandEdit',
   component: BrandAdd,
 }
