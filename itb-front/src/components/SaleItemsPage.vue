@@ -203,42 +203,54 @@ const closeSuccessPopup = () => {
     </div>
 
     <div v-else class="p-6">
-      <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">No sale items found.</div>
-      <ul v-else class="space-y-4">
-        <li
-          v-for="item in filteredAndSortedItems"
-          :key="item.id"
-          class="itbms-list-item border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer flex items-center justify-between transition duration-300"
-        >
-          <div class="flex items-center" @click="goToPhoneDetails(item.id)" style="flex-grow: 1;">
-            <img
-              :src="'phone/iPhone.jpg'"
-              alt="phone"
-              class="w-24 h-24 object-contain mr-4 rounded"
-            />
-            <div class="flex-grow">
-              <div class="font-semibold">{{ item.brandName }} {{ item.model }}</div>
-              <div class="text-sm text-gray-600">{{ item.ramGb || '-' }}GB / {{ item.storageGb || '-' }}GB</div>
-            </div>
-            <div class="font-bold text-lg ml-4 mr-[5%]">{{ item.price.toLocaleString() }} Baht</div>
-          </div>
-          <div class="flex space-x-2">
-            <button
-              @click.stop="goToEditItem(item.id)"
-              class="bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500 text-sm"
-            >
-              Edit
-            </button>
-            <button
-              @click.stop="deleteItem(item.id)"
-              class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500 text-sm"
-            >
-              Delete
-            </button>
-          </div>
-        </li>
-      </ul>
-    </div>
+  <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">
+    No sale items found.
+  </div>
+  <table v-else class="w-full border-collapse border text-sm text-left text-black">
+    <thead>
+      <tr class="bg-gray-100">
+        <th class="border px-4 py-2">Id</th>
+        <th class="border px-4 py-2">Brand</th>
+        <th class="border px-4 py-2">Model</th>
+        <th class="border px-4 py-2">Ram</th>
+        <th class="border px-4 py-2">Storage</th>
+        <th class="border px-4 py-2">Color</th>
+        <th class="border px-4 py-2">Price</th>
+        <th class="border px-4 py-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        v-for="item in filteredAndSortedItems"
+        :key="item.id"
+        class="itbms-row hover:bg-gray-50 transition"
+      >
+        <td class="itbms-id border px-4 py-2">{{ item.id }}</td>
+        <td class="itbms-brand border px-4 py-2">{{ item.brandName }}</td>
+        <td class="itbms-model border px-4 py-2">{{ item.model }}</td>
+        <td class="itbms-ramGb border px-4 py-2">{{ item.ramGb }}</td>
+        <td class="itbms-storageGb border px-4 py-2">{{ item.storageGb }}</td>
+        <td class="itbms-color border px-4 py-2">{{ item.color }}</td>
+        <td class="itbms-price border px-4 py-2">{{ item.price.toLocaleString() }}</td>
+        <td class="border px-4 py-2 space-x-1">
+          <button
+            @click.stop="goToEditItem(item.id)"
+            class="itbms-edit-button bg-yellow-500 text-white border-2 border-yellow-500 rounded px-2 py-1 hover:bg-transparent hover:text-yellow-500 transition-colors duration-300"
+          >
+            Edit
+          </button>
+          <button
+            @click.stop="deleteItem(item.id)"
+            class="itbms-delete-button bg-red-500 text-white border-2 border-red-500 rounded px-2 py-1 hover:bg-transparent hover:text-red-500 transition-colors duration-300"
+          >
+            Delete
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 
     <transition name="bounce-popup">
       <div
