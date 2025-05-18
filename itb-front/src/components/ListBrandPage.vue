@@ -21,6 +21,7 @@ const showEditSuccessPopup = ref(false)
 const showEditFailPopup = ref(false)
 const showfailPopup = ref(false)
 const showNotFoundPopup = ref(false)
+const showcannotDeletePopup =ref(false)
 const deleteId = ref(null)
 const countdown = ref(3)
 const startCountdown = () => {
@@ -139,6 +140,11 @@ const confirmDelete = async () => {
       setTimeout(() => {
         showNotFoundPopup.value = false;
       }, 3000);
+    }else if (statusCode === 400) {
+      isDeleting.value = false;
+      setTimeout(() => {
+        showcannotDeletePopup.value = true;
+      }, 1000);
     }
   } catch (error) {
     console.error("delete Fail:", error);
@@ -157,6 +163,7 @@ const closeSuccessPopup = () => {
   showDeleteSuccessPopup.value = false
   showEditFailPopup.value =false
   showfailPopup.value = false
+  showcannotDeletePopup.value = false
 }
 
 const setViewMode = (mode) => {
@@ -398,6 +405,19 @@ const setViewMode = (mode) => {
         <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
           <h2 class="text-xl text-red-500 font-semibold mb-4">Error 500!</h2>
           <p class="itbms-message mb-4">The status could not be added.</p>
+          <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="bounce-popup">
+      <div
+        v-if="showcannotDeletePopup"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+      >
+        <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
+          <h2 class="text-xl text-red-500 font-semibold mb-4">Delete this brand is not allow!</h2>
+          <p class="itbms-message mb-4">There are sale items with this brand.</p>
           <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
         </div>
       </div>
