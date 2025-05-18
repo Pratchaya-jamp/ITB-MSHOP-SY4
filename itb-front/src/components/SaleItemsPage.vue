@@ -34,7 +34,7 @@ const deleteItem = async (id) => {
 
 onMounted(async () => {
   try {
-    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/sale-items')
+    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items')
     items.value = data
   } catch (err) {
     console.error('Error loading items:', err)

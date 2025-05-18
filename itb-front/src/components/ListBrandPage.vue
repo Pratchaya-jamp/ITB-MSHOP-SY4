@@ -38,7 +38,7 @@ const addBrandtemButton = () => {
 
 onMounted(async () => {
   try {
-    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands')
+    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands')
     items.value = data.sort((a, b) => {
       if (a.brandName < b.brandName) {
         return -1;
@@ -127,7 +127,7 @@ const confirmDelete = async () => {
   showDeleteConfirmationPopup.value = false
   isDeleting.value = true
   try {
-    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands', deleteId.value);
+    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands', deleteId.value);
     if (statusCode === 204) {
       setTimeout(() => {
         isDeleting.value = false
@@ -414,31 +414,62 @@ const closeSuccessPopup = () => {
 
 /* Style for the list view item */
 .itbms-list-item {
-  border: 1px solid #e0e0e0;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); 
-  cursor: pointer;
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
+  transition: transform 0.2s ease-in-out;
 }
 
 .itbms-list-item:hover {
   transform: scale(1.02);
-  box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
-}
-
-.itbms-list-item img {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  margin-right: 1rem;
-  border-radius: 0.5rem;
 }
 
 .itbms-list-item {
   opacity: 0;
   animation: fadeInUp 0.5s ease forwards;
+}
+
+/* สไตล์พื้นหลัง popup overlay */
+.itbms-bg {
+  background-color: rgba(0, 0, 0, 0.3); /* opacity 0.3 = โปร่งนุ่มขึ้น */
+  backdrop-filter: blur(2px); /* เพิ่ม blur ด้านหลังให้หรู */
+}
+
+.bounce-popup-enter-active,
+.bounce-popup-leave-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* bounce effect */
+}
+
+.bounce-popup-enter-from {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.bounce-popup-leave-to {
+  transform: scale(1.2);
+  opacity: 0;
+}
+
+/* Animation สำหรับ Fade In/Out ของพื้นหลัง */
+.fade-background-enter-active,
+.fade-background-leave-active {
+  transition: background-color 0.3s ease;
+}
+
+.fade-background-enter-from {
+  background-color: rgba(0, 0, 0, 0); /* เริ่มจาก Opacity 0 */
+}
+
+.fade-background-leave-to {
+  background-color: rgba(0, 0, 0, 0); /* จบที่ Opacity 0 */
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+.loading-overlay {
+  background-color: rgba(0, 0, 0, 0.2); /* หรือค่าอื่น ๆ ที่คุณต้องการ */
 }
 </style>

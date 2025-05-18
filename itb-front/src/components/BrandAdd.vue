@@ -42,7 +42,7 @@ const brand = ref({
  onMounted(async () => {
     if (id) {
     isEditMode.value = true
-    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands', id)
+    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands', id)
 
     if (data) {
       const formattedBrand = {
@@ -119,7 +119,7 @@ const confirmAddItem = async () => {
 if (isEditMode.value) {
   try {
     const result = await editItem(
-      'http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands',
+      'http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands',
       newbrand
     );
 
@@ -146,7 +146,7 @@ if (isEditMode.value) {
 } else {
   try {
     const result = await addItem(
-      'http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/brands',
+      'http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands',
       newbrand
     );
 
@@ -316,3 +316,80 @@ if (isEditMode.value) {
 </transition>
 </template>
  
+<style scoped>
+.bounce-popup-enter-active,
+.bounce-popup-leave-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* bounce effect */
+}
+
+.bounce-popup-enter-from {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.bounce-popup-leave-to {
+  transform: scale(1.2);
+  opacity: 0;
+}
+
+/* Animation สำหรับ Fade In/Out ของพื้นหลัง */
+.fade-background-enter-active,
+.fade-background-leave-active {
+  transition: background-color 0.3s ease;
+}
+
+.fade-background-enter-from {
+  background-color: rgba(0, 0, 0, 0); /* เริ่มจาก Opacity 0 */
+}
+
+.fade-background-leave-to {
+  background-color: rgba(0, 0, 0, 0); /* จบที่ Opacity 0 */
+}
+
+/* Animation สำหรับ Fade In/Out ของเนื้อหา Pop-up (ถ้าต้องการ) */
+.fade-in-out-enter-active,
+.fade-in-out-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease; /* เพิ่ม transform */
+}
+
+.fade-in-out-enter-from {
+  opacity: 0;
+  transform: scale(0.95); /* เริ่มจากขนาดเล็กลงเล็กน้อย */
+}
+
+.fade-in-out-leave-to {
+  opacity: 0;
+  transform: scale(1.05); /* จบที่ขนาดใหญ่ขึ้นเล็กน้อย */
+}
+
+/* Animation สำหรับ Slide Up ของเนื้อหา Pop-up (ถ้าต้องการ) */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.slide-up-enter-from {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.slide-up-leave-to {
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+/* สไตล์คงที่สำหรับพื้นหลัง (เพื่อให้ transition ทำงานได้) */
+.fixed.bg-black {
+  background-color: rgba(0, 0, 0, 0.5); /* กำหนด Opacity เริ่มต้น */
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+</style>

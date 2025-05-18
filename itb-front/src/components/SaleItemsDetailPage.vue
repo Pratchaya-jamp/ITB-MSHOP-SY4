@@ -36,7 +36,7 @@ showEditFallPopup.value = false
 // ดึงข้อมูลจาก backend
 onMounted(async () => {
   try {
-    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/sale-items', id)
+    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id)
     if (!data || data?.status === 404) {
       showNotFoundPopup.value = true
       startCountdown()
@@ -93,7 +93,7 @@ const confirmDelete = async () => {
   showDeleteConfirmationPopup.value = false
   isDeleting.value = true
   try {
-    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/sy4/v1/sale-items', id);
+    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items', id);
     if (statusCode === 204) {
       setTimeout(() => {
         isDeleting.value = false
