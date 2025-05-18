@@ -8,6 +8,7 @@ RUN npm run build
 
 # Stage 2: Serve the built application using Nginx with custom config
 FROM nginx:alpine
+RUN mkdir /app
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/itb-front.conf
 EXPOSE 80

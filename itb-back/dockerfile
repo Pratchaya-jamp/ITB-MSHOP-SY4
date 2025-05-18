@@ -1,10 +1,21 @@
-FROM maven:3.9-eclipse-temurin-17 AS builder
+FROM openjdk:17-jdk-slim AS build
+
+# Set work directory
 WORKDIR /app
-COPY pom.xml .
-COPY .mvn .
-COPY mvnw .
-COPY src ./src
-RUN chmod +x ./mvnw
+
+# Copy Maven wrapper + source code
+COPY . .
+
+# Give permission to mvnw
+RUN chmod +x mvnw
+
+# Build the app using the wrapper
+RUN ./mvnw clean package -DskipTests
+
+# Run phase
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 EXPOSE 5005
-CMD ["mvn", "spring-boot:run", "-Dspring-boot.run.profiles=dev"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
