@@ -36,6 +36,7 @@ const addBrandtemButton = () => {
 }
 
 
+
 onMounted(async () => {
   try {
     const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands')
@@ -192,7 +193,7 @@ const closeSuccessPopup = () => {
     </div>
     <div class="ml-[8%] flex items-start justify-between mb-4">
       <button
-        class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
+        class="itbms-add-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
         @click="addBrandtemButton"
       >
         + Add brand Item
@@ -235,13 +236,13 @@ const closeSuccessPopup = () => {
           <div class="flex space-x-2 justify-center items-center mt-[8%]">
             <button
               @click="router.push(`/brands/${item.id}/edit`)"
-              class="bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500 text-sm"
+              class="itbms-edit-button bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500 text-sm"
             >
               Edit
             </button>
             <button
               @click.stop="deletebrand(item.id)"
-              class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500 text-sm"
+              class="itbms-delete-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500 text-sm"
             >
               Delete
             </button>
@@ -251,31 +252,57 @@ const closeSuccessPopup = () => {
     </div>
 
     <div class="p-6" v-else>
-      <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">No brand found.</div>
-      <ul v-else class="space-y-4">
-        <li
-          v-for="item in filteredAndSortedItems"
-          :key="item.id"
-          class="itbms-list-item border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer flex items-center"
-        >
-          <img :src="`brands/${item.id}.png`" alt="brand" class="w-24 h-24 object-contain mr-4 rounded" />
-          <div class="font-semibold flex-grow">{{ item.brandName }}</div>
-          <div class="flex space-x-2">
+      <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">
+    No brand found.
+  </div>
+  <table v-else class="w-full border-collapse border text-sm text-left text-black">
+    <thead>
+      <tr class="bg-gray-100">
+        <th class="border px-4 py-2">Id</th>
+        <th class="border px-4 py-2">Name</th>
+        <th class="border px-4 py-2">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        v-for="item in filteredAndSortedItems"
+        :key="item.id"
+        class="itbms-row hover:bg-gray-50 transition"
+      >
+        <td class="border px-4 py-2">{{ item.id }}</td>
+
+        <!-- คอลัมน์ชื่อ + รูปภาพ -->
+        <td class="border  px-4 py-2">
+  <div class="flex items-center space-x-3">
+    <img
+      :src="`brands/${item.id}.png`"
+      alt="brand"
+      class="w-10 h-10 object-contain rounded"
+    />
+    <span>{{ item.brandName }}</span>
+  </div>
+</td>
+
+        <!-- คอลัมน์ Action -->
+        <td class="border px-4 py-2">
+          <div class="flex space-x-1">
             <button
               @click="router.push(`/brands/${item.id}/edit`)"
-              class="bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500 text-sm"
+              class="itbms-edit-button bg-yellow-500 text-white border-2 border-yellow-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-yellow-500 text-sm"
             >
               Edit
             </button>
             <button
               @click.stop="deletebrand(item.id)"
-              class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500 text-sm"
+              class="itbms-Delete-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500 text-sm"
             >
               Delete
             </button>
           </div>
-        </li>
-      </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
     </div>
 
     <!-- Footer -->

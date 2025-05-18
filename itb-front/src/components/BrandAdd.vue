@@ -184,7 +184,8 @@ if (isEditMode.value) {
   <div class="min-h-screen bg-white px-4 py-8">
     <!-- Breadcrumb อยู่ด้านนอก -->
     <div class="max-w-6xl mx-auto text-gray-600 text-sm mb-4">
-      <router-link to="/brands"><span class="itbms-home-button hover:underline cursor-pointer">Home</span></router-link> ›
+      <router-link to="/sale-items"><span class="itbms-item-list hover:underline cursor-pointer">Home</span></router-link> ›
+      <router-link to="/brands"><span class="itbms-manage-brand hover:underline cursor-pointer">BrandList</span></router-link> ›
       <span v-if="brand?.id" class="itbms-row text-gray-800 font-medium ml-1">
         {{ brand?.name || '-' }}
         </span>
@@ -206,19 +207,19 @@ if (isEditMode.value) {
           <div class="mb-4">
             <label class="block text-gray-800 font-medium mb-1">Name:<span class="text-red-500">*</span></label>
             <input v-model="brand.name" type="text"
-              class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+              class="itbms-name w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
           </div>
  
           <div class="mb-4">
             <label class="block text-gray-800 font-medium mb-1">WebsiteUrl:</label>
             <input v-model="brand.websiteUrl" type="url"
-              class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+              class="itbms-WebsiteUrl w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
           </div>
  
           <div class="mb-4">
             <label class="block text-gray-800 font-medium mb-1">isActive:</label>
             <select v-model="brand.isActive"
-              class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900">
+              class="itbms-isActive w-full border border-gray-300 rounded px-4 py-2 text-gray-900">
               <option value="" disabled selected>Choose your status</option>
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
@@ -228,7 +229,7 @@ if (isEditMode.value) {
           <div class="mb-6">
             <label class="block text-gray-800 font-medium mb-1">countryOfOrigin:</label>
             <input v-model="brand.countryOfOrigin" type="text"
-              class="w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+              class="itbms-countryOfOrigin w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
           </div>
  
           <!-- ปุ่ม -->
