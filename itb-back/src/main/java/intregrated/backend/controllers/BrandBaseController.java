@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/v1/brands")
-@CrossOrigin(origins = "${app.cors.allowedOrigins}")
+@CrossOrigin(origins = "http://intproj24.sit.kmutt.ac.th")
 public class BrandBaseController {
     @Autowired
     BrandBaseService brandBaseService;

@@ -43,7 +43,7 @@ const brand = ref({
  onMounted(async () => {
     if (id) {
     isEditMode.value = true
-    const data = await getItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands', id)
+    const data = await getItemById('http://intproj24.sit.kmutt.ac.th/sy4/api/v1/brands', id)
 
     if (data) {
       const formattedBrand = {
@@ -120,7 +120,7 @@ const confirmAddItem = async () => {
 if (isEditMode.value) {
   try {
     const result = await editItem(
-      'http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands',
+      'http://intproj24.sit.kmutt.ac.th/sy4/api/v1/brands',
       id,
       newbrand
     );
@@ -148,7 +148,7 @@ if (isEditMode.value) {
 } else {
   try {
     const result = await addItem(
-      'http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands',
+      'http://intproj24.sit.kmutt.ac.th/sy4/api/v1/brands',
       newbrand
     );
 

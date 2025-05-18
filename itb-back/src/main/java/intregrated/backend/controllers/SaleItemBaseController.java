@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/v1/sale-items")
-@CrossOrigin(origins = "${app.cors.allowedOrigins}")
+@CrossOrigin(origins = "http://intproj24.sit.kmutt.ac.th")
 public class SaleItemBaseController {
     @Autowired
     SaleItemBaseService saleItemBaseService;

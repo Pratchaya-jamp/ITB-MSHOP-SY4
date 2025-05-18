@@ -42,16 +42,8 @@ const goToSaleItemsList = () => {
 
 onMounted(async () => {
   try {
-    const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands')
-    items.value = data.sort((a, b) => {
-      if (a.brandName < b.brandName) {
-        return -1;
-      }
-      if (a.brandName > b.brandName) {
-        return 1;
-      }
-      return 0;
-    });
+    const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/api/v1/brands')
+    items.value = data.sort((a, b) => a.id - b.id)
   } catch (err) {
     console.error('Error loading items:', err)
   }
@@ -132,7 +124,7 @@ const confirmDelete = async () => {
   showDeleteConfirmationPopup.value = false
   isDeleting.value = true
   try {
-    const statusCode = await deleteItemById('http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands', deleteId.value);
+    const statusCode = await deleteItemById('http://intproj24.sit.kmutt.ac.th/sy4/api/v1/brands', deleteId.value);
     if (statusCode === 204) {
       setTimeout(() => {
         isDeleting.value = false
