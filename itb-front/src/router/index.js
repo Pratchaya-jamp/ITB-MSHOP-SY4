@@ -25,6 +25,11 @@ const routes = [
     component: SaleItemsPage,
   },
   {
+    path: '/sale-items/list',
+    name: 'ListSaleItems',
+    component: SaleItemsPage,
+  },
+  {
     path: '/sale-items/:id',
     name: 'SaleItemsdetail',
     component: SaleItemsDetailPage,

@@ -5,12 +5,12 @@ import { addItem,editItem, getItems, getItemById } from '@/libs/fetchUtilsOur'
 
 const route = useRoute();
 const router = useRouter();
- 
+
 const isEdit = computed(() => !!route.query.edit);
- 
+
 const defaultImage = '/sy4/brands/1.png'; // โลโก้ default
 const brandLogo = ref('/sy4/brands/1.png');
- 
+
 // State สำหรับควบคุมการแสดง Pop-up
 const originalBrand = ref(null)
 const showConfirmationAddPopup = ref(false)
@@ -20,6 +20,7 @@ const id = route.params.id
 const isEditMode = ref(false)
 const countdown = ref(3)
 const isLoading = ref(false)
+const responseMessage = ref('')
 
 const startCountdown = () => {
   if (countdown.value > 0) {
@@ -30,15 +31,15 @@ const startCountdown = () => {
   }
 }
 const showNotFoundPopup = ref(false)
- 
+
 const brand = ref({
   name: '',
   websiteUrl: '',
-  isActive: '',
+  isActive: false, // เปลี่ยนค่าเริ่มต้นเป็น false
   countryOfOrigin: '',
 });
 
- 
+
  onMounted(async () => {
     if (id) {
     isEditMode.value = true
@@ -112,7 +113,7 @@ const confirmAddItem = async () => {
   const newbrand = {
     name: brand.value.name.trim(),
   websiteUrl: brand.value.websiteUrl?.trim() || null,
-  isActive: brand.value.isActive?.trim() || null,
+  isActive: brand.value.isActive, // ส่งค่า boolean โดยตรง
   countryOfOrigin: brand.value.countryOfOrigin?.trim() || null,
   }
 
@@ -120,6 +121,7 @@ if (isEditMode.value) {
   try {
     const result = await editItem(
       'http://ip24sy4.sit.kmutt.ac.th:8080/v1/brands',
+      id,
       newbrand
     );
 
@@ -130,7 +132,7 @@ if (isEditMode.value) {
     setTimeout(() => {
       isLoading.value = false;
       router.push({
-        path: `/brands`,
+        path: '/brands',
         query: { editSuccess: 'true' },
       });
     }, 1000);
@@ -139,7 +141,7 @@ if (isEditMode.value) {
     responseMessage.value = 'เกิดข้อผิดพลาดในการแก้ไขสินค้า';
     isLoading.value = false;
     router.push({
-      path: `/brands`,
+      path: '/brands',
       query: { editFail: 'true' },
     });
   }
@@ -179,73 +181,77 @@ if (isEditMode.value) {
   showConfirmationEditPopup.value = false
 }
 </script>
- 
+
 <template>
   <div class="min-h-screen bg-white px-4 py-8">
-    <!-- Breadcrumb อยู่ด้านนอก -->
     <div class="max-w-6xl mx-auto text-gray-600 text-sm mb-4">
       <router-link to="/sale-items"><span class="itbms-item-list hover:underline cursor-pointer">Home</span></router-link> ›
       <router-link to="/brands"><span class="itbms-manage-brand hover:underline cursor-pointer">BrandList</span></router-link> ›
-      <span v-if="brand?.id" class="itbms-row text-gray-800 font-medium ml-1">
+      <span v-if="brand?.name" class="itbms-row text-gray-800 font-medium ml-1">
         {{ brand?.name || '-' }}
         </span>
       <span v-else
       class="text-indigo-600 font-medium">New Brand</span>
     </div>
- 
-    <!-- กล่องฟอร์ม -->
+
     <div class="bg-white rounded-lg shadow-lg w-full max-w-6xl mx-auto p-8">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-       
-        <!-- ซ้าย: แสดงโลโก้และอัปโหลด -->
+
         <div class="flex flex-col items-center justify-center border border-gray-300 rounded-lg p-4">
           <img :src="brandLogo" alt="Brand Logo" class="w-48 h-48 object-contain mb-4" />
         </div>
- 
-        <!-- ขวา: ฟอร์มกรอกข้อมูล -->
+
         <div>
           <div class="mb-4">
             <label class="block text-gray-800 font-medium mb-1">Name:<span class="text-red-500">*</span></label>
             <input v-model="brand.name" type="text"
               class="itbms-name w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
           </div>
- 
+
           <div class="mb-4">
             <label class="block text-gray-800 font-medium mb-1">WebsiteUrl:</label>
             <input v-model="brand.websiteUrl" type="url"
-              class="itbms-WebsiteUrl w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+              class="itbms-websiteUrl w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
           </div>
- 
-          <div class="mb-4">
-            <label class="block text-gray-800 font-medium mb-1">isActive:</label>
-            <select v-model="brand.isActive"
-              class="itbms-isActive w-full border border-gray-300 rounded px-4 py-2 text-gray-900">
-              <option value="" disabled selected>Choose your status</option>
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-            </select>
-          </div>  
-    
+
+          <div class="mb-4 flex items-center">
+            <label class="block text-gray-800 font-medium mr-4">isActive:</label>
+            <button
+              type="button"
+              class="itbms-isActive relative inline-flex flex-shrink-0 w-11 h-6 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              :class="{'bg-indigo-600': brand.isActive, 'bg-gray-200': !brand.isActive}"
+              role="switch"
+              aria-checked="brand.isActive"
+              @click="brand.isActive = !brand.isActive"
+            >
+              <span class="sr-only">Enable notifications</span>
+              <span
+                aria-hidden="true"
+                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200"
+                :class="{'translate-x-5': brand.isActive, 'translate-x-0': !brand.isActive}"
+              ></span>
+            </button>
+          </div>
+
           <div class="mb-6">
             <label class="block text-gray-800 font-medium mb-1">countryOfOrigin:</label>
             <input v-model="brand.countryOfOrigin" type="text"
               class="itbms-countryOfOrigin w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
           </div>
- 
-          <!-- ปุ่ม -->
+
           <div class="flex gap-2 mt-4 justify-end">
           <button
-           @click="submitForm"
-           :disabled="!isFormTouched || !isValid() || (isEditMode && !isModified)"
-           :class="[
-             'itbms-save-button rounded-md px-4 py-2 transition-colors duration-300',
-             isFormTouched && isValid() && (!isEditMode || isModified)
-             ? 'bg-green-500 text-white border-2 border-green-500 cursor-pointer hover:bg-transparent hover:text-green-500'
-             : 'bg-gray-300 text-gray-500 border-2 border-gray-300'
-           ]"
-         >
-           Save
-         </button>
+            @click="submitForm"
+            :disabled="!isFormTouched || !isValid() || (isEditMode && !isModified)"
+            :class="[
+              'itbms-save-button rounded-md px-4 py-2 transition-colors duration-300',
+              isFormTouched && isValid() && (!isEditMode || isModified)
+              ? 'bg-green-500 text-white border-2 border-green-500 cursor-pointer hover:bg-transparent hover:text-green-500'
+              : 'bg-gray-300 text-gray-500 border-2 border-gray-300'
+            ]"
+          >
+            Save
+          </button>
           <router-link to="/brands">
             <button
               class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
@@ -253,9 +259,9 @@ if (isEditMode.value) {
               Cancel
             </button>
           </router-link>
+          </div>
         </div>
-        </div>
- 
+
       </div>
     </div>
   </div>
@@ -269,13 +275,12 @@ if (isEditMode.value) {
       <p class="itbms-message mb-4">Do you want to add this brand?</p>
       <div class="flex justify-center gap-4">
           <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
-         <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>  
+         <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>
       </div>
     </div>
   </div>
 </transition>
- 
-<!-- Edit popup -->
+
 <transition name="bounce-popup">
   <div
     v-if="showConfirmationEditPopup"
@@ -286,12 +291,12 @@ if (isEditMode.value) {
       <p class="itbms-message mb-4">Do you want to save changes to this brand?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
-        <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>    
+        <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>
       </div>
     </div>
   </div>
 </transition>
- 
+
 <transition name="fade-background">
       <div v-if="isLoading" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
@@ -316,7 +321,7 @@ if (isEditMode.value) {
   </div>
 </transition>
 </template>
- 
+
 <style scoped>
 .bounce-popup-enter-active,
 .bounce-popup-leave-active {

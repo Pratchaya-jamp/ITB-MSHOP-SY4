@@ -10,13 +10,16 @@ const searchQuery = ref('')
 const filterBy = ref('')
 const route = useRoute()
 const showAddSuccessPopup = ref(false)
-//const showEditSuccessPopup = ref(false)
 const showDeleteSuccessPopup = ref(false)
 const showfailPopup = ref(false)
-const isGridView = ref(true)
+const isGridView = computed(() => route.path !== '/sale-items/list')
 
 const addSaleItemButton = () => {
   router.push('/sale-items/add')
+}
+
+const goToManageBrand = () => {
+  router.push('/brands')
 }
 
 const goToPhoneDetails = (id) => {
@@ -31,7 +34,6 @@ const deleteItem = async (id) => {
   router.push({ path: `/sale-items/${id}`, query: { confirmDelete: 'true' } })
 }
 
-
 onMounted(async () => {
   try {
     const data = await getItems('http://ip24sy4.sit.kmutt.ac.th:8080/v1/sale-items')
@@ -41,13 +43,12 @@ onMounted(async () => {
   }
 })
 
-
 watch(
   () => route.query.addSuccess,
   (addSuccess) => {
     if (addSuccess === 'true') {
-      setTimeout (() => {
-      showAddSuccessPopup.value = true
+      setTimeout(() => {
+        showAddSuccessPopup.value = true
       }, 200)
       router.replace({ path: route.path, query: {} })
     }
@@ -55,25 +56,12 @@ watch(
   { immediate: true }
 )
 
-// watch(
-//   () => route.query.editSuccess,
-//   (editSuccess) => {
-//     if (editSuccess === 'true') {
-//       setTimeout(() => {
-//       showEditSuccessPopup.value = true
-//       }, 200)
-//       router.replace({ path: route.path, query: {} })
-//     }
-//   },
-//   { immediate: true }
-// )
-
 watch(
   () => route.query.deleteSuccess,
   (deleteSuccess) => {
     if (deleteSuccess === 'true') {
       setTimeout(() => {
-      showDeleteSuccessPopup.value = true
+        showDeleteSuccessPopup.value = true
       }, 200)
       router.replace({ path: route.path, query: {} })
     }
@@ -86,7 +74,7 @@ watch(
   (addFail) => {
     if (addFail === 'true') {
       setTimeout(() => {
-      showfailPopup.value = true
+        showfailPopup.value = true
       }, 200)
       router.replace({ path: route.path, query: {} })
     }
@@ -94,8 +82,12 @@ watch(
   { immediate: true }
 )
 
+const sortedItemsByCreatedOn = computed(() => {
+  return [...items.value].sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
+})
+
 const filteredAndSortedItems = computed(() => {
-  let result = [...items.value]
+  let result = [...sortedItemsByCreatedOn.value]  
 
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
@@ -105,21 +97,14 @@ const filteredAndSortedItems = computed(() => {
     )
   }
 
-  if (filterBy.value === 'cheapest') {
-    result.sort((a, b) => a.price - b.price)
-  } else if (filterBy.value === 'expensive') {
-    result.sort((a, b) => b.price - a.price)
-  }
-
   return result
 })
 
 const closeSuccessPopup = () => {
   showAddSuccessPopup.value = false
-  //showEditSuccessPopup.value = false
   showDeleteSuccessPopup.value = false
   showfailPopup.value = false
-  router.replace('/sale-items')
+  router.replace(route.path)
 }
 </script>
 
@@ -150,32 +135,19 @@ const closeSuccessPopup = () => {
     </div>
     <div class="ml-[8%] flex items-start justify-between mb-4">
       <button
-        class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
+        class="itbms-sale-item-add bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
         @click="addSaleItemButton"
       >
         + Add Sell Item
       </button>
-      <div class="flex flex-col items-end mr-[5%]">
-        <div class="mb-2">
-          </div>
-        <div class="bg-gray-200 text-sm text-gray-500 leading-none border-2 border-gray-200 rounded-full inline-flex">
-          <button
-            :class="['inline-flex items-center transition-colors duration-300 ease-in focus:outline-none hover:text-gray-900 focus:text-gray-900 rounded-l-full px-4 py-2', { 'active': isGridView }]"
-            id="grid"
-            @click="isGridView = true"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="fill-current w-4 h-4 mr-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            <span>Grid</span>
-          </button>
-          <button
-            :class="['inline-flex items-center transition-colors duration-300 ease-in focus:outline-none hover:text-gray-900 focus:text-gray-900 rounded-r-full px-4 py-2', { 'active': !isGridView }]"
-            id="list"
-            @click="isGridView = false"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="fill-current w-4 h-4 mr-2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-            <span>List</span>
-          </button>
-        </div>
+      <div class="mr-[5%]">
+        <button
+          v-if="!isGridView"
+          @click="goToManageBrand"
+          class="itbms-manage-brand bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500"
+        >
+          Manage Brand
+        </button>
       </div>
     </div>
 
@@ -203,54 +175,53 @@ const closeSuccessPopup = () => {
     </div>
 
     <div v-else class="p-6">
-  <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">
-    No sale items found.
-  </div>
-  <table v-else class="w-full border-collapse border text-sm text-left text-black">
-    <thead>
-      <tr class="bg-gray-100">
-        <th class="border px-4 py-2">Id</th>
-        <th class="border px-4 py-2">Brand</th>
-        <th class="border px-4 py-2">Model</th>
-        <th class="border px-4 py-2">Ram</th>
-        <th class="border px-4 py-2">Storage</th>
-        <th class="border px-4 py-2">Color</th>
-        <th class="border px-4 py-2">Price</th>
-        <th class="border px-4 py-2">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr
-        v-for="item in filteredAndSortedItems"
-        :key="item.id"
-        class="itbms-row hover:bg-gray-50 transition"
-      >
-        <td class="itbms-id border px-4 py-2">{{ item.id }}</td>
-        <td class="itbms-brand border px-4 py-2">{{ item.brandName }}</td>
-        <td class="itbms-model border px-4 py-2">{{ item.model }}</td>
-        <td class="itbms-ramGb border px-4 py-2">{{ item.ramGb }}</td>
-        <td class="itbms-storageGb border px-4 py-2">{{ item.storageGb }}</td>
-        <td class="itbms-color border px-4 py-2">{{ item.color }}</td>
-        <td class="itbms-price border px-4 py-2">{{ item.price.toLocaleString() }}</td>
-        <td class="border px-4 py-2 space-x-1">
-          <button
-            @click.stop="goToEditItem(item.id)"
-            class="itbms-edit-button bg-yellow-500 text-white border-2 border-yellow-500 rounded px-2 py-1 hover:bg-transparent hover:text-yellow-500 transition-colors duration-300"
+      <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">
+        No sale items found.
+      </div>
+      <table v-else class="w-full border-collapse border text-sm text-left text-black">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="border px-4 py-2">Id</th>
+            <th class="border px-4 py-2">Brand</th>
+            <th class="border px-4 py-2">Model</th>
+            <th class="border px-4 py-2">Ram</th>
+            <th class="border px-4 py-2">Storage</th>
+            <th class="border px-4 py-2">Color</th>
+            <th class="border px-4 py-2">Price</th>
+            <th class="border px-4 py-2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="item in filteredAndSortedItems"
+            :key="item.id"
+            class="itbms-row hover:bg-gray-50 transition"
           >
-            Edit
-          </button>
-          <button
-            @click.stop="deleteItem(item.id)"
-            class="itbms-delete-button bg-red-500 text-white border-2 border-red-500 rounded px-2 py-1 hover:bg-transparent hover:text-red-500 transition-colors duration-300"
-          >
-            Delete
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
+            <td class="itbms-id border px-4 py-2">{{ item.id }}</td>
+            <td class="itbms-brand border px-4 py-2">{{ item.brandName }}</td>
+            <td class="itbms-model border px-4 py-2">{{ item.model }}</td>
+            <td class="itbms-ramGb border px-4 py-2">{{ item.ramGb }}</td>
+            <td class="itbms-storageGb border px-4 py-2">{{ item.storageGb }}</td>
+            <td class="itbms-color border px-4 py-2">{{ item.color }}</td>
+            <td class="itbms-price border px-4 py-2">{{ item.price.toLocaleString() }}</td>
+            <td class="border px-4 py-2 space-x-1">
+              <button
+                @click.stop="goToEditItem(item.id)"
+                class="itbms-edit-button bg-yellow-500 text-white border-2 border-yellow-500 rounded px-2 py-1 hover:bg-transparent hover:text-yellow-500 transition-colors duration-300"
+              >
+                Edit
+              </button>
+              <button
+                @click.stop="deleteItem(item.id)"
+                class="itbms-delete-button bg-red-500 text-white border-2 border-red-500 rounded px-2 py-1 hover:bg-transparent hover:text-red-500 transition-colors duration-300"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <transition name="bounce-popup">
       <div
@@ -289,14 +260,11 @@ const closeSuccessPopup = () => {
         </div>
       </div>
     </transition>
-
-    
   </div>
   <Footer />
 </template>
 
 <style scoped>
-/*@apply bg-white text-blue-400 rounded-full;*/
 .active {
   background: white;
   border-radius: 9999px;
@@ -327,7 +295,6 @@ const closeSuccessPopup = () => {
 .itbms-list-item:hover {
   transform: scale(1.02);
 }
-
 .itbms-list-item {
   opacity: 0;
   animation: fadeInUp 0.5s ease forwards;

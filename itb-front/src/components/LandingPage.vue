@@ -7,6 +7,9 @@ const router = useRouter()
 const navigateToSaleItems = () => {
   router.push('/sale-items')
 }
+const navigateToBrands = () => {
+  router.push('/sale-items/list')
+}
 const services = ref(null)
 const contact = ref(null)
 const scrollTo = (target) => {
@@ -38,12 +41,20 @@ const scrollTo = (target) => {
         <p class="text-lg opacity-80">
           Explore our curated collection of the latest smartphones. Trusted brands, amazing prices, and lightning-fast delivery — all in one place.
         </p>
-        <button
-          @click="navigateToSaleItems"
-          class="mt-4 px-8 py-3 bg-yellow-400 hover:bg-yellow-300 text-black font-semibold rounded-full shadow-lg transition duration-300 transform hover:-translate-y-1 hover:scale-105"
-        >
-          Shop Now
-        </button>
+        <div class="flex items-center mt-4">
+          <button
+            @click="navigateToSaleItems"
+            class="itbms-shopnow px-8 py-3 bg-yellow-400 hover:bg-yellow-300 text-black font-semibold rounded-full shadow-lg transition duration-300 transform hover:-translate-y-1 hover:scale-105 mr-4"
+          >
+            Shop Now
+          </button>
+          <button
+            @click="navigateToBrands"
+            class="itbms-seller px-8 py-3 bg-white hover:bg-gray-100 text-gray-800 font-semibold rounded-full shadow-lg transition duration-300 transform hover:-translate-y-1 hover:scale-105"
+          >
+            Seller
+          </button>
+        </div>
       </div>
 
       <!-- Phone Image -->
