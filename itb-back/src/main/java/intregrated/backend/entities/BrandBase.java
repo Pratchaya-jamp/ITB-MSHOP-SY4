@@ -23,7 +23,7 @@ public class BrandBase {
     private Integer id;
 
     @Size(max = 30)
-    @Column(name = "name", nullable = false, length = 30)
+    @Column(name = "name", nullable = false, unique = true, length = 30)
     private String name;
 
     @Size(max = 40)
