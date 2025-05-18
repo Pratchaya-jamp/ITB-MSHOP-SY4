@@ -28,7 +28,6 @@ public class BrandBaseController {
     @GetMapping("")
     public ResponseEntity<List<BrandBaseDto>> getAllBrandBases() {
         List<BrandBase> brandBases = brandBaseService.getAllBrandBase();
-
         return ResponseEntity.ok(ListMapper.mapList(brandBases, BrandBaseDto.class, modelMapper));
     }
 

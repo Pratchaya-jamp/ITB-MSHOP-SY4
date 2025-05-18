@@ -4,6 +4,7 @@ import intregrated.backend.dtos.BrandBaseByIdDto;
 import intregrated.backend.dtos.NewBrandBaseDto;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.repositories.BrandBaseRepo;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -39,14 +40,20 @@ public class BrandBaseService {
                 .build();
     }
 
+    @Transactional
     public void deleteBrandBaseById(Integer id) {
-        if (!brandBaseRepo.existsById(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Brand with id " + id + " not found"
-            );
+        BrandBase brandBase = brandBaseRepo.findById(id).orElseThrow(
+                () -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Brand with id " + id + " not found"
+                )
+        );
+
+        if (brandBase.getSaleItemBases() != null && !brandBase.getSaleItemBases().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "BrandBase with id " + id + " has sale items");
+        } else {
+            brandBaseRepo.deleteById(id);
         }
-        brandBaseRepo.deleteById(id);
     }
 
     public BrandBaseByIdDto createBrandBase(NewBrandBaseDto newBrandBase) {
