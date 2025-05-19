@@ -10,7 +10,7 @@ const route = useRoute()
 const items = ref([])
 const searchQuery = ref('')
 const filterBy = ref('')
-const viewMode = ref('grid') // กำหนดค่าเริ่มต้นเป็น 'grid'
+const viewMode = ref('list') // กำหนดค่าเริ่มต้นเป็น 'grid'
 
 const showBrandNameDelete = ref('')
 const isDeleting = ref(false)
@@ -268,7 +268,7 @@ const setViewMode = (mode) => {
             :key="item.id"
             class="itbms-row hover:bg-gray-50 transition"
           >
-            <td class="border px-4 py-2">{{ item.id }}</td>
+            <td class="itbms-id border px-4 py-2">{{ item.id }}</td>
 
             <td class="border  px-4 py-2">
               <div class="flex items-center space-x-3">
@@ -277,7 +277,7 @@ const setViewMode = (mode) => {
                   alt="brand"
                   class="w-10 h-10 object-contain rounded"
                 />
-                <span>{{ item.brandName }}</span>
+                <span class="itbms-name">{{ item.brandName }}</span>
               </div>
             </td>
 

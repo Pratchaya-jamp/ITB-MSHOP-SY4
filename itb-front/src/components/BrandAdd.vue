@@ -120,8 +120,7 @@ const confirmAddItem = async () => {
 if (isEditMode.value) {
   try {
     const result = await editItem(
-      'http://intproj24.sit.kmutt.ac.th/sy4/api/v1/brands',
-      id,
+      'http://intproj24.sit.kmutt.ac.th/sy4/api/v1/brands', id,
       newbrand
     );
 
@@ -215,23 +214,21 @@ if (isEditMode.value) {
           </div>
 
           <div class="mb-4 flex items-center">
-            <label class="block text-gray-800 font-medium mr-4">isActive:</label>
-            <button
-              type="button"
-              class="itbms-isActive relative inline-flex flex-shrink-0 w-11 h-6 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              :class="{'bg-indigo-600': brand.isActive, 'bg-gray-200': !brand.isActive}"
-              role="switch"
-              aria-checked="brand.isActive"
-              @click="brand.isActive = !brand.isActive"
-            >
-              <span class="sr-only">Enable notifications</span>
-              <span
-                aria-hidden="true"
-                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200"
-                :class="{'translate-x-5': brand.isActive, 'translate-x-0': !brand.isActive}"
-              ></span>
-            </button>
-          </div>
+  <label class="block text-gray-800 font-medium mr-4">isActive:</label>
+  <input
+    v-model="brand.isActive"
+    type="checkbox"
+    id="isActiveSwitch"
+    class="itbms-isActive" style="opacity: 0; position: absolute; /* ซ่อนด้วย opacity แทน */"
+  />
+  <div
+    class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-indigo-600 cursor-pointer"
+    @click="document.getElementById('isActiveSwitch').click()" ></div>
+  <span
+    aria-hidden="true"
+    class="absolute left-0 top-0 h-6 w-6 bg-white border border-gray-300 rounded-full peer-checked:translate-x-5 transition-transform duration-200 ease-in-out cursor-pointer"
+  ></span>
+</div>
 
           <div class="mb-6">
             <label class="block text-gray-800 font-medium mb-1">countryOfOrigin:</label>
@@ -315,7 +312,7 @@ if (isEditMode.value) {
   >
     <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
       <h2 class="text-xl font-semibold mb-4">⚠️ Item not found.</h2>
-      <p class="itbms-message mb-2">The requested sale item does not exist.</p>
+      <p class="itbms-message mb-2">The brand does not exist.</p>
       <p class="text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
     </div>
   </div>
@@ -397,5 +394,45 @@ if (isEditMode.value) {
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+input[type="checkbox"].itbms-isActive + div {
+  width: 44px; /* ปรับขนาดตามต้องการ */
+  height: 24px; /* ปรับขนาดตามต้องการ */
+  background-color: #e5e7eb; /* สีพื้นหลังเมื่อไม่ Checked */
+  border-radius: 12px; /* ทำให้ขอบมน */
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+input[type="checkbox"].itbms-isActive:checked + div {
+  background-color: #6366f1; /* สีพื้นหลังเมื่อ Checked */
+}
+
+input[type="checkbox"].itbms-isActive + div + span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px; /* ปรับขนาด Thumb ตามต้องการ */
+  height: 20px; /* ปรับขนาด Thumb ตามต้องการ */
+  background-color: white;
+  border-radius: 50%; /* ทำให้เป็นวงกลม */
+  transition: transform 0.2s ease-in-out;
+}
+
+input[type="checkbox"].itbms-isActive:checked + div + span {
+  transform: translateX(20px); /* ระยะเลื่อนเมื่อ Checked */
 }
 </style>

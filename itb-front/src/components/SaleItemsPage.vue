@@ -200,9 +200,9 @@ const closeSuccessPopup = () => {
             <td class="itbms-id border px-4 py-2">{{ item.id }}</td>
             <td class="itbms-brand border px-4 py-2">{{ item.brandName }}</td>
             <td class="itbms-model border px-4 py-2">{{ item.model }}</td>
-            <td class="itbms-ramGb border px-4 py-2">{{ item.ramGb }}</td>
-            <td class="itbms-storageGb border px-4 py-2">{{ item.storageGb }}</td>
-            <td class="itbms-color border px-4 py-2">{{ item.color }}</td>
+            <td class="itbms-ramGb border px-4 py-2">{{ item.ramGb || '-'}}</td>
+            <td class="itbms-storageGb border px-4 py-2">{{ item.storageGb || '-' }}</td>
+            <td class="itbms-color border px-4 py-2">{{ item.color || '-'}}</td>
             <td class="itbms-price border px-4 py-2">{{ item.price.toLocaleString() }}</td>
             <td class="border px-4 py-2 space-x-1">
               <button

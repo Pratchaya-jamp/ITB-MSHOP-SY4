@@ -109,9 +109,14 @@ const isFormTouched = computed(() => {
 })
 
 const isValid = () => {
-  const { brandName, model, price, description } = product.value
-  return [brandName, model, price, description].every(val => String(val).trim() !== '')
-}
+  const { model, price, description } = product.value;
+  return (
+    selectedBrandId.value !== null &&
+    String(model).trim() !== '' &&
+    String(price).trim() !== '' &&
+    String(description).trim() !== ''
+  );
+};
 
 const submitForm = async () => {
   if (!isFormTouched.value) {
@@ -198,7 +203,7 @@ if (isEditMode.value) {
     setTimeout(() => {
       isLoading.value = false;
       router.push({
-        path: '/sale-items',
+        path: '/sale-items/list',
         query: { addSuccess: 'true' },
       });
     }, 1000);
@@ -207,7 +212,7 @@ if (isEditMode.value) {
     responseMessage.value = 'เกิดข้อผิดพลาดในการเพิ่มสินค้า';
     isLoading.value = false;
     router.push({
-      path: '/sale-items',
+      path: '/sale-items/list',
       query: { addFail: 'true' },
     });
   }
