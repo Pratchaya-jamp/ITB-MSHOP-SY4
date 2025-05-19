@@ -8,6 +8,7 @@ import { deleteItemById } from '@/libs/fetchUtilsOur'
 const router = useRouter()
 const route = useRoute()
 const items = ref([])
+const saleItems = ref([])
 const searchQuery = ref('')
 const filterBy = ref('')
 const viewMode = ref('list') // กำหนดค่าเริ่มต้นเป็น 'grid'
@@ -45,6 +46,8 @@ onMounted(async () => {
   try {
     const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/api/v1/brands')
     items.value = data.sort((a, b) => a.id - b.id)
+    const saleItemsData = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/api/v1/sale-items')
+    saleItems.value = saleItemsData
   } catch (err) {
     console.error('Error loading items:', err)
   }
@@ -116,13 +119,31 @@ watch(
 )
 
 const deletebrand = async (item) => {
-  deleteId.value = item.id
-  showBrandNameDelete.value = item.brandName
-  showDeleteConfirmationPopup.value = true
+  const hasRelated = saleItems.value.some(saleItem => saleItem.brandName === item.brandName);
+  hasRelatedSaleItemsOnPopup.value = hasRelated;
+  deleteId.value = item.id;
+  showBrandNameDelete.value = item.brandName;
+  if (hasRelated) {
+    deleteMessage.value = `Delete ${item.brandName} is not allowed. There are sale items with ${item.brandName} brand.`;
+  } else {
+    deleteMessage.value = `Do you want to delete ${item.brandName} brand ?`;
+  }
+  showDeleteConfirmationPopup.value = true;
 }
+
+const deleteMessage = ref('')
+const hasRelatedSaleItemsOnPopup = ref(false)
 
 const confirmDelete = async () => {
   showDeleteConfirmationPopup.value = false
+  if (hasRelatedSaleItemsOnPopup.value) {
+    // ถ้ามี sale item ที่เกี่ยวข้อง จะไม่ทำการลบจริงและอาจแสดง popup อื่นๆ เพิ่มเติม (ถ้าต้องการ)
+    setTimeout(() => {
+      showcannotDeletePopup.value = true; // แสดง popup แจ้งเตือนว่าลบไม่ได้
+    }, 200);
+    return;
+  }
+
   isDeleting.value = true
   try {
     const statusCode = await deleteItemById('http://intproj24.sit.kmutt.ac.th/sy4/api/v1/brands', deleteId.value);
@@ -312,9 +333,9 @@ const setViewMode = (mode) => {
   >
     <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
       <h2 class="text-xl font-semibold mb-4">Confirm delete the brand</h2>
-      <p class="itbms-message mb-4">Do you want to delete {{ showBrandNameDelete }} brand ?</p>
+      <p class="itbms-message text-sm">{{ deleteMessage }}</p>
       <div class="flex justify-center gap-4">
-        <button @click="confirmDelete" class="itbms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
+        <button v-if="!hasRelatedSaleItemsOnPopup" @click="confirmDelete" class="itbms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
         <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>      
       </div>
     </div>
@@ -339,7 +360,7 @@ const setViewMode = (mode) => {
   >
     <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center max-w-sm w-full">
       <h2 class="text-xl font-semibold mb-4">⚠️ Item not found.</h2>
-      <p class="itbms-message mb-2">The requested brand does not exist.</p>
+      <p class="itbms-message mb-2">An error has occurred, the brand does not exist.</p>
       <p class="text-sm text-gray-500">Bring You Back in {{ countdown }} second<span v-if="countdown > 1">s</span>...</p>
     </div>
   </div>
@@ -417,7 +438,7 @@ const setViewMode = (mode) => {
       >
         <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
           <h2 class="text-xl text-red-500 font-semibold mb-4">Delete this brand is not allow!</h2>
-          <p class="itbms-message mb-4">There are sale items with this brand.</p>
+          <p class="itbms-message mb-4">The status could not be added.</p>
           <button @click="closeSuccessPopup" class="bg-blue-500 text-white border-2 border-blue-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-blue-500">Done</button>
         </div>
       </div>

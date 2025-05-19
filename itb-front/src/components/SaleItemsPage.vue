@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getItems } from '@/libs/fetchUtilsOur';
+import { getItems, deleteItemById } from '@/libs/fetchUtilsOur';
 import Footer from './Footer.vue'
 
 const router = useRouter()
@@ -28,10 +28,6 @@ const goToPhoneDetails = (id) => {
 
 const goToEditItem = (id) => {
   router.push(`/sale-items/${id}/edit`)
-}
-
-const deleteItem = async (id) => {
-  router.push({ path: `/sale-items/${id}`, query: { confirmDelete: 'true' } })
 }
 
 onMounted(async () => {
@@ -99,6 +95,45 @@ const filteredAndSortedItems = computed(() => {
 
   return result
 })
+
+const deleteResponseMessage = ref('')
+const showDeleteConfirmationPopup = ref(false)
+const isDeleting = ref(false)
+const deleteSale = ref(null)
+const deleteproduct = async (item) => {
+  deleteSale.value = item.id
+  showDeleteConfirmationPopup.value = true
+}
+
+const confirmDelete = async () => {
+  showDeleteConfirmationPopup.value = false
+  isDeleting.value = true
+  try {
+    const statusCode = await deleteItemById('http://intproj24.sit.kmutt.ac.th/sy4/api/v1/sale-items', deleteSale.value);
+    if (statusCode === 204) {
+      setTimeout(() => {
+        isDeleting.value = false
+        router.push({ path: '/sale-items/list', query: { deleteSuccess: 'true' } })
+      }, 1000)
+    }else if (statusCode === 404) {
+      // กรณีได้รับ 404 ตอนลบ แสดงว่าข้อมูลไม่มีแล้ว
+      isDeleting.value = false;
+      showNotFoundPopup.value = true;
+      startCountdown();
+      setTimeout(() => {
+        router.push('/sale-items/list');
+      }, 3000);
+    }
+  } catch (error) {
+    console.error("delete Fall:", error);
+    deleteResponseMessage.value = ('เกิดข้อผิดพลาดในการลบสินค้า')
+    isDeleting.value = false
+  }
+}
+
+const cancelDeleteItem = () => {
+  showDeleteConfirmationPopup.value = false
+}
 
 const closeSuccessPopup = () => {
   showAddSuccessPopup.value = false
@@ -207,13 +242,13 @@ const closeSuccessPopup = () => {
             <td class="border px-4 py-2 space-x-1">
               <button
                 @click.stop="goToEditItem(item.id)"
-                class="itbms-edit-button bg-yellow-500 text-white border-2 border-yellow-500 rounded px-2 py-1 hover:bg-transparent hover:text-yellow-500 transition-colors duration-300"
+                class="itbms-edit-button bg-yellow-500 text-white border-2 border-yellow-500 rounded px-2 py-1 hover:bg-transparent hover:text-yellow-500 transition-colors duration-300 cursor-pointer"
               >
                 Edit
               </button>
               <button
-                @click.stop="deleteItem(item.id)"
-                class="itbms-delete-button bg-red-500 text-white border-2 border-red-500 rounded px-2 py-1 hover:bg-transparent hover:text-red-500 transition-colors duration-300"
+                @click.stop="deleteproduct(item)"
+                class="itbms-delete-button bg-red-500 text-white border-2 border-red-500 rounded px-2 py-1 hover:bg-transparent hover:text-red-500 transition-colors duration-300 cursor-pointer"
               >
                 Delete
               </button>
@@ -223,6 +258,30 @@ const closeSuccessPopup = () => {
       </table>
     </div>
 
+    <div
+    v-if="showDeleteConfirmationPopup"
+    class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
+      <p class="itbms-message mb-4">Do you want to delete this sale item?</p>
+      <div class="flex justify-center gap-4">
+        <button @click="confirmDelete" class="itbms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
+        <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
+      </div>
+    </div>
+  </div>
+  <transition name="fade-background">
+      <div v-if="isDeleting" class="fixed top-0 left-0 w-full h-full bg-black flex items-center justify-center z-50 loading-overlay">
+        <div class="bg-white text-black p-6 rounded-lg shadow-lg text-center">
+          <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
+          </svg>
+          <p class="itbms-message text-sm font-medium">Deleting product...</p>
+        </div>
+      </div>
+    </transition>
     <transition name="bounce-popup">
       <div
         v-if="showAddSuccessPopup"
@@ -333,5 +392,18 @@ const closeSuccessPopup = () => {
 
 .fade-background-leave-to {
   background-color: rgba(0, 0, 0, 0); /* จบที่ Opacity 0 */
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+.loading-overlay {
+  background-color: rgba(0, 0, 0, 0.2); /* หรือค่าอื่น ๆ ที่คุณต้องการ */
 }
 </style>

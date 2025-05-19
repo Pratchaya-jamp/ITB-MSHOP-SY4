@@ -212,22 +212,27 @@ if (isEditMode.value) {
             <input v-model="brand.websiteUrl" type="url"
               class="itbms-websiteUrl w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
           </div>
-
+ 
           <div class="mb-4 flex items-center">
   <label class="block text-gray-800 font-medium mr-4">isActive:</label>
-  <input
-    v-model="brand.isActive"
-    type="checkbox"
-    id="isActiveSwitch"
-    class="itbms-isActive" style="opacity: 0; position: absolute; /* ซ่อนด้วย opacity แทน */"
-  />
   <div
-    class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-indigo-600 cursor-pointer"
-    @click="document.getElementById('isActiveSwitch').click()" ></div>
-  <span
-    aria-hidden="true"
-    class="absolute left-0 top-0 h-6 w-6 bg-white border border-gray-300 rounded-full peer-checked:translate-x-5 transition-transform duration-200 ease-in-out cursor-pointer"
-  ></span>
+    class="relative inline-flex items-center cursor-pointer"
+    @click="brand.isActive = !brand.isActive"
+  >
+    <input
+      v-model="brand.isActive"
+      type="checkbox"
+      id="isActiveSwitch"
+      class="itbms-isActive itbms-checkbox sr-only"
+    />
+    <div
+      class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-indigo-600 transition-colors duration-200 ease-in-out"
+    ></div>
+    <span
+      aria-hidden="true"
+      class="absolute top-0 left-0 h-6 w-6 bg-white border border-gray-300 rounded-full peer-checked:translate-x-5 transition-transform duration-200 ease-in-out"
+    ></span>
+  </div>
 </div>
 
           <div class="mb-6">
@@ -408,7 +413,7 @@ if (isEditMode.value) {
   border-width: 0;
 }
 
-input[type="checkbox"].itbms-isActive + div {
+input[type="checkbox"].itbms-checkbox + div {
   width: 44px; /* ปรับขนาดตามต้องการ */
   height: 24px; /* ปรับขนาดตามต้องการ */
   background-color: #e5e7eb; /* สีพื้นหลังเมื่อไม่ Checked */
@@ -417,11 +422,11 @@ input[type="checkbox"].itbms-isActive + div {
   transition: background-color 0.2s ease-in-out;
 }
 
-input[type="checkbox"].itbms-isActive:checked + div {
+input[type="checkbox"].itbms-checkbox:checked + div {
   background-color: #6366f1; /* สีพื้นหลังเมื่อ Checked */
 }
 
-input[type="checkbox"].itbms-isActive + div + span {
+input[type="checkbox"].itbms-checkbox + div + span {
   position: absolute;
   top: 2px;
   left: 2px;
@@ -432,7 +437,8 @@ input[type="checkbox"].itbms-isActive + div + span {
   transition: transform 0.2s ease-in-out;
 }
 
-input[type="checkbox"].itbms-isActive:checked + div + span {
+input[type="checkbox"].itbms-checkbox:checked + div + span {
   transform: translateX(20px); /* ระยะเลื่อนเมื่อ Checked */
 }
+
 </style>
