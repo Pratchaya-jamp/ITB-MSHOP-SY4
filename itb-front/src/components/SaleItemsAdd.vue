@@ -25,6 +25,7 @@ const mainImage = ref('/sy4/phone/iPhone.jpg')
 const responseMessage = ref('')
 const originalProduct = ref(null)
 const addnewitemMessage = ref('New Sale ltem')
+const selectedBrandId = ref(null)
 
 // State สำหรับควบคุมการแสดง Pop-up
 const showConfirmationAddPopup = ref(false)
@@ -78,6 +79,11 @@ onMounted(async () => {
       }
       product.value = { ...formattedProduct }
       originalProduct.value = { ...formattedProduct }
+
+      const selectedBrand = brandList.value.find(brand => brand.brandName === data.brandName);
+      if (selectedBrand) {
+        selectedBrandId.value = selectedBrand.id;
+      }
     } else {
       if (!data || data?.status === 404) {
       showNotFoundPopup.value = true
@@ -138,7 +144,8 @@ const confirmAddItem = async () => {
   const newProduct = {
     //id:product.value.id,
     brand: {
-      brandName: product.value.brandName
+      id: selectedBrandId.value,
+      //brandName: product.value.brandName,
     },
     model: product.value.model.trim(),
     description: product.value.description.trim(),
@@ -153,8 +160,7 @@ const confirmAddItem = async () => {
 if (isEditMode.value) {
   try {
     const result = await editItem(
-      'http://intproj24.sit.kmutt.ac.th/sy4/api/v1/sale-items',
-      id,
+      'http://intproj24.sit.kmutt.ac.th/sy4/api/v1/sale-items', id,
       newProduct
     );
 
@@ -253,9 +259,9 @@ const cancelAddItem = () => {
           <!-- <input v-model="product.id" type="number" class="border p-2 rounded w-full" /> -->
           
           <label class="text-left font-medium">Brand:<span class="text-red-500">*</span></label>
-          <select v-if="brandList.length > 0" v-model="product.brandName" class="itbms-brand border p-2 rounded w-full">
+          <select v-if="brandList.length > 0" v-model="selectedBrandId" class="itbms-brand border p-2 rounded w-full">
           <option value="" disabled selected> Select Brand</option>
-          <option v-for="brand in brandList" :key="brand.id" :value="brand.brandName">
+          <option v-for="brand in brandList" :key="brand.id" :value="brand.id">
           {{ brand.brandName }}
           </option>
           </select>
