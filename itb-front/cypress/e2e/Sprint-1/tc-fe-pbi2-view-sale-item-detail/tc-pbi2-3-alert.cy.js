@@ -32,7 +32,7 @@ describe(`TC-FE-PBI2-VIEW-SALE-ITEM-DETAIL-3 with Alert\n
         })
       
         cy.location().should((location)=>{
-            expect(location.pathname).to.eq('/sale-items')
+            expect(location.pathname).to.eq('/sy4/sale-items')
         })
 
     })

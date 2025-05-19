@@ -30,7 +30,7 @@ describe(`TC-FE-PBI2-VIEW-SALE-ITEM-DETAIL-3 with Message\n
         cy.get('.itbms-message').contains('The requested sale item does not exist.')
       
         cy.location().should((location)=>{
-            expect(location.pathname).to.eq('/sale-items')
+            expect(location.pathname).to.eq('/sy4/sale-items')
         })
 
     })
