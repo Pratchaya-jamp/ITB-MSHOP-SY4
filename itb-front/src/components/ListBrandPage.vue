@@ -244,7 +244,7 @@ const setViewMode = (mode) => {
           :key="item.id"
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
         >
-          <img :src="`brands/${item.id}.png`" alt="brand" class="w-full h-40 object-contain mb-4" />
+          <img :src="`logobrands/${item.id}.png`" alt="brand" class="w-full h-40 object-contain mb-4" />
           <div class="font-semibold text-center">{{ item.brandName }}</div>
         </div>
       </div>
@@ -273,7 +273,7 @@ const setViewMode = (mode) => {
             <td class="border  px-4 py-2">
               <div class="flex items-center space-x-3">
                 <img
-                  :src="`brands/${item.id}.png`"
+                  :src="`logobrands/${item.id}.png`"
                   alt="brand"
                   class="w-10 h-10 object-contain rounded"
                 />

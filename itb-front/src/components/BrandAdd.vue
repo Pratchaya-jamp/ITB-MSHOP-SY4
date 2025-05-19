@@ -8,8 +8,8 @@ const router = useRouter();
 
 const isEdit = computed(() => !!route.query.edit);
 
-const defaultImage = '/sy4/brands/1.png'; // โลโก้ default
-const brandLogo = ref('/sy4/brands/1.png');
+const defaultImage = '/sy4/logobrands/1.png'; // โลโก้ default
+const brandLogo = ref('/sy4/logobrands/1.png');
 
 // State สำหรับควบคุมการแสดง Pop-up
 const originalBrand = ref(null)
