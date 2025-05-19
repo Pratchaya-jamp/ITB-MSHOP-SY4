@@ -79,7 +79,7 @@ describe(`TC-FE-PBI6-ADD-BRAND-2\n
         cy.get('.itbms-name').type('Infinix')
         cy.get('.itbms-countryOfOrigin').type('Hong Kong')
         cy.get('.itbms-websiteUrl').type('https://th.infinixmobility.com/')
-        cy.get('.itbms-isActive').check()
+        cy.get('.itbms-isActive').check({ force: true })
         cy.get('.itbms-save-button').as('save') ;
         cy.get('@save').should(($btn)=>{
             expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.false
@@ -105,7 +105,7 @@ describe(`TC-FE-PBI6-ADD-BRAND-2\n
         cy.get('.itbms-name').type('Infinix')
         cy.get('.itbms-countryOfOrigin').type('Hong Kong')
         cy.get('.itbms-websiteUrl').type('https://th.infinixmobility.com/')
-        cy.get('.itbms-isActive').check()
+        cy.get('.itbms-isActive').check({ force: true })
         cy.get('.itbms-save-button').as('save') ;
         cy.get('@save').should(($btn)=>{
             expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.false

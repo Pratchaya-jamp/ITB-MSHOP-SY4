@@ -71,7 +71,7 @@ describe(`TC-FE-PBI7-EDIT-BRAND-3\n
         cy.get('.itbms-name').clear().type('Tecno (2025)')
         cy.get('.itbms-countryOfOrigin').clear().type('China')
         cy.get('.itbms-websiteUrl').clear().type('https://www.tecno-mobile.com/')
-        cy.get('.itbms-isActive').uncheck()
+        cy.get('.itbms-isActive').uncheck({ force: true })
 
         cy.get('@save').should(($btn)=>{
             expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.false

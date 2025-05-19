@@ -79,7 +79,7 @@ describe(`TC-FE-PBI6-ADD-BRAND-4\n
         cy.get('.itbms-name').type('Meizu00001Meizu00002Meizu00003')
         cy.get('.itbms-countryOfOrigin').type('China00001China00002China00003China00004China00005China00006China00007China00008')
         cy.get('.itbms-websiteUrl').type('https://www.meizu.com/0000003/000000004/')
-        cy.get('.itbms-isActive').check()
+        cy.get('.itbms-isActive').check({ force: true })
         cy.get('.itbms-save-button').as('save') ;
         cy.get('@save').should(($btn)=>{
             expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.false
@@ -105,7 +105,7 @@ describe(`TC-FE-PBI6-ADD-BRAND-4\n
         cy.get('.itbms-name').type('Meizu00001Meizu00002Meizu00003')
         cy.get('.itbms-countryOfOrigin').type('China00001China00002China00003China00004China00005China00006China00007China00008')
         cy.get('.itbms-websiteUrl').type('https://www.meizu.com/0000003/000000004/')
-        cy.get('.itbms-isActive').check()
+        cy.get('.itbms-isActive').check({ force: true })
         cy.get('.itbms-save-button').as('save') ;
         cy.get('@save').should(($btn)=>{
             expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.false
