@@ -32,7 +32,7 @@ const goToEditItem = (id) => {
 
 onMounted(async () => {
   try {
-    const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/api/v1/sale-items')
+    const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items')
     items.value = data
   } catch (err) {
     console.error('Error loading items:', err)
@@ -109,7 +109,7 @@ const confirmDelete = async () => {
   showDeleteConfirmationPopup.value = false
   isDeleting.value = true
   try {
-    const statusCode = await deleteItemById('http://intproj24.sit.kmutt.ac.th/sy4/api/v1/sale-items', deleteSale.value);
+    const statusCode = await deleteItemById('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items', deleteSale.value);
     if (statusCode === 204) {
       setTimeout(() => {
         isDeleting.value = false
@@ -198,7 +198,7 @@ const closeSuccessPopup = () => {
           @click="goToPhoneDetails(item.id)"
         >
           <img
-            :src="'phone/iPhone.jpg'"
+            :src="'/sy4/phone/iPhone.jpg'"
             alt="phone"
             class="w-full h-40 object-contain mb-4"
           />
