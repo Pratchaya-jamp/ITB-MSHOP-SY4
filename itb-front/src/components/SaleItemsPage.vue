@@ -140,6 +140,7 @@ const closeSuccessPopup = () => {
   showDeleteSuccessPopup.value = false
   showfailPopup.value = false
   router.replace(route.path)
+  router.go(0)
 }
 </script>
 
