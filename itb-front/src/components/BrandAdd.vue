@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed,watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { addItem,editItem, getItems, getItemById } from '@/libs/fetchUtilsOur'
 
@@ -68,6 +68,61 @@ const brand = ref({
 }
 })
 
+const isNameValid = ref(true)
+const isWebsiteUrlValid = ref(true)
+const iscountryOfOriginValid = ref(true)
+
+
+// ติดตาม Valid แบบ real-time
+const nameError = ref('')
+const websiteUrlError = ref('')
+const countryOfOriginError = ref('')
+
+// --- brandname ---
+watch(() => brand.value.name, (newVal) => {
+  if (newVal.trim() === '') {
+    nameError.value = 'Please enter brand name.'
+    isNameValid.value = false
+  } else if (newVal.trim().length > 30) {
+    nameError.value = 'Brand name must not exceed 30 characters.'
+    isNameValid.value = false
+  } else {
+    nameError.value = ''
+    isNameValid.value = true
+  }
+})
+ 
+// --- websiteUrl ---
+watch(() => brand.value.websiteUrl, (newVal) => {
+const pattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/
+  
+  if (!newVal.trim()) {
+    websiteUrlError.value = ''
+    isWebsiteUrlValid.value = true
+  } else if (newVal.length > 80) {
+    websiteUrlError.value = 'URL ต้องไม่เกิน 80 ตัวอักษร'
+    isWebsiteUrlValid.value = false
+  } else if (!pattern.test(newVal)) {
+    websiteUrlError.value = 'URL ไม่ถูกต้อง'
+    isWebsiteUrlValid.value = false
+  } else {
+    websiteUrlError.value = ''
+    isWebsiteUrlValid.value = true
+  }
+
+})
+
+// --- countryOfOrigin ---
+watch(() => brand.value.countryOfOrigin, (newVal) => {
+   if (newVal.trim().length > 80) {
+    countryOfOriginError.value = 'countryOfOrigin must not exceed 80 characters.'
+    iscountryOfOriginValid.value = false
+  } else {
+    countryOfOriginError.value = ''
+    iscountryOfOriginValid.value = true
+  }
+})
+
 const isModified = computed(() => {
   if (!originalBrand.value) return true // ในกรณีเพิ่มสินค้าใหม่
   return Object.keys(brand.value).some(key => String(brand.value[key]) !== String(originalBrand.value[key]))
@@ -78,8 +133,11 @@ const isFormTouched = computed(() => {
 })
 
 const isValid = () => {
-  const { name } = brand.value
-  return [name].every(val => String(val).trim() !== '')
+  return (
+  iscountryOfOriginValid.value === true &&
+  isWebsiteUrlValid.value === true &&
+  isNameValid.value === true 
+)
 }
 
 const submitForm = async () => {
@@ -205,12 +263,15 @@ if (isEditMode.value) {
             <label class="block text-gray-800 font-medium mb-1">Name:<span class="text-red-500">*</span></label>
             <input v-model="brand.name" type="text"
               class="itbms-name w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+            
+          <p v-if="nameError" class="text-red-500 text-sm">{{ nameError }}</p>
           </div>
 
           <div class="mb-4">
             <label class="block text-gray-800 font-medium mb-1">WebsiteUrl:</label>
             <input v-model="brand.websiteUrl" type="url"
               class="itbms-websiteUrl w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+              <p v-if="websiteUrlError" class="text-red-500 text-sm">{{ websiteUrlError }}</p>
           </div>
  
           <div class="mb-4 flex items-center">
@@ -239,6 +300,7 @@ if (isEditMode.value) {
             <label class="block text-gray-800 font-medium mb-1">countryOfOrigin:</label>
             <input v-model="brand.countryOfOrigin" type="text"
               class="itbms-countryOfOrigin w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
+              <p v-if="countryOfOriginError" class="text-red-500 text-sm">{{ countryOfOriginError }}</p>
           </div>
 
           <div class="flex gap-2 mt-4 justify-end">

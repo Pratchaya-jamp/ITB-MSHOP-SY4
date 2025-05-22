@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed,onMounted } from 'vue'
+import { ref, computed,onMounted, watch } from 'vue'
 import { useRouter,useRoute } from 'vue-router'
 import { addItem,editItem, getItems, getItemById } from '@/libs/fetchUtilsOur'
 import Footer from './Footer.vue'
@@ -99,6 +99,154 @@ onMounted(async () => {
   }
 })
 
+
+// Valid flags
+const isPriceValid = ref(true)
+const isModelValid = ref(true)
+const isDescriptionValid = ref(true)
+const isRamValid = ref(true)
+const isScreenValid = ref(true)
+const isStorageValid = ref(true)
+const isColorValid = ref(true)
+const isQuantityValid = ref(true)
+
+// ติดตาม Valid แบบ real-time
+const modelError = ref('')
+const priceError = ref('')
+const descriptionError = ref('')
+const ramError = ref('')
+const screenSizeError = ref('')
+const storageError = ref('')
+const colorError = ref('')
+const quantityError = ref('')
+
+
+
+watch(() => product.value.price, (newVal) => {
+  const val = Number(newVal)
+
+  if (newVal === '') {
+    priceError.value = 'Please enter the price.',
+    isPriceValid.value = false
+  } else if (isNaN(val) || val <= 0) {
+    priceError.value = 'Price must be greater than 0.',
+    isPriceValid.value = false
+  } else if ( val >= 1000000) {
+    priceError.value = 'The price must not exceed 1,000,000 Baht.',
+    isPriceValid.value = false
+  } else if (!Number.isInteger(val)) {
+    priceError.value = 'Prices must be in whole numbers only.',
+    isPriceValid.value = false
+  } else {
+    priceError.value = '',
+    isPriceValid.value = true
+  }
+})
+
+// --- Model ---
+watch(() => product.value.model, (newVal) => {
+  if (newVal.trim() === '') {
+    modelError.value = 'Please enter model name.'
+    isModelValid.value = false
+  } else if (newVal.length > 60) {
+    modelError.value = 'Model name must not exceed 60 characters.'
+    isModelValid.value = false
+  } else {
+    modelError.value = ''
+    isModelValid.value = true
+  }
+})
+ 
+// --- Description ---
+watch(() => product.value.description, (newVal) => {
+  if (newVal.trim() === '') {
+    descriptionError.value = 'Please fill in the details.'
+    isDescriptionValid.value = false
+  } else if (newVal.trim().length > 200) {
+    descriptionError.value = 'Description must not exceed 200 characters.'
+    isDescriptionValid.value = false
+  } else {
+    descriptionError.value = ''
+    isDescriptionValid.value = true
+  }
+})
+ 
+// --- RAM ---
+watch(() => product.value.ramGb, (newVal) => {
+  const val = Number(newVal)
+  if ( !Number.isInteger(val) || val < 0) {
+    ramError.value = 'Please enter the correct RAM.'
+    isRamValid.value = false
+  } else if (val > 10000) {
+    ramError.value = 'RAM must not exceed 10,000 GB.'
+    isRamValid.value = false
+  } else {
+    ramError.value = ''
+    isRamValid.value = true
+  }
+})
+ 
+// --- Screen Size ---
+watch(() => product.value.screenSizeInch, (newVal) => {
+  const val = Number(newVal)
+  if ( val < 0) {
+    screenSizeError.value = 'Please enter the correct screen size.'
+    isScreenValid.value = false
+  } else if (!/^\d{1,8}(\.\d{1,2})?$/.test(val.toString())) {
+    screenSizeError.value = 'Screen size must have no more than 2 decimal places.'
+    isScreenValid.value = false
+  } else {
+    screenSizeError.value = ''
+    isScreenValid.value = true
+  }
+})
+ 
+// --- Storage ---
+watch(() => product.value.storageGb, (newVal) => {
+  const val = Number(newVal)
+  if ( !Number.isInteger(val) || val < 0) {
+    storageError.value = 'Please enter the correct storage.'
+    isStorageValid.value = false
+  } else if (val > 10000) {
+    storageError.value = 'Storage must not exceed 10,000 GB.'
+    isStorageValid.value = false
+  } else {
+    storageError.value = ''
+    isStorageValid.value = true
+  }
+})
+ 
+// --- Color ---
+watch(() => product.value.color, (newVal) => {
+  if (newVal.trim().length > 15) {
+    colorError.value = 'The color must not exceed 15 characters.'
+    isColorValid.value = false
+  } else {
+    colorError.value = ''
+    isColorValid.value = true
+  }
+})
+ 
+// --- quantity ---
+watch(() => product.value.quantity, (newVal) => {
+  const val = Number(newVal)
+ 
+  if (!Number.isInteger(val)) {
+    quantityError.value = 'Product quantity must be an integer.'
+    isQuantityValid.value = false
+  } else if (val < 0) {
+    quantityError.value = 'Product quantity must not be negative.'
+    isQuantityValid.value = false
+  } else if (val > 1000000) {
+    quantityError.value = 'The quantity of products must not exceed 1,000,000.'
+    isQuantityValid.value = false
+  } else {
+    quantityError.value = ''
+    isQuantityValid.value = true
+  }
+})
+
+
 const isModified = computed(() => {
   if (!originalProduct.value) return true // ในกรณีเพิ่มสินค้าใหม่
   return Object.keys(product.value).some(key => String(product.value[key]) !== String(originalProduct.value[key]))
@@ -109,12 +257,17 @@ const isFormTouched = computed(() => {
 })
 
 const isValid = () => {
-  const { model, price, description } = product.value;
   return (
     selectedBrandId.value !== null &&
-    String(model).trim() !== '' &&
-    String(price).trim() !== '' &&
-    String(description).trim() !== ''
+    isPriceValid.value === true &&
+    isModelValid.value === true &&
+    isDescriptionValid.value === true &&
+    isRamValid.value === true &&
+    isScreenValid.value === true &&
+    isStorageValid.value === true &&
+    isColorValid.value === true &&
+    isQuantityValid.value === true &&
+    isPriceValid.value === true 
   );
 };
 
@@ -274,28 +427,44 @@ const cancelAddItem = () => {
 
           <label class="text-left font-medium">Model:<span class="text-red-500">*</span></label>
           <input v-model="product.model" type="text" class="itbms-model border p-2 rounded w-full" maxlength="60" />
+          <div v-if="modelError"></div>
+          <p v-if="modelError" class="text-red-500 text-sm">{{ modelError }}</p>
 
           <label class="text-left font-medium">Price (Baht):<span class="text-red-500">*</span></label>
-          <input v-model="product.price" type="number" class="itbms-price border p-2 rounded w-full" />
-
+          <input v-model="product.price" min="0" type="number" class="itbms-price border p-2 rounded w-full" />
+          <div v-if="priceError"></div>
+          <p v-if="priceError" class="text-red-500 text-sm">{{ priceError }}</p>
+          
           <label class="text-left font-medium">Ram (GB):</label>
           <input v-model="product.ramGb" type="number" class="itbms-ramGb border p-2 rounded w-full" />
+          <div v-if="ramError"></div>
+          <p v-if="ramError" class="text-red-500 text-sm">{{ ramError }}</p>
 
           <label class="text-left font-medium">Screen Size (in):</label>
           <input v-model="product.screenSizeInch" type="number" class="itbms-screenSizeInch border p-2 rounded w-full" />
+          <div v-if="screenSizeError"></div>
+          <p v-if="screenSizeError" class="text-red-500 text-sm">{{ screenSizeError }}</p>
 
           <label class="text-left font-medium">Storage (GB):</label>
           <input v-model="product.storageGb" type="number" class="itbms-storageGb border p-2 rounded w-full" />
+          <div v-if="storageError"></div>
+          <p v-if="storageError" class="text-red-500 text-sm">{{ storageError }}</p>
 
           <label class="text-left font-medium">Color:</label>
           <input v-model="product.color" type="text" class="itbms-color border p-2 rounded w-full" />
+          <div v-if="colorError"></div>
+          <p v-if="colorError" class="text-red-500 text-sm">{{ colorError }}</p>
 
           <label class="text-left font-medium">Quantity:</label>
           <input v-model="product.quantity" type="number" class="itbms-quantity border p-2 rounded w-full" />
+          <div v-if="quantityError"></div>
+          <p v-if="quantityError" class="text-red-500 text-sm">{{ quantityError }}</p>
         </div>
 
         <label class="block font-medium mt-4">Description:<span class="text-red-500">*</span></label>
         <textarea v-model="product.description" rows="3" class="itbms-description border p-2 rounded w-full"></textarea>
+        <div v-if="descriptionError"></div>
+          <p v-if="descriptionError" class="text-red-500 text-sm">{{ descriptionError }}</p>
 
         <div class="flex gap-2 mt-4 justify-end">
           <button
