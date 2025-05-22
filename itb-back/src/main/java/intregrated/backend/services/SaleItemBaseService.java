@@ -6,7 +6,12 @@ import intregrated.backend.entities.BrandBase;
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.repositories.BrandBaseRepo;
 import intregrated.backend.repositories.SaleItemBaseRepo;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -160,6 +165,35 @@ public class SaleItemBaseService {
         }
         saleItemBaseRepo.deleteById(id);
     }
+
+    public Page<SaleItemBaseByIdDto> getPagedSaleItems(List<String> filterBrands, Integer page,
+                                                       Integer size, String sortField, String sortDirection) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
+
+        Page<SaleItemBase> result;
+        if (filterBrands == null || filterBrands.isEmpty()) {
+            result = saleItemBaseRepo.findAll(pageable);
+        } else {
+            result = saleItemBaseRepo.findByBrand_NameInIgnoreCase(filterBrands, pageable);
+        }
+
+        return result.map(this::mapToDto);
+    }
+
+    private SaleItemBaseByIdDto mapToDto(SaleItemBase s) {
+        return SaleItemBaseByIdDto.builder()
+                .id(s.getId())
+                .model(s.getModel())
+                .brandName(s.getBrand() != null ? s.getBrand().getName() : null)
+                .description(s.getDescription())
+                .price(s.getPrice())
+                .ramGb(s.getRamGb())
+                .screenSizeInch(s.getScreenSizeInch() != null ? s.getScreenSizeInch().doubleValue() : null)
+                .quantity(s.getQuantity())
+                .storageGb(s.getStorageGb())
+                .color(s.getColor())
+                .createdOn(s.getCreatedOn())
+                .updatedOn(s.getUpdatedOn())
+                .build();
+    }
 }
-
-
