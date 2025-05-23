@@ -276,6 +276,78 @@ const closeSuccessPopup = async () => {
   router.replace({ path: route.path, query: {} }); // Clear query params
   await fetchItems(); // Re-fetch items to ensure data is up-to-date and triggers computed re-evaluation
 }
+
+//---pagination
+const currentPage = ref(parseInt(route.query.page) || 1)
+const pageSize = ref(10)
+ 
+const totalPages = computed(() =>
+  Math.ceil(filteredAndSortedItems.value.length / pageSize.value)
+)
+ 
+const paginatedItems = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredAndSortedItems.value.slice(start, end)
+})
+// จำกัดเลขหน้าให้ไม่เกิน 10 ปุ่ม
+const lastAction = ref('')     // 'next', 'prev', 'direct'
+const fixedStart = ref(1)      // จำ start ช่วงเลขหน้าไว้
+const maxVisible = 10
+ 
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  const action = lastAction.value
+ 
+  let start, end
+ 
+  if (action === 'next') {
+  const endOfGroup = fixedStart.value + maxVisible - 1
+ 
+  if (current > endOfGroup) {
+    end = Math.min(current, total)
+    start = Math.max(end - maxVisible + 1, 1)
+    fixedStart.value = start
+  }
+}
+ 
+  if (action === 'prev') {
+  if (current < fixedStart.value) {
+    start = Math.max(current, 1)
+    fixedStart.value = start
+  }
+}
+ 
+  // ใช้ค่า start จาก fixedStart เสมอ
+  start = fixedStart.value
+  end = Math.min(start + maxVisible - 1, total)
+ 
+  // ป้องกัน start เกินขอบ
+  if (start < 1) start = 1
+  if (end > total) {
+    end = total
+    start = Math.max(end - maxVisible + 1, 1)
+  }
+ 
+  const pages = []
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+ 
+  return pages
+})
+ 
+ 
+ 
+watch(currentPage, (newPage) => {
+  router.replace({ query: { ...route.query, page: newPage } })
+})
+ 
+watch([pageSize, searchQuery,selectedBrands], () => {
+  currentPage.value = 1
+})
+
 </script>
 
 <template>
@@ -341,6 +413,7 @@ const closeSuccessPopup = async () => {
           </button>
         </div>
       </div>
+      
 
       <div class="flex items-center space-x-4 mr-[5%]">
         <button
@@ -383,7 +456,7 @@ const closeSuccessPopup = async () => {
           <span class="sr-only">Clear Sort</span>
         </button>
 
-
+        
         <button
           v-if="!isGridView"
           @click="goToManageBrand"
@@ -391,8 +464,29 @@ const closeSuccessPopup = async () => {
         >
           Manage Brand
         </button>
+
+        
       </div>
+      
     </div>
+
+    <div class="ml-[6%] mb-6 flex items-center gap-3">
+          <label for="page-size" class="text-sm font-medium text-gray-700">
+            Items per page:
+          </label>
+          <select
+            id="page-size"
+            v-model="pageSize"
+            class="border-2 border-blue-500 bg-white rounded-md px-3 py-2 text-sm font-semibold text-blue-700
+              shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500
+              hover:border-blue-600 hover:bg-blue-50 cursor-pointer"
+            >
+            <option :value="5">5</option>
+            <option :value="10">10</option>
+            <option :value="20">20</option>
+            </select>
+        </div>
+    
 
     <transition name="modal-fade">
       <div v-if="showBrandFilterModal" class="itbms-bg fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -423,7 +517,7 @@ const closeSuccessPopup = async () => {
       <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">No sale items found.</div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         <div
-          v-for="(item, index) in filteredAndSortedItems"
+          v-for="(item, index) in paginatedItems"
           :key="item.id"
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
           :style="{ animationDelay: (index * 50) + 'ms' }"
@@ -461,7 +555,7 @@ const closeSuccessPopup = async () => {
         </thead>
         <tbody>
           <tr
-            v-for="item in filteredAndSortedItems"
+            v-for="item in paginatedItems"
             :key="item.id"
             class="itbms-row hover:bg-gray-50 transition"
           >
@@ -552,6 +646,82 @@ const closeSuccessPopup = async () => {
         </div>
       </div>
     </transition>
+
+        <!-- ✅ Pagination Navigation Bar -->
+<div v-if="totalPages > 1" class="flex justify-center mt-6 flex-wrap gap-2">
+    <!-- First -->
+    <button
+      @click="currentPage = 1"
+      :disabled="currentPage === 1"
+      :class="[
+        'itbms-page-first rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
+        currentPage === 1
+          ? 'bg-blue-300 text-white border-blue-300 opacity-90'
+          : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500 cursor-pointer'
+      ]"
+    >
+      ⏮ First
+    </button>
+ 
+    <!-- Prev -->
+    <button
+      @click="() => { lastAction = 'prev'; currentPage-- }"
+  :disabled="currentPage === 1"
+      :class="[
+        'itbms-page-prev rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
+        currentPage === 1
+          ? 'bg-blue-300 text-white border-blue-300 opacity-90'
+          : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500 cursor-pointer'
+      ]"
+    >
+      ◀ Prev
+    </button>
+ 
+    <!-- Page Numbers -->
+    <button
+      v-for="page in visiblePages"
+      :key="'page-' + page"
+      @click="() => { lastAction = ''; currentPage = page }"
+      :class="[
+        `itbms-page-${page}`,
+        'px-4 py-2 border-2 rounded-md text-sm font-semibold transition shadow-sm',
+        currentPage === page
+          ? 'bg-blue-600 text-white border-blue-700'
+          : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-100 hover:text-blue-700'
+      ]"
+    >
+      {{ page }}
+    </button>
+ 
+    <!-- Next -->
+    <button
+      @click="() => { lastAction = 'next'; currentPage++ }"
+  :disabled="currentPage === totalPages"
+      :class="[
+        'itbms-page-next rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
+        currentPage === totalPages
+          ? 'bg-blue-300 text-white border-blue-300 opacity-90'
+          : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500 cursor-pointer'
+      ]"
+    >
+      Next ▶
+    </button>
+ 
+    <!-- Last -->
+    <button
+      @click="currentPage = totalPages"
+      :disabled="currentPage === totalPages"
+      :class="[
+        'itbms-page-last rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
+        currentPage === totalPages
+          ? 'bg-blue-300 text-white border-blue-300 opacity-90'
+          : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500 cursor-pointer'
+      ]"
+    >
+      Last ⏭
+    </button>
+  </div>
+
   </div>
   <Footer />
 </template>
