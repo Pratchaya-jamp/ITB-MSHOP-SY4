@@ -5,15 +5,34 @@ import { getItems, deleteItemById } from '@/libs/fetchUtilsOur';
 import Footer from './Footer.vue'
 
 const router = useRouter()
+const route = useRoute()
+
 const items = ref([])
 const searchQuery = ref('')
-const filterBy = ref('')
-const route = useRoute()
 const showAddSuccessPopup = ref(false)
 const showDeleteSuccessPopup = ref(false)
 const showfailPopup = ref(false)
 const isGridView = computed(() => route.path !== '/sale-items/list')
 
+// Sort related properties
+const currentSortOrder = ref('createdOn'); // Default sort order: 'createdOn', 'brandAsc', 'brandDesc'
+
+// Filter related properties
+const selectedBrands = ref([]); // Stores array of selected brand names for filtering
+const showBrandFilterModal = ref(false); // State to control visibility of the brand filter modal
+
+// Computed property to get unique brands for the filter modal
+const availableBrands = computed(() => {
+  const brands = new Set();
+  items.value.forEach(item => {
+    if (item.brandName) {
+      brands.add(item.brandName);
+    }
+  });
+  return Array.from(brands).sort(); // Return sorted unique brands
+});
+
+// --- Navigation Functions ---
 const addSaleItemButton = () => {
   router.push('/sale-items/add')
 }
@@ -30,15 +49,66 @@ const goToEditItem = (id) => {
   router.push(`/sale-items/${id}/edit`)
 }
 
-onMounted(async () => {
+// --- Data Fetching Function ---
+const fetchItems = async () => {
   try {
     const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items')
     items.value = data
+    console.log("Fetched items:", items.value); // Add this for debugging
   } catch (err) {
     console.error('Error loading items:', err)
   }
+}
+
+// --- Lifecycle Hooks ---
+onMounted(async () => {
+  await fetchItems(); // Fetch items on component mount
+
+  // Load sort order from sessionStorage on mount to persist until session ends
+  const savedSortOrder = sessionStorage.getItem('saleItemsSortOrder');
+  if (savedSortOrder && ['createdOn', 'brandAsc', 'brandDesc'].includes(savedSortOrder)) {
+    currentSortOrder.value = savedSortOrder;
+  }
+
+  // Load selected brands from sessionStorage on mount for filtering
+  const savedSelectedBrands = sessionStorage.getItem('selectedBrandsFilter');
+  if (savedSelectedBrands) {
+    try {
+      const parsedBrands = JSON.parse(savedSelectedBrands);
+      if (Array.isArray(parsedBrands)) {
+        selectedBrands.value = parsedBrands;
+      } else {
+        console.warn("sessionStorage 'selectedBrandsFilter' is not an array, clearing it.");
+        sessionStorage.removeItem('selectedBrandsFilter');
+      }
+    } catch (e) {
+      console.error("Error parsing saved selected brands from sessionStorage:", e);
+      sessionStorage.removeItem('selectedBrandsFilter'); // Clear invalid data
+    }
+  }
 })
 
+// --- Watchers for Session Storage Persistence ---
+// Watch for changes in currentSortOrder and save to sessionStorage
+watch(currentSortOrder, (newValue) => {
+  if (isGridView.value) { // Only persist sort for grid view
+    sessionStorage.setItem('saleItemsSortOrder', newValue);
+  }
+  // No need to call fetchItems() here, as computed property will react
+});
+
+// Watch for changes in selectedBrands and save to sessionStorage
+watch(selectedBrands, (newValue) => {
+  sessionStorage.setItem('selectedBrandsFilter', JSON.stringify(newValue));
+  // No need to call fetchItems() here, as computed property will react
+}, { deep: true }); // Use deep watch for array changes
+
+// Watch for searchQuery changes (optional, but good for debugging)
+watch(searchQuery, (newValue) => {
+  console.log("Search query changed:", newValue);
+});
+
+// Watchers for URL query parameters (for popups)
 watch(
   () => route.query.addSuccess,
   (addSuccess) => {
@@ -78,24 +148,89 @@ watch(
   { immediate: true }
 )
 
-const sortedItemsByCreatedOn = computed(() => {
-  return [...items.value].sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
-})
-
+// --- Filter & Sort Logic ---
 const filteredAndSortedItems = computed(() => {
-  let result = [...sortedItemsByCreatedOn.value]  
+  let result = [...items.value]; // Start with the original fetched items
 
+  console.log("Computed property: Starting with items:", result.length, "items.");
+  console.log("Current searchQuery:", searchQuery.value);
+  console.log("Current selectedBrands:", selectedBrands.value);
+  console.log("Current sortOrder:", currentSortOrder.value);
+
+
+  // 1. Apply search query first
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(item =>
-      item.brandName.toLowerCase().includes(query) ||
-      item.model.toLowerCase().includes(query)
+      (item.brandName && item.brandName.toLowerCase().includes(query)) ||
+      (item.model && item.model.toLowerCase().includes(query))
     )
+    console.log("After search filter:", result.length, "items.");
+  }
+
+  // 2. Apply brand filter
+  if (selectedBrands.value.length > 0) {
+    result = result.filter(item =>
+      selectedBrands.value.includes(item.brandName)
+    );
+    console.log("After brand filter:", result.length, "items.");
+  }
+
+  // 3. Apply sorting based on currentSortOrder only if in Grid View
+  if (isGridView.value) {
+    if (currentSortOrder.value === 'brandAsc') { // Sort by brand name in alphabetical order
+      result.sort((a, b) => {
+        const brandA = a.brandName ? a.brandName.toLowerCase() : '';
+        const brandB = b.brandName ? b.brandName.toLowerCase() : ''; // Fix: changed b.brandB to b.brandName
+        return brandA.localeCompare(brandB);
+      });
+    } else if (currentSortOrder.value === 'brandDesc') { // Sort by brand name in reverse alphabetical order
+      result.sort((a, b) => {
+        const brandA = a.brandName ? a.brandName.toLowerCase() : '';
+        const brandB = b.brandName ? b.brandName.toLowerCase() : ''; // Fix: changed b.brandB to b.brandName
+        return brandB.localeCompare(brandA);
+      });
+    } else { // 'createdOn' or any other default/cleared state, default sort by created time
+      result.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
+    }
+    console.log("After sorting (Grid View):", result.length, "items.");
+  } else {
+    // If not in grid view, always default sort by createdOn
+    result.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
+    console.log("After sorting (List View):", result.length, "items.");
   }
 
   return result
 })
 
+// --- Sort Functions ---
+const sortBrandAscending = () => {
+  currentSortOrder.value = 'brandAsc';
+};
+
+const sortBrandDescending = () => {
+  currentSortOrder.value = 'brandDesc';
+};
+
+const clearBrandSorting = () => {
+  currentSortOrder.value = 'createdOn';
+};
+
+// --- Filter Functions ---
+const toggleBrandFilterModal = () => {
+  showBrandFilterModal.value = !showBrandFilterModal.value;
+};
+
+const removeBrandFromFilter = (brandName) => {
+  selectedBrands.value = selectedBrands.value.filter(brand => brand !== brandName);
+};
+
+const clearAllBrandFilters = () => {
+  selectedBrands.value = [];
+  showBrandFilterModal.value = false; // Close modal after clearing
+};
+
+// --- Delete Item Functions ---
 const deleteResponseMessage = ref('')
 const showDeleteConfirmationPopup = ref(false)
 const isDeleting = ref(false)
@@ -113,15 +248,13 @@ const confirmDelete = async () => {
     if (statusCode === 204) {
       setTimeout(() => {
         isDeleting.value = false
-        router.push({ path: '/sale-items/list', query: { deleteSuccess: 'true' } })
+        // Refresh items after successful deletion
+        router.push({ path: route.path, query: { deleteSuccess: 'true' } })
       }, 1000)
     }else if (statusCode === 404) {
-      // กรณีได้รับ 404 ตอนลบ แสดงว่าข้อมูลไม่มีแล้ว
       isDeleting.value = false;
-      showNotFoundPopup.value = true;
-      startCountdown();
       setTimeout(() => {
-        router.push('/sale-items/list');
+        router.push(route.path); // Stay on the current path, no query param needed
       }, 3000);
     }
   } catch (error) {
@@ -135,12 +268,13 @@ const cancelDeleteItem = () => {
   showDeleteConfirmationPopup.value = false
 }
 
-const closeSuccessPopup = () => {
+// --- Popup Close Function ---
+const closeSuccessPopup = async () => {
   showAddSuccessPopup.value = false
   showDeleteSuccessPopup.value = false
   showfailPopup.value = false
-  router.replace(route.path)
-  router.go(0)
+  router.replace({ path: route.path, query: {} }); // Clear query params
+  await fetchItems(); // Re-fetch items to ensure data is up-to-date and triggers computed re-evaluation
 }
 </script>
 
@@ -149,7 +283,7 @@ const closeSuccessPopup = () => {
     <div class="Itbms-header container mx-auto py-8 flex items-center justify-between">
       <div class="Itbms-logo font-bold text-3xl text-black">ITB MShop</div>
       <div class="flex-grow flex justify-center">
-        <div class="Itbms-search-bar flex items-center rounded-md border border-gray-300 focus-within:border-blue-500 w-full max-w-md">
+        <div class="Itbms-search-bar flex items-center rounded-md border border-gray-300 focus-within:border-blue-500 w-full max-w-sm">
           <input type="text" placeholder="Search..." v-model="searchQuery" class="Itbms-search-input py-2 px-3 w-full focus:outline-none rounded-l-md text-black" />
           <button class="Itbms-search-button bg-gray-100 hover:bg-gray-200 p-2 rounded-r-md focus:outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,14 +303,87 @@ const closeSuccessPopup = () => {
         </div>
       </div>
     </div>
-    <div class="ml-[8%] flex items-start justify-between mb-4">
+
+    <div class="ml-[8%] flex flex-col md:flex-row items-start justify-between mb-4 gap-4">
       <button
         class="itbms-sale-item-add bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500"
         @click="addSaleItemButton"
       >
         + Add Sell Item
       </button>
-      <div class="mr-[5%]">
+
+      <div class="itbms-filter-container flex-grow flex justify-center w-full md:w-auto">
+        <div class="itbms-brand-filter flex items-center rounded-md border border-gray-300 focus-within:border-blue-500 w-full max-w-sm">
+          <div class="flex flex-grow flex-wrap items-center gap-1 p-2 min-h-[40px] max-h-[40px] overflow-y-auto">
+            <span v-for="brand in selectedBrands" :key="brand" class="itbms-filter-item bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full flex items-center whitespace-nowrap">
+              {{ brand }}
+              <button @click.stop="removeBrandFromFilter(brand)" class="itbms-filter-item-clear ml-1 text-blue-800 hover:text-blue-600 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </span>
+            <input
+              type="text"
+              :placeholder="selectedBrands.length === 0 ? 'Filter by brand(s)' : ''"
+              readonly
+              class="itbms-brand-filter-input py-2 px-3 flex-grow focus:outline-none rounded-l-md text-black bg-white cursor-pointer"
+              @click="toggleBrandFilterModal"
+            />
+          </div>
+          <button @click="toggleBrandFilterModal" class="itbms-brand-filter-button bg-gray-100 hover:bg-gray-200 p-2 rounded-r-none focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V19l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+          </button>
+          <button @click="clearAllBrandFilters()" class="itbms-brand-filter-clear bg-red-500 text-white hover:bg-transparent hover:text-red-500 border-2 border-red-500 p-2 rounded-r-md focus:outline-none transition-colors duration-300">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4 mr-[5%]">
+        <button
+          v-if="isGridView"
+          @click="sortBrandAscending"
+          class="itbms-sort-brand-asc border-2 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 focus:outline-none"
+          :class="currentSortOrder === 'brandAsc' ? 'bg-transparent text-blue-500 border-blue-500' : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500'"
+          title="Sort by Brand Ascending"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v9.75m0 0-3-3m3 3 3-3" />
+          </svg>
+          <span class="sr-only">Sort by Brand Ascending</span>
+        </button>
+
+        <button
+          v-if="isGridView"
+          @click="sortBrandDescending"
+          class="itbms-sort-brand-desc border-2 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 focus:outline-none"
+          :class="currentSortOrder === 'brandDesc' ? 'bg-transparent text-blue-500 border-blue-500' : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500'"
+          title="Sort by Brand Descending"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5 4.5V8.25m0 0 3 3m-3-3-3 3" />
+          </svg>
+          <span class="sr-only">Sort by Brand Descending</span>
+        </button>
+
+        <button
+          v-if="isGridView"
+          @click="clearBrandSorting"
+          class="itbms-no-sort border-2 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 focus:outline-none"
+          :class="currentSortOrder === 'createdOn' ? 'bg-transparent text-blue-500 border-blue-500' : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500'"
+          title="Clear Sort (Default: Created On)"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 .75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V4.5Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12c0 5.66 4.62 10.25 10.25 10.25S22.75 17.66 22.75 12A10.25 10.25 0 0 0 12 1.75 10.07 10.07 0 0 0 4.25 4.5" />
+          </svg>
+          <span class="sr-only">Clear Sort</span>
+        </button>
+
+
         <button
           v-if="!isGridView"
           @click="goToManageBrand"
@@ -186,6 +393,31 @@ const closeSuccessPopup = () => {
         </button>
       </div>
     </div>
+
+    <transition name="modal-fade">
+      <div v-if="showBrandFilterModal" class="itbms-bg fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
+          <h3 class="text-lg font-semibold mb-4 text-black">Select Brands</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 max-h-60 overflow-y-auto border border-gray-300 rounded-md p-2">
+            <div v-for="brand in availableBrands" :key="brand" class="flex items-center space-x-2 py-1">
+              <input
+                type="checkbox"
+                :id="'brand-' + brand"
+                :value="brand"
+                v-model="selectedBrands"
+                class="form-checkbox h-4 w-4 text-blue-600 rounded"
+              />
+              <label :for="'brand-' + brand" class="text-gray-700">{{ brand }}</label>
+            </div>
+            <p v-if="availableBrands.length === 0" class="text-gray-500 text-center py-4 w-full col-span-full">No brands available.</p>
+          </div>
+          <div class="mt-4 flex justify-end space-x-2">
+            <button @click="showBrandFilterModal = false" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors duration-300">Close</button>
+            <button @click="clearAllBrandFilters()" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors duration-300">Clear All</button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <div v-if="isGridView" class="p-6">
       <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">No sale items found.</div>
@@ -263,12 +495,12 @@ const closeSuccessPopup = () => {
     v-if="showDeleteConfirmationPopup"
     class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
   >
-    <div class="bg-white text-black  rounded-lg p-6 shadow-lg text-center">
+    <div class="bg-white text-black rounded-lg p-6 shadow-lg text-center">
       <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
       <p class="itbms-message mb-4">Do you want to delete this sale item?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmDelete" class="itbms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
-        <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
+        <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>      
       </div>
     </div>
   </div>
@@ -366,6 +598,23 @@ const closeSuccessPopup = () => {
   backdrop-filter: blur(2px); /* เพิ่ม blur ด้านหลังให้หรู */
 }
 
+/* Modal Fade Transition */
+.modal-fade-enter-active {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+
+/* Other Popups - Kept as is */
 .bounce-popup-enter-active,
 .bounce-popup-leave-active {
   transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* bounce effect */
