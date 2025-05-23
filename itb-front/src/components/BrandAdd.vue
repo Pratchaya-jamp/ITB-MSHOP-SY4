@@ -68,7 +68,7 @@ const brand = ref({
 }
 })
 
-const isNameValid = ref(true)
+const isNameValid = ref(false)
 const isWebsiteUrlValid = ref(true)
 const iscountryOfOriginValid = ref(true)
 

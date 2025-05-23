@@ -218,8 +218,8 @@ watch(() => product.value.storageGb, (newVal) => {
  
 // --- Color ---
 watch(() => product.value.color, (newVal) => {
-  if (newVal.trim().length > 15) {
-    colorError.value = 'The color must not exceed 15 characters.'
+  if (newVal.trim().length > 50) {
+    colorError.value = 'The color must not exceed 50 characters.'
     isColorValid.value = false
   } else {
     colorError.value = ''
