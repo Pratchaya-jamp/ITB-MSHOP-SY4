@@ -1,18 +1,35 @@
-  async function getItems(url) {
-      try {
-        const data = await fetch(url);
-    
-        if (!data.ok) {
-          throw new Error(`HTTP error`);
+async function getItems(url, options = {}) {
+  try {
+    const { params } = options;
+
+    // ประกอบ query string
+    const query = new URLSearchParams();
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach(v => query.append(key, v))
+        } else if (value !== undefined && value !== null) {
+          query.append(key, value)
         }
-    
-        const items = await data.json();
-    
-        return items
-      } catch (error) {
-        throw new Error(`HTTP error`);
-      }
+      });
     }
+
+    const fullUrl = `${url}?${query.toString()}`
+
+    const data = await fetch(fullUrl);
+
+    if (!data.ok) {
+      throw new Error(`HTTP error`);
+    }
+
+    const items = await data.json();
+    return items;
+  } catch (error) {
+    throw new Error(`HTTP error`);
+  }
+}
+
     
     async function getItemById(url, id) {
       try {
