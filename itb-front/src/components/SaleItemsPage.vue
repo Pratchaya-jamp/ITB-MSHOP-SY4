@@ -14,23 +14,63 @@ const showDeleteSuccessPopup = ref(false)
 const showfailPopup = ref(false)
 const isGridView = computed(() => route.path !== '/sale-items/list')
 
-// Sort related properties
-const currentSortOrder = ref('createdOn'); // Default sort order: 'createdOn', 'brandAsc', 'brandDesc'
+const saleItems = ref([])
+const totalItems = ref(0)
 
-// Filter related properties
-const selectedBrands = ref([]); // Stores array of selected brand names for filtering
-const showBrandFilterModal = ref(false); // State to control visibility of the brand filter modal
 
-// Computed property to get unique brands for the filter modal
-const availableBrands = computed(() => {
-  const brands = new Set();
-  items.value.forEach(item => {
-    if (item.brandName) {
-      brands.add(item.brandName);
+const baseUrl = 'http://intproj24.sit.kmutt.ac.th/sy4/api/v2/sale-items'
+
+async function fetchItems() {
+  try {
+    const {
+      search,
+      filterBrands,
+      page = 0,
+      size = 12,
+      sortField,
+      sortDirection
+    } = route.query
+
+    const url = new URL(baseUrl)
+
+    // ใส่ filter search
+    if (search) {
+      url.searchParams.append('search', search)
     }
-  });
-  return Array.from(brands).sort(); // Return sorted unique brands
-});
+
+    // ใส่ filterBrands (รองรับหลายค่า)
+    if (Array.isArray(filterBrands)) {
+      filterBrands.forEach(b => url.searchParams.append('filterBrands', b))
+    } else if (filterBrands) {
+      url.searchParams.append('filterBrands', filterBrands)
+    }
+
+    // Pagination
+    url.searchParams.append('page', page)
+    url.searchParams.append('size', size)
+
+    // Sort
+    if (sortField) {
+      url.searchParams.append('sortField', sortField)
+    }
+    if (sortDirection) {
+      url.searchParams.append('sortDirection', sortDirection)
+    }
+
+    const result = await getItems(url.toString())
+    saleItems.value = result.content || []
+    totalItems.value = result.totalElements || 0
+
+  } catch (err) {
+    console.error('❌ Failed to fetch sale items:', err)
+  }
+}
+
+// โหลดข้อมูลครั้งแรก
+onMounted(fetchItems)
+
+// โหลดใหม่ทุกครั้งที่ query string เปลี่ยน
+watch(() => route.query, fetchItems, { deep: true })
 
 // --- Navigation Functions ---
 const addSaleItemButton = () => {
@@ -49,44 +89,7 @@ const goToEditItem = (id) => {
   router.push(`/sale-items/${id}/edit`)
 }
 
-// --- Data Fetching Function ---
-const fetchItems = async () => {
-  try {
-    const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items')
-    items.value = data
-    console.log("Fetched items:", items.value); // Add this for debugging
-  } catch (err) {
-    console.error('Error loading items:', err)
-  }
-}
 
-// --- Lifecycle Hooks ---
-onMounted(async () => {
-  await fetchItems(); // Fetch items on component mount
-
-  // Load sort order from sessionStorage on mount to persist until session ends
-  const savedSortOrder = sessionStorage.getItem('saleItemsSortOrder');
-  if (savedSortOrder && ['createdOn', 'brandAsc', 'brandDesc'].includes(savedSortOrder)) {
-    currentSortOrder.value = savedSortOrder;
-  }
-
-  // Load selected brands from sessionStorage on mount for filtering
-  const savedSelectedBrands = sessionStorage.getItem('selectedBrandsFilter');
-  if (savedSelectedBrands) {
-    try {
-      const parsedBrands = JSON.parse(savedSelectedBrands);
-      if (Array.isArray(parsedBrands)) {
-        selectedBrands.value = parsedBrands;
-      } else {
-        console.warn("sessionStorage 'selectedBrandsFilter' is not an array, clearing it.");
-        sessionStorage.removeItem('selectedBrandsFilter');
-      }
-    } catch (e) {
-      console.error("Error parsing saved selected brands from sessionStorage:", e);
-      sessionStorage.removeItem('selectedBrandsFilter'); // Clear invalid data
-    }
-  }
-})
 
 // --- Watchers for Session Storage Persistence ---
 // Watch for changes in currentSortOrder and save to sessionStorage
@@ -108,55 +111,11 @@ watch(searchQuery, (newValue) => {
   console.log("Search query changed:", newValue);
 });
 
-// Watchers for URL query parameters (for popups)
-watch(
-  () => route.query.addSuccess,
-  (addSuccess) => {
-    if (addSuccess === 'true') {
-      setTimeout(() => {
-        showAddSuccessPopup.value = true
-      }, 200)
-      router.replace({ path: route.path, query: {} })
-    }
-  },
-  { immediate: true }
-)
 
-watch(
-  () => route.query.deleteSuccess,
-  (deleteSuccess) => {
-    if (deleteSuccess === 'true') {
-      setTimeout(() => {
-        showDeleteSuccessPopup.value = true
-      }, 200)
-      router.replace({ path: route.path, query: {} })
-    }
-  },
-  { immediate: true }
-)
-
-watch(
-  () => route.query.addFail,
-  (addFail) => {
-    if (addFail === 'true') {
-      setTimeout(() => {
-        showfailPopup.value = true
-      }, 200)
-      router.replace({ path: route.path, query: {} })
-    }
-  },
-  { immediate: true }
-)
 
 // --- Filter & Sort Logic ---
 const filteredAndSortedItems = computed(() => {
   let result = [...items.value]; // Start with the original fetched items
-
-  console.log("Computed property: Starting with items:", result.length, "items.");
-  console.log("Current searchQuery:", searchQuery.value);
-  console.log("Current selectedBrands:", selectedBrands.value);
-  console.log("Current sortOrder:", currentSortOrder.value);
-
 
   // 1. Apply search query first
   if (searchQuery.value.trim()) {
@@ -165,7 +124,7 @@ const filteredAndSortedItems = computed(() => {
       (item.brandName && item.brandName.toLowerCase().includes(query)) ||
       (item.model && item.model.toLowerCase().includes(query))
     )
-    console.log("After search filter:", result.length, "items.");
+
   }
 
   // 2. Apply brand filter
@@ -173,7 +132,6 @@ const filteredAndSortedItems = computed(() => {
     result = result.filter(item =>
       selectedBrands.value.includes(item.brandName)
     );
-    console.log("After brand filter:", result.length, "items.");
   }
 
   // 3. Apply sorting based on currentSortOrder only if in Grid View
@@ -277,24 +235,9 @@ const closeSuccessPopup = async () => {
   await fetchItems(); // Re-fetch items to ensure data is up-to-date and triggers computed re-evaluation
 }
 
-//---pagination
-const currentPage = ref(parseInt(route.query.page) || 1)
-const pageSize = ref(10)
- 
-const totalPages = computed(() =>
-  Math.ceil(filteredAndSortedItems.value.length / pageSize.value)
-)
- 
-const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredAndSortedItems.value.slice(start, end)
-})
+
 // จำกัดเลขหน้าให้ไม่เกิน 10 ปุ่ม
-const lastAction = ref('')     // 'next', 'prev', 'direct'
-const fixedStart = ref(1)      // จำ start ช่วงเลขหน้าไว้
-const maxVisible = 10
- 
+
 const visiblePages = computed(() => {
   const total = totalPages.value
   const current = currentPage.value
