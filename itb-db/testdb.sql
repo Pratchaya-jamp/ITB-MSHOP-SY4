@@ -162,6 +162,6 @@ alter table sale_item_base
 modify column color varchar(50) character set utf8mb4;
 
 alter table sale_item_base
-modify column description varchar character set utf8mb4;
+modify column description text character set utf8mb4 not null;
 
 select * from sale_item_base;

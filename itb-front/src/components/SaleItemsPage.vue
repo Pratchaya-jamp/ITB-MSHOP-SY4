@@ -18,7 +18,7 @@ const saleItems = ref([])
 const totalItems = ref(0)
 
 
-const baseUrl = 'http://intproj24.sit.kmutt.ac.th/sy4/api/v2/sale-items'
+const baseUrl = 'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items'
 
 async function fetchItems() {
   try {
