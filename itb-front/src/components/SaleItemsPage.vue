@@ -7,159 +7,132 @@ import Footer from './Footer.vue'
 const router = useRouter()
 const route = useRoute()
 
-const items = ref([])
-const searchQuery = ref('')
+
 const showAddSuccessPopup = ref(false)
 const showDeleteSuccessPopup = ref(false)
 const showfailPopup = ref(false)
 const isGridView = computed(() => route.path !== '/sale-items/list')
 
-const saleItems = ref([])
-const totalItems = ref(0)
 
+const searchQuery = ref(route.query.search || '')
+const selectedBrands = ref(route.query.filterBrands ? [].concat(route.query.filterBrands) : [])
+const currentSortOrder = ref(
+  route.query.sortField === 'brand.name'
+    ? route.query.sortDirection === 'asc'
+      ? 'brandAsc'
+      : 'brandDesc'
+    : 'createdOn'
+)
 
-const baseUrl = 'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items'
+const showBrandFilterModal = ref(false)
+const items = ref([])
+const totalPages = ref(0)
+const currentPage = ref(parseInt(route.query.page) || 0)
+const pageSize = 10
 
+// Query parameter sync
+function updateQueryParams() {
+  router.replace({
+    query: {
+      search: searchQuery.value || undefined,
+      filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
+      page: currentPage.value,
+      size: pageSize,
+      sortField: currentSortOrder.value === 'createdOn' ? undefined : 'brand.name',
+      sortDirection:
+        currentSortOrder.value === 'brandAsc'
+          ? 'asc'
+          : currentSortOrder.value === 'brandDesc'
+          ? 'desc'
+          : undefined,
+      view: isGridView.value ? undefined : 'list',
+    },
+  })
+}
+
+// Fetch
 async function fetchItems() {
   try {
-    const {
-      search,
-      filterBrands,
-      page = 0,
-      size = 12,
-      sortField,
-      sortDirection
-    } = route.query
+    const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/api/v2/sale-items', {
+      params: {
+        search: searchQuery.value,
+        filterBrands: selectedBrands.value,
+        page: currentPage.value,
+        size: pageSize,
+        sortField: currentSortOrder.value === 'createdOn' ? undefined : 'brand.name',
+        sortDirection:
+          currentSortOrder.value === 'brandAsc'
+            ? 'asc'
+            : currentSortOrder.value === 'brandDesc'
+            ? 'desc'
+            : undefined,
+      },
+    })
 
-    const url = new URL(baseUrl)
-
-    // ใส่ filter search
-    if (search) {
-      url.searchParams.append('search', search)
-    }
-
-    // ใส่ filterBrands (รองรับหลายค่า)
-    if (Array.isArray(filterBrands)) {
-      filterBrands.forEach(b => url.searchParams.append('filterBrands', b))
-    } else if (filterBrands) {
-      url.searchParams.append('filterBrands', filterBrands)
-    }
-
-    // Pagination
-    url.searchParams.append('page', page)
-    url.searchParams.append('size', size)
-
-    // Sort
-    if (sortField) {
-      url.searchParams.append('sortField', sortField)
-    }
-    if (sortDirection) {
-      url.searchParams.append('sortDirection', sortDirection)
-    }
-
-    const result = await getItems(url.toString())
-    saleItems.value = result.content || []
-    totalItems.value = result.totalElements || 0
-
+    items.value = response.content
+    totalPages.value = response.totalPages
   } catch (err) {
-    console.error('❌ Failed to fetch sale items:', err)
+    console.error('Fetch error:', err)
   }
 }
 
-// โหลดข้อมูลครั้งแรก
+// Pagination
+function goToPage(page) {
+  currentPage.value = page
+  updateQueryParams()
+}
+
+// Sort
+function sortBrandAscending() {
+  currentSortOrder.value = 'brandAsc'
+  currentPage.value = 0
+  updateQueryParams()
+}
+function sortBrandDescending() {
+  currentSortOrder.value = 'brandDesc'
+  currentPage.value = 0
+  updateQueryParams()
+}
+function clearBrandSorting() {
+  currentSortOrder.value = 'createdOn'
+  currentPage.value = 0
+  updateQueryParams()
+}
+
+// Filter
+function toggleBrandFilterModal() {
+  showBrandFilterModal.value = !showBrandFilterModal.value
+}
+function removeBrandFromFilter(brand) {
+  selectedBrands.value = selectedBrands.value.filter(b => b !== brand)
+  currentPage.value = 0
+  updateQueryParams()
+}
+function clearAllBrandFilters() {
+  selectedBrands.value = []
+  currentPage.value = 0
+  updateQueryParams()
+}
+
+// View toggle
+function toggleViewMode() {
+  isGridView.value = !isGridView.value
+  updateQueryParams()
+}
+
+// Navigation
+function addSaleItemButton() {
+  router.push({ name: 'SaleItemAdd' })
+}
+function goToManageBrand() {
+  router.push({ name: 'BrandList' })
+}
+
+// Watch fetch trigger
+watch([searchQuery, selectedBrands, currentSortOrder, currentPage], fetchItems, { immediate: true })
 onMounted(fetchItems)
 
-// โหลดใหม่ทุกครั้งที่ query string เปลี่ยน
-watch(() => route.query, fetchItems, { deep: true })
 
-// --- Navigation Functions ---
-const addSaleItemButton = () => {
-  router.push('/sale-items/add')
-}
-
-const goToManageBrand = () => {
-  router.push('/brands')
-}
-
-const goToPhoneDetails = (id) => {
-  router.push(`/sale-items/${id}`)
-}
-
-const goToEditItem = (id) => {
-  router.push(`/sale-items/${id}/edit`)
-}
-
-
-
-// --- Watchers for Session Storage Persistence ---
-// Watch for changes in currentSortOrder and save to sessionStorage
-watch(currentSortOrder, (newValue) => {
-  if (isGridView.value) { // Only persist sort for grid view
-    sessionStorage.setItem('saleItemsSortOrder', newValue);
-  }
-  // No need to call fetchItems() here, as computed property will react
-});
-
-// Watch for changes in selectedBrands and save to sessionStorage
-watch(selectedBrands, (newValue) => {
-  sessionStorage.setItem('selectedBrandsFilter', JSON.stringify(newValue));
-  // No need to call fetchItems() here, as computed property will react
-}, { deep: true }); // Use deep watch for array changes
-
-// Watch for searchQuery changes (optional, but good for debugging)
-watch(searchQuery, (newValue) => {
-  console.log("Search query changed:", newValue);
-});
-
-
-
-// --- Filter & Sort Logic ---
-const filteredAndSortedItems = computed(() => {
-  let result = [...items.value]; // Start with the original fetched items
-
-  // 1. Apply search query first
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(item =>
-      (item.brandName && item.brandName.toLowerCase().includes(query)) ||
-      (item.model && item.model.toLowerCase().includes(query))
-    )
-
-  }
-
-  // 2. Apply brand filter
-  if (selectedBrands.value.length > 0) {
-    result = result.filter(item =>
-      selectedBrands.value.includes(item.brandName)
-    );
-  }
-
-  // 3. Apply sorting based on currentSortOrder only if in Grid View
-  if (isGridView.value) {
-    if (currentSortOrder.value === 'brandAsc') { // Sort by brand name in alphabetical order
-      result.sort((a, b) => {
-        const brandA = a.brandName ? a.brandName.toLowerCase() : '';
-        const brandB = b.brandName ? b.brandName.toLowerCase() : ''; // Fix: changed b.brandB to b.brandName
-        return brandA.localeCompare(brandB);
-      });
-    } else if (currentSortOrder.value === 'brandDesc') { // Sort by brand name in reverse alphabetical order
-      result.sort((a, b) => {
-        const brandA = a.brandName ? a.brandName.toLowerCase() : '';
-        const brandB = b.brandName ? b.brandName.toLowerCase() : ''; // Fix: changed b.brandB to b.brandName
-        return brandB.localeCompare(brandA);
-      });
-    } else { // 'createdOn' or any other default/cleared state, default sort by created time
-      result.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
-    }
-    console.log("After sorting (Grid View):", result.length, "items.");
-  } else {
-    // If not in grid view, always default sort by createdOn
-    result.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
-    console.log("After sorting (List View):", result.length, "items.");
-  }
-
-  return result
-})
 
 // --- Sort Functions ---
 const sortBrandAscending = () => {
@@ -235,61 +208,47 @@ const closeSuccessPopup = async () => {
   await fetchItems(); // Re-fetch items to ensure data is up-to-date and triggers computed re-evaluation
 }
 
+ 
+ // Watchers for URL query parameters (for popups)
+watch(
+  () => route.query.addSuccess,
+  (addSuccess) => {
+    if (addSuccess === 'true') {
+      setTimeout(() => {
+        showAddSuccessPopup.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
 
-// จำกัดเลขหน้าให้ไม่เกิน 10 ปุ่ม
+watch(
+  () => route.query.deleteSuccess,
+  (deleteSuccess) => {
+    if (deleteSuccess === 'true') {
+      setTimeout(() => {
+        showDeleteSuccessPopup.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
 
-const visiblePages = computed(() => {
-  const total = totalPages.value
-  const current = currentPage.value
-  const action = lastAction.value
+watch(
+  () => route.query.addFail,
+  (addFail) => {
+    if (addFail === 'true') {
+      setTimeout(() => {
+        showfailPopup.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
  
-  let start, end
- 
-  if (action === 'next') {
-  const endOfGroup = fixedStart.value + maxVisible - 1
- 
-  if (current > endOfGroup) {
-    end = Math.min(current, total)
-    start = Math.max(end - maxVisible + 1, 1)
-    fixedStart.value = start
-  }
-}
- 
-  if (action === 'prev') {
-  if (current < fixedStart.value) {
-    start = Math.max(current, 1)
-    fixedStart.value = start
-  }
-}
- 
-  // ใช้ค่า start จาก fixedStart เสมอ
-  start = fixedStart.value
-  end = Math.min(start + maxVisible - 1, total)
- 
-  // ป้องกัน start เกินขอบ
-  if (start < 1) start = 1
-  if (end > total) {
-    end = total
-    start = Math.max(end - maxVisible + 1, 1)
-  }
- 
-  const pages = []
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
- 
-  return pages
-})
- 
- 
- 
-watch(currentPage, (newPage) => {
-  router.replace({ query: { ...route.query, page: newPage } })
-})
- 
-watch([pageSize, searchQuery,selectedBrands], () => {
-  currentPage.value = 1
-})
 
 </script>
 
