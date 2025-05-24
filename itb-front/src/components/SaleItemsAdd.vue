@@ -101,14 +101,14 @@ onMounted(async () => {
 
 
 // Valid flags
-const isPriceValid = ref(true)
-const isModelValid = ref(true)
-const isDescriptionValid = ref(true)
+const isPriceValid = ref(false)
+const isModelValid = ref(false)
+const isDescriptionValid = ref(false)
 const isRamValid = ref(true)
 const isScreenValid = ref(true)
 const isStorageValid = ref(true)
 const isColorValid = ref(true)
-const isQuantityValid = ref(true)
+const isQuantityValid = ref(false)
 
 // ติดตาม Valid แบบ real-time
 const modelError = ref('')
@@ -125,7 +125,7 @@ const quantityError = ref('')
 watch(() => product.value.price, (newVal) => {
   const val = Number(newVal)
 
-  if (newVal === '') {
+  if (newVal.trim() === null || newVal.trim() === undefined || newVal.trim() === '') {
     priceError.value = 'Please enter the price.',
     isPriceValid.value = false
   } else if (isNaN(val) || val <= 0) {
@@ -145,7 +145,7 @@ watch(() => product.value.price, (newVal) => {
 
 // --- Model ---
 watch(() => product.value.model, (newVal) => {
-  if (newVal.trim() === '') {
+  if (newVal.trim() === null || newVal.trim() === undefined || newVal.trim() === '') {
     modelError.value = 'Please enter model name.'
     isModelValid.value = false
   } else if (newVal.length > 60) {
@@ -159,11 +159,11 @@ watch(() => product.value.model, (newVal) => {
  
 // --- Description ---
 watch(() => product.value.description, (newVal) => {
-  if (newVal.trim() === '') {
+  if (newVal.trim() === null || newVal.trim() === undefined || newVal.trim() === '') {
     descriptionError.value = 'Please fill in the details.'
     isDescriptionValid.value = false
-  } else if (newVal.trim().length > 200) {
-    descriptionError.value = 'Description must not exceed 200 characters.'
+  } else if (newVal.trim().length > 65535) {
+    descriptionError.value = 'Description must not exceed 65535 characters.'
     isDescriptionValid.value = false
   } else {
     descriptionError.value = ''
@@ -218,8 +218,8 @@ watch(() => product.value.storageGb, (newVal) => {
  
 // --- Color ---
 watch(() => product.value.color, (newVal) => {
-  if (newVal.trim().length > 50) {
-    colorError.value = 'The color must not exceed 50 characters.'
+  if (newVal.trim().length > 40) {
+    colorError.value = 'The color must not exceed 40 characters.'
     isColorValid.value = false
   } else {
     colorError.value = ''
@@ -230,8 +230,11 @@ watch(() => product.value.color, (newVal) => {
 // --- quantity ---
 watch(() => product.value.quantity, (newVal) => {
   const val = Number(newVal)
- 
-  if (!Number.isInteger(val)) {
+
+  if (newVal === null || newVal === undefined || newVal === '') {
+    quantityError.value = 'Product quantity is required.'
+    isQuantityValid.value = false
+  } else if (!Number.isInteger(val)) {
     quantityError.value = 'Product quantity must be an integer.'
     isQuantityValid.value = false
   } else if (val < 0) {
