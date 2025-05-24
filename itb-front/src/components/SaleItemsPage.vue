@@ -34,38 +34,38 @@ const pageSize = 10
 function updateQueryParams() {
   router.replace({
     query: {
-      search: searchQuery.value || undefined,
+      // ไม่ต้องใส่ search: searchQuery.value
       filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
       page: currentPage.value,
       size: pageSize,
-      sortField: currentSortOrder.value === 'createdOn' ? undefined : 'brand.name',
+      sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
       sortDirection:
         currentSortOrder.value === 'brandAsc'
           ? 'asc'
           : currentSortOrder.value === 'brandDesc'
           ? 'desc'
-          : undefined,
+          : 'asc',
       view: isGridView.value ? undefined : 'list',
     },
   })
 }
 
+
 // Fetch
 async function fetchItems() {
   try {
-    const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/api/v2/sale-items', {
+    const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', {
       params: {
-        search: searchQuery.value,
-        filterBrands: selectedBrands.value,
+        filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
         page: currentPage.value,
         size: pageSize,
-        sortField: currentSortOrder.value === 'createdOn' ? undefined : 'brand.name',
+        sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
         sortDirection:
           currentSortOrder.value === 'brandAsc'
             ? 'asc'
             : currentSortOrder.value === 'brandDesc'
             ? 'desc'
-            : undefined,
+            : 'asc', // default ถ้าเป็น createdOn ก็ให้ asc
       },
     })
 
@@ -75,6 +75,7 @@ async function fetchItems() {
     console.error('Fetch error:', err)
   }
 }
+
 
 // Pagination
 function goToPage(page) {
@@ -132,34 +133,6 @@ function goToManageBrand() {
 watch([searchQuery, selectedBrands, currentSortOrder, currentPage], fetchItems, { immediate: true })
 onMounted(fetchItems)
 
-
-
-// --- Sort Functions ---
-const sortBrandAscending = () => {
-  currentSortOrder.value = 'brandAsc';
-};
-
-const sortBrandDescending = () => {
-  currentSortOrder.value = 'brandDesc';
-};
-
-const clearBrandSorting = () => {
-  currentSortOrder.value = 'createdOn';
-};
-
-// --- Filter Functions ---
-const toggleBrandFilterModal = () => {
-  showBrandFilterModal.value = !showBrandFilterModal.value;
-};
-
-const removeBrandFromFilter = (brandName) => {
-  selectedBrands.value = selectedBrands.value.filter(brand => brand !== brandName);
-};
-
-const clearAllBrandFilters = () => {
-  selectedBrands.value = [];
-  showBrandFilterModal.value = false; // Close modal after clearing
-};
 
 // --- Delete Item Functions ---
 const deleteResponseMessage = ref('')
@@ -553,7 +526,7 @@ watch(
 <div v-if="totalPages > 1" class="flex justify-center mt-6 flex-wrap gap-2">
     <!-- First -->
     <button
-      @click="currentPage = 1"
+      @click="goToPage(1)"
       :disabled="currentPage === 1"
       :class="[
         'itbms-page-first rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
@@ -567,7 +540,7 @@ watch(
  
     <!-- Prev -->
     <button
-      @click="() => { lastAction = 'prev'; currentPage-- }"
+      @click="() => { lastAction = 'prev'; goToPage(currentPage - 1) }"
   :disabled="currentPage === 1"
       :class="[
         'itbms-page-prev rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
@@ -583,7 +556,7 @@ watch(
     <button
       v-for="page in visiblePages"
       :key="'page-' + page"
-      @click="() => { lastAction = ''; currentPage = page }"
+      @click="() => { lastAction = ''; goToPage(page) }"
       :class="[
         `itbms-page-${page}`,
         'px-4 py-2 border-2 rounded-md text-sm font-semibold transition shadow-sm',
@@ -597,7 +570,7 @@ watch(
  
     <!-- Next -->
     <button
-      @click="() => { lastAction = 'next'; currentPage++ }"
+      @click="() => { lastAction = 'next'; goToPage(currentPage + 1) }"
   :disabled="currentPage === totalPages"
       :class="[
         'itbms-page-next rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
@@ -611,7 +584,7 @@ watch(
  
     <!-- Last -->
     <button
-      @click="currentPage = totalPages"
+      @click="goToPage(totalPages)"
       :disabled="currentPage === totalPages"
       :class="[
         'itbms-page-last rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
