@@ -2,8 +2,6 @@ package intregrated.backend.dtos;
 
 import lombok.*;
 
-import java.time.Instant;
-
 @Getter
 @Setter
 @Builder

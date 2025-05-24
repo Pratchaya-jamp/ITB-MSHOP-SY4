@@ -6,7 +6,6 @@ import intregrated.backend.entities.BrandBase;
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.repositories.BrandBaseRepo;
 import intregrated.backend.repositories.SaleItemBaseRepo;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,9 +34,7 @@ public class SaleItemBaseService {
     public SaleItemBase getSaleItemBaseRepoById(Integer id) {
         return saleItemBaseRepo.findById(id).orElseThrow(
                 () -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "BrandBase with id: " + id + " is not found"
-                )
-        );
+                        HttpStatus.NOT_FOUND, "BrandBase with id: " + id + " is not found"));
     }
 
     public SaleItemBaseByIdDto createSaleItem(NewSaleItemDto newSaleItem) {
@@ -48,17 +45,17 @@ public class SaleItemBaseService {
                 brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
                         .orElseThrow(() -> new ResponseStatusException(
                                 HttpStatus.BAD_REQUEST,
-                                "Brand with id " + newSaleItem.getBrand().getId() + " not found"
-                        ));
-            } else if (newSaleItem.getBrand().getBrandName() != null && !newSaleItem.getBrand().getBrandName().trim().isEmpty()) {
+                                "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
+            } else if (newSaleItem.getBrand().getBrandName() != null
+                    && !newSaleItem.getBrand().getBrandName().trim().isEmpty()) {
                 String trimmedBrandName = newSaleItem.getBrand().getBrandName().trim();
                 brand = brandBaseRepo.findByNameIgnoreCase(trimmedBrandName)
                         .orElseThrow(() -> new ResponseStatusException(
                                 HttpStatus.BAD_REQUEST,
-                                "Brand with name \"" + trimmedBrandName + "\" not found"
-                        ));
+                                "Brand with name \"" + trimmedBrandName + "\" not found"));
             } else {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand must contain either valid ID or name.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Brand must contain either valid ID or name.");
             }
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand is required.");
@@ -69,7 +66,8 @@ public class SaleItemBaseService {
         saleItem.setDescription(newSaleItem.getDescription().trim());
         saleItem.setPrice(newSaleItem.getPrice());
         saleItem.setRamGb(newSaleItem.getRamGb());
-        saleItem.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch()) : null);
+        saleItem.setScreenSizeInch(
+                newSaleItem.getScreenSizeInch() != null ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch()) : null);
         if (newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0) {
             saleItem.setQuantity(1);
         } else {
@@ -107,15 +105,15 @@ public class SaleItemBaseService {
         SaleItemBase existing = saleItemBaseRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "SaleItem with id " + id + " not found"
-                ));
+                        "SaleItem with id " + id + " not found"));
 
         existing.setModel(newSaleItem.getModel().trim());
         existing.setDescription(newSaleItem.getDescription().trim());
         existing.setPrice(newSaleItem.getPrice());
         existing.setRamGb(newSaleItem.getRamGb() != null ? newSaleItem.getRamGb() : null);
         existing.setStorageGb(newSaleItem.getStorageGb() != null ? newSaleItem.getStorageGb() : null);
-        existing.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch()) : null);
+        existing.setScreenSizeInch(
+                newSaleItem.getScreenSizeInch() != null ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch()) : null);
         if (newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0) {
             existing.setQuantity(1);
         } else {
@@ -157,18 +155,25 @@ public class SaleItemBaseService {
     }
 
     public void deleteSaleItem(Integer id) {
-        if (! saleItemBaseRepo.existsById(id)) {
+        if (!saleItemBaseRepo.existsById(id)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "SaleItem with id " + id + " not found"
-            );
+                    "SaleItem with id " + id + " not found");
         }
         saleItemBaseRepo.deleteById(id);
     }
 
     public Page<SaleItemBaseByIdDto> getPagedSaleItems(List<String> filterBrands, Integer page,
-                                                       Integer size, String sortField, String sortDirection) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
+            Integer size, String sortField, String sortDirection) {
+
+        Sort sort;
+        if ("brand.name".equals(sortField)) {
+            sort = Sort.by(Sort.Direction.fromString(sortDirection), "brand.name");
+        } else {
+            sort = Sort.by(Sort.Direction.fromString(sortDirection), sortField);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<SaleItemBase> result;
         if (filterBrands == null || filterBrands.isEmpty()) {
