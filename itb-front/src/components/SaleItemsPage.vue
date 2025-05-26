@@ -13,40 +13,35 @@ const showDeleteSuccessPopup = ref(false)
 const showfailPopup = ref(false)
 const isGridView = computed(() => route.path !== '/sale-items/list')
 
-
-const searchQuery = ref(route.query.search || '')
-const selectedBrands = ref(route.query.filterBrands ? [].concat(route.query.filterBrands) : [])
-const currentSortOrder = ref(
-  route.query.sortField === 'brand.name'
-    ? route.query.sortDirection === 'asc'
-      ? 'brandAsc'
-      : 'brandDesc'
-    : 'createdOn'
-)
-
 const showBrandFilterModal = ref(false)
 const items = ref([])
 const totalPages = ref(0)
-const currentPage = ref(parseInt(route.query.page) || 0)
-const pageSize = 10
+const brandList = ref([])
+const savedPageSize = sessionStorage.getItem('pageSize')
+const savedPage = parseInt(sessionStorage.getItem('currentPage'))
+const currentPage = ref(!isNaN(savedPage) ? savedPage : 0)
+const pageSize = ref(savedPageSize ? parseInt(savedPageSize) : 10)
+
+const searchQuery = ref(route.query.search || '')
+const selectedBrands = ref(
+  JSON.parse(sessionStorage.getItem('selectedBrands') || 'null') ??
+  (route.query.filterBrands ? [].concat(route.query.filterBrands) : [])
+)
+
+const savedSort = sessionStorage.getItem('sortOrder')
+const currentSortOrder = ref(savedSort || 'createdOn')
+
+const availableBrands = computed(() => {
+  return brandList.value
+    .map(b => b.brandName)   // ดึงเฉพาะ brandName
+    .filter(name => !!name) // กรอง null/undefined
+});
+
 
 // Query parameter sync
 function updateQueryParams() {
   router.replace({
-    query: {
-      // ไม่ต้องใส่ search: searchQuery.value
-      filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
-      page: currentPage.value,
-      size: pageSize,
-      sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
-      sortDirection:
-        currentSortOrder.value === 'brandAsc'
-          ? 'asc'
-          : currentSortOrder.value === 'brandDesc'
-          ? 'desc'
-          : 'asc',
-      view: isGridView.value ? undefined : 'list',
-    },
+    path: route.path
   })
 }
 
@@ -58,7 +53,7 @@ async function fetchItems() {
       params: {
         filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
         page: currentPage.value,
-        size: pageSize,
+        size: pageSize.value,
         sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
         sortDirection:
           currentSortOrder.value === 'brandAsc'
@@ -74,7 +69,132 @@ async function fetchItems() {
   } catch (err) {
     console.error('Fetch error:', err)
   }
+
 }
+
+async function fetchbrand() {
+  try {
+    const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/brands')
+    brandList.value = data.sort((a, b) => {
+  //if (a.brandName < b.brandName) {
+    //return -1;
+  //}
+  //if (a.brandName > b.brandName) {
+    //return 1;
+  //}
+  //return 0;
+   const brandA = a.brandName ? a.brandName.toLowerCase() : ''
+   const brandB = b.brandName ? b.brandName.toLowerCase() : ''
+
+   if (brandA < brandB) {
+     return -1
+  }
+  if (brandA > brandB) {
+     return 1
+  }
+  return 0
+});
+  } catch (err) {
+    console.error('Error loading items:', err)
+  }
+}
+
+watch(
+  [selectedBrands, searchQuery], // หรือ filters อื่นๆ ที่คุณใช้
+  () => {
+    currentPage.value = 0
+    lastAction.value = '' // เพื่อให้ visiblePages รีคอมพิวต์ใหม่
+ updateQueryParams()
+  fetchItems()
+ }
+)
+
+
+watch(() => route.query.page, async (newPage) => {
+  page.value = Number(newPage) || 1
+  await fetchItems()
+
+  if (items.value.length === 0 && page.value !== 1) {
+    // รอให้ route เปลี่ยนแล้วค่อย fetch ใหม่อีกรอบ
+    await router.push({ path: '/items', query: { page: 1 } })
+    currentPage.value = 0
+    await fetchItems() // โหลดข้อมูลของหน้าใหม่
+  }
+})
+ 
+watch(items, (newItems) => {
+  if (newItems.length === 0 && page.value !== 1) {
+    router.push({ path: '/items', query: { page: 1 } })
+  }
+})
+
+watch(currentPage, (newPage) => {
+  sessionStorage.setItem('currentPage', newPage)
+})
+
+watch(pageSize, (newSize) => {
+  sessionStorage.setItem('pageSize', newSize)
+})
+
+watch(selectedBrands, (newVal) => {
+  sessionStorage.setItem('selectedBrands', JSON.stringify(newVal))
+})
+
+watch(currentSortOrder, (val) => {
+  sessionStorage.setItem('sortOrder', val)
+})
+
+const fixedStart = ref(0)           // ใช้เก็บจุดเริ่มกลุ่ม (0-based)
+const lastAction =ref('')
+const groupSize = 10
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  const action = lastAction.value
+
+
+  let start, end
+
+  if (!fixedStart.value) {
+    fixedStart.value = 1
+  }
+
+  const currentPage1Based = current + 1
+
+  if (action === 'next') {
+    const endOfGroup = fixedStart.value + groupSize - 1
+    if (currentPage1Based > endOfGroup) {
+      end = Math.min(currentPage1Based, total)
+      start = Math.max(end - groupSize + 1, 1)
+      fixedStart.value = start
+    }
+  }
+
+  if (action === 'prev') {
+    if (currentPage1Based < fixedStart.value) {
+      start = Math.max(currentPage1Based, 1)
+      fixedStart.value = start
+    }
+  }
+
+  if (action === 'first') {
+    fixedStart.value = 1
+  }
+
+  if (action === 'last') {
+    start = Math.max(total - groupSize + 1, 1)
+    fixedStart.value = start
+  }
+
+  start = fixedStart.value
+  end = Math.min(start + groupSize - 1, total)
+
+  const pages = []
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+})
 
 
 // Pagination
@@ -82,6 +202,12 @@ function goToPage(page) {
   currentPage.value = page
   updateQueryParams()
 }
+
+//edit
+const goToEditItem = (id) => {
+  router.push(`/sale-items/${id}/edit`)
+}
+
 
 // Sort
 function sortBrandAscending() {
@@ -99,6 +225,13 @@ function clearBrandSorting() {
   currentPage.value = 0
   updateQueryParams()
 }
+
+watch(pageSize, () => {
+  currentPage.value = 0  // รีเซ็ตไปหน้าแรกเมื่อเปลี่ยนขนาดหน้า
+  updateQueryParams()
+  fetchItems()
+  fixedStart.value = 0
+})
 
 // Filter
 function toggleBrandFilterModal() {
@@ -123,16 +256,22 @@ function toggleViewMode() {
 
 // Navigation
 function addSaleItemButton() {
-  router.push({ name: 'SaleItemAdd' })
+  router.push('/sale-items/add')
 }
 function goToManageBrand() {
-  router.push({ name: 'BrandList' })
+  router.push('/brands')
+}
+const goToPhoneDetails = (id) => {
+  router.push(`/sale-items/${id}`)
 }
 
 // Watch fetch trigger
 watch([searchQuery, selectedBrands, currentSortOrder, currentPage], fetchItems, { immediate: true })
-onMounted(fetchItems)
 
+onMounted(() => {
+  fetchItems()
+  fetchbrand()
+})
 
 // --- Delete Item Functions ---
 const deleteResponseMessage = ref('')
@@ -150,7 +289,7 @@ const confirmDelete = async () => {
   try {
     const statusCode = await deleteItemById('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items', deleteSale.value);
     if (statusCode === 204) {
-      setTimeout(() => {
+      setTimeout(async () => {
         isDeleting.value = false
         // Refresh items after successful deletion
         router.push({ path: route.path, query: { deleteSuccess: 'true' } })
@@ -181,7 +320,7 @@ const closeSuccessPopup = async () => {
   await fetchItems(); // Re-fetch items to ensure data is up-to-date and triggers computed re-evaluation
 }
 
- 
+
  // Watchers for URL query parameters (for popups)
 watch(
   () => route.query.addSuccess,
@@ -221,7 +360,7 @@ watch(
   },
   { immediate: true }
 )
- 
+
 
 </script>
 
@@ -288,13 +427,13 @@ watch(
           </button>
         </div>
       </div>
-      
+
 
       <div class="flex items-center space-x-4 mr-[5%]">
         <button
           v-if="isGridView"
           @click="sortBrandAscending"
-          class="itbms-sort-brand-asc border-2 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 focus:outline-none"
+          class="itbms-brand-asc border-2 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 focus:outline-none"
           :class="currentSortOrder === 'brandAsc' ? 'bg-transparent text-blue-500 border-blue-500' : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500'"
           title="Sort by Brand Ascending"
         >
@@ -307,7 +446,7 @@ watch(
         <button
           v-if="isGridView"
           @click="sortBrandDescending"
-          class="itbms-sort-brand-desc border-2 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 focus:outline-none"
+          class="itbms-brand-desc border-2 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 focus:outline-none"
           :class="currentSortOrder === 'brandDesc' ? 'bg-transparent text-blue-500 border-blue-500' : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500'"
           title="Sort by Brand Descending"
         >
@@ -320,7 +459,7 @@ watch(
         <button
           v-if="isGridView"
           @click="clearBrandSorting"
-          class="itbms-no-sort border-2 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 focus:outline-none"
+          class="itbms-brand-none border-2 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 focus:outline-none"
           :class="currentSortOrder === 'createdOn' ? 'bg-transparent text-blue-500 border-blue-500' : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500'"
           title="Clear Sort (Default: Created On)"
         >
@@ -331,7 +470,7 @@ watch(
           <span class="sr-only">Clear Sort</span>
         </button>
 
-        
+
         <button
           v-if="!isGridView"
           @click="goToManageBrand"
@@ -340,9 +479,9 @@ watch(
           Manage Brand
         </button>
 
-        
+
       </div>
-      
+
     </div>
 
     <div class="ml-[6%] mb-6 flex items-center gap-3">
@@ -352,7 +491,7 @@ watch(
           <select
             id="page-size"
             v-model="pageSize"
-            class="border-2 border-blue-500 bg-white rounded-md px-3 py-2 text-sm font-semibold text-blue-700
+            class="itbms-page-size border-2 border-blue-500 bg-white rounded-md px-3 py-2 text-sm font-semibold text-blue-700
               shadow-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500
               hover:border-blue-600 hover:bg-blue-50 cursor-pointer"
             >
@@ -361,7 +500,7 @@ watch(
             <option :value="20">20</option>
             </select>
         </div>
-    
+
 
     <transition name="modal-fade">
       <div v-if="showBrandFilterModal" class="itbms-bg fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -376,7 +515,7 @@ watch(
                 v-model="selectedBrands"
                 class="form-checkbox h-4 w-4 text-blue-600 rounded"
               />
-              <label :for="'brand-' + brand" class="text-gray-700">{{ brand }}</label>
+              <label :for="'brand-' + brand" class="itbms-filter-item text-gray-700">{{ brand }}</label>
             </div>
             <p v-if="availableBrands.length === 0" class="text-gray-500 text-center py-4 w-full col-span-full">No brands available.</p>
           </div>
@@ -389,10 +528,10 @@ watch(
     </transition>
 
     <div v-if="isGridView" class="p-6">
-      <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">No sale items found.</div>
+      <div v-if="items && items.length === 0" class="text-gray-500 text-center">No sale items found.</div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         <div
-          v-for="(item, index) in paginatedItems"
+          v-for="(item, index) in items"
           :key="item.id"
           class="itbms-row border rounded-lg p-4 shadow hover:shadow-lg text-black cursor-pointer"
           :style="{ animationDelay: (index * 50) + 'ms' }"
@@ -412,7 +551,7 @@ watch(
     </div>
 
     <div v-else class="p-6">
-      <div v-if="filteredAndSortedItems.length === 0" class="text-gray-500 text-center">
+      <div v-if="items && items.length === 0" class="text-gray-500 text-center">
         No sale items found.
       </div>
       <table v-else class="w-full border-collapse border text-sm text-left text-black">
@@ -430,7 +569,7 @@ watch(
         </thead>
         <tbody>
           <tr
-            v-for="item in paginatedItems"
+            v-for="item in items"
             :key="item.id"
             class="itbms-row hover:bg-gray-50 transition"
           >
@@ -469,7 +608,7 @@ watch(
       <p class="itbms-message mb-4">Do you want to delete this sale item?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmDelete" class="itbms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
-        <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>      
+        <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>
       </div>
     </div>
   </div>
@@ -526,69 +665,69 @@ watch(
 <div v-if="totalPages > 1" class="flex justify-center mt-6 flex-wrap gap-2">
     <!-- First -->
     <button
-      @click="goToPage(1)"
-      :disabled="currentPage === 1"
+      @click="() => { lastAction = 'first'; goToPage(0) }"
+      :disabled="currentPage === 0"
       :class="[
         'itbms-page-first rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
-        currentPage === 1
+        currentPage === 0
           ? 'bg-blue-300 text-white border-blue-300 opacity-90'
           : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500 cursor-pointer'
       ]"
     >
       ⏮ First
     </button>
- 
+
     <!-- Prev -->
     <button
       @click="() => { lastAction = 'prev'; goToPage(currentPage - 1) }"
-  :disabled="currentPage === 1"
+  :disabled="currentPage === 0"
       :class="[
         'itbms-page-prev rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
-        currentPage === 1
+        currentPage === 0
           ? 'bg-blue-300 text-white border-blue-300 opacity-90'
           : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500 cursor-pointer'
       ]"
     >
       ◀ Prev
     </button>
- 
+
     <!-- Page Numbers -->
     <button
       v-for="page in visiblePages"
       :key="'page-' + page"
-      @click="() => { lastAction = ''; goToPage(page) }"
+      @click="() => { lastAction = ''; goToPage(page - 1) }"
       :class="[
-        `itbms-page-${page}`,
+        `itbms-page-${page - 1}`,
         'px-4 py-2 border-2 rounded-md text-sm font-semibold transition shadow-sm',
-        currentPage === page
+        currentPage === page - 1
           ? 'bg-blue-600 text-white border-blue-700'
           : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-100 hover:text-blue-700'
       ]"
     >
       {{ page }}
     </button>
- 
+
     <!-- Next -->
     <button
       @click="() => { lastAction = 'next'; goToPage(currentPage + 1) }"
-  :disabled="currentPage === totalPages"
+  :disabled="currentPage === totalPages  - 1"
       :class="[
         'itbms-page-next rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
-        currentPage === totalPages
+        currentPage === totalPages  - 1
           ? 'bg-blue-300 text-white border-blue-300 opacity-90'
           : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500 cursor-pointer'
       ]"
     >
       Next ▶
     </button>
- 
+
     <!-- Last -->
     <button
-      @click="goToPage(totalPages)"
-      :disabled="currentPage === totalPages"
+      @click="() => { lastAction = 'last';goToPage(totalPages - 1)}"
+      :disabled="currentPage === totalPages - 1"
       :class="[
         'itbms-page-last rounded-md px-4 py-2 border-2 text-sm transition-colors duration-300',
-        currentPage === totalPages
+        currentPage === totalPages  - 1
           ? 'bg-blue-300 text-white border-blue-300 opacity-90'
           : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500 cursor-pointer'
       ]"

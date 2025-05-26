@@ -161,38 +161,26 @@ public class SaleItemBaseService {
         saleItemBaseRepo.deleteById(id);
     }
 
-    public Page<SaleItemBaseByIdDto> getPagedSaleItems(List<String> filterBrands, Integer page,
-            Integer size, String sortField, String sortDirection) {
+    public Page<SaleItemBaseByIdDto> getPagedSaleItems(List<String> filterBrands,
+                                                       Integer page,
+                                                       Integer size,
+                                                       String sortField,
+                                                       String sortDirection) {
 
-        Pageable pageable;
-
-        if ("brand.name".equalsIgnoreCase(sortField)) {
-            pageable = PageRequest.of(page, size);
-            Page<SaleItemBase> result = saleItemBaseRepo.findAllWithBrandNameFilter(
-                    filterBrands != null && !filterBrands.isEmpty() ? filterBrands.stream().map(String::toLowerCase).toList() : null,
-                    pageable
-            );
-
-            Comparator<SaleItemBase> comparator = Comparator.comparing(
-                    (SaleItemBase s) -> s.getBrand() != null && s.getBrand().getName() != null ? s.getBrand().getName().toLowerCase() : "",
-                    sortDirection.equalsIgnoreCase("desc") ? Comparator.reverseOrder() : Comparator.naturalOrder()
-            );
-
-            List<SaleItemBase> sortedList = result.getContent().stream()
-                    .sorted(comparator)
-                    .toList();
-
-            return new PageImpl<>(sortedList, pageable, result.getTotalElements()).map(this::mapToDto);
-        }
-
-        pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
-
-        Page<SaleItemBase> result;
-        if (filterBrands == null || filterBrands.isEmpty()) {
-            result = saleItemBaseRepo.findAll(pageable);
+        Sort sort;
+        if ("brand.name".equals(sortField)) {
+            sort = Sort.by(Sort.Direction.fromString(sortDirection), "brand.name");
         } else {
-            result = saleItemBaseRepo.findByBrand_NameInIgnoreCase(filterBrands, pageable);
+            sort = Sort.by(Sort.Direction.fromString(sortDirection), sortField);
         }
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        List<String> lowerBrands = (filterBrands == null || filterBrands.isEmpty())
+                ? null
+                : filterBrands.stream().map(String::toLowerCase).toList();
+
+        Page<SaleItemBase> result = saleItemBaseRepo.findAllWithBrandNameFilter(lowerBrands, pageable);
 
         return result.map(this::mapToDto);
     }

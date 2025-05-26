@@ -46,6 +46,29 @@ const startCountdown = () => {
 }
 const showNotFoundPopup = ref(false)
 
+// Valid flags
+const isPriceValid = ref(false)
+const isModelValid = ref(false)
+const isDescriptionValid = ref(false)
+const isRamValid = ref(true) // Initialized to true, assuming it's optional or has a default valid state
+const isScreenValid = ref(true) // Initialized to true
+const isStorageValid = ref(true) // Initialized to true
+const isColorValid = ref(true) // Initialized to true
+const isQuantityValid = ref(false)
+
+// ติดตาม Valid แบบ real-time
+const modelError = ref('')
+const priceError = ref('')
+const descriptionError = ref('')
+const ramError = ref('')
+const screenSizeError = ref('')
+const storageError = ref('')
+const colorError = ref('')
+const quantityError = ref('')
+
+
+
+
 onMounted(async () => {
   try {
     const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/brands')
@@ -92,60 +115,45 @@ onMounted(async () => {
       setTimeout(() => {
         router.push('/sale-items')
       }, 3000)
-      //alert('The requested sale item does not exist.')
       return
     }
     }
   }
+  // For add mode, ensure required fields start with their initial validation
+  // by setting them to an empty string to trigger the watcher on mount.
+  // In edit mode, watchers will trigger immediately after product.value is set.
+  if (!isEditMode.value) {
+    product.value.price = ''; // Ensure initial validation for price
+    product.value.model = ''; // Ensure initial validation for model
+    product.value.description = ''; // Ensure initial validation for description
+    product.value.quantity = ''; // Ensure initial validation for quantity
+  }
 })
 
-
-// Valid flags
-const isPriceValid = ref(false)
-const isModelValid = ref(false)
-const isDescriptionValid = ref(false)
-const isRamValid = ref(true)
-const isScreenValid = ref(true)
-const isStorageValid = ref(true)
-const isColorValid = ref(true)
-const isQuantityValid = ref(false)
-
-// ติดตาม Valid แบบ real-time
-const modelError = ref('')
-const priceError = ref('')
-const descriptionError = ref('')
-const ramError = ref('')
-const screenSizeError = ref('')
-const storageError = ref('')
-const colorError = ref('')
-const quantityError = ref('')
-
-
-
+// --- Price ---
 watch(() => product.value.price, (newVal) => {
   const val = Number(newVal)
-
-  if (newVal.trim() === null || newVal.trim() === undefined || newVal.trim() === '') {
-    priceError.value = 'Please enter the price.',
+  if (newVal === null || newVal === undefined || newVal === '' || isNaN(val)) {
+    priceError.value = 'Please enter the price.'
     isPriceValid.value = false
-  } else if (isNaN(val) || val <= 0) {
-    priceError.value = 'Price must be greater than 0.',
+  } else if (val <= 0) {
+    priceError.value = 'Price must be greater than 0.'
     isPriceValid.value = false
-  } else if ( val >= 1000000) {
-    priceError.value = 'The price must not exceed 1,000,000 Baht.',
+  } else if (val >= 1000000) {
+    priceError.value = 'The price must not exceed 1,000,000 Baht.'
     isPriceValid.value = false
   } else if (!Number.isInteger(val)) {
-    priceError.value = 'Prices must be in whole numbers only.',
+    priceError.value = 'Prices must be in whole numbers only.'
     isPriceValid.value = false
   } else {
-    priceError.value = '',
+    priceError.value = ''
     isPriceValid.value = true
   }
 })
 
 // --- Model ---
 watch(() => product.value.model, (newVal) => {
-  if (newVal.trim() === null || newVal.trim() === undefined || newVal.trim() === '') {
+  if (typeof newVal !== 'string' || newVal.trim() === '') {
     modelError.value = 'Please enter model name.'
     isModelValid.value = false
   } else if (newVal.length > 60) {
@@ -156,10 +164,10 @@ watch(() => product.value.model, (newVal) => {
     isModelValid.value = true
   }
 })
- 
+
 // --- Description ---
 watch(() => product.value.description, (newVal) => {
-  if (newVal.trim() === null || newVal.trim() === undefined || newVal.trim() === '') {
+  if (typeof newVal !== 'string' || newVal.trim() === '') {
     descriptionError.value = 'Please fill in the details.'
     isDescriptionValid.value = false
   } else if (newVal.trim().length > 65535) {
@@ -170,11 +178,16 @@ watch(() => product.value.description, (newVal) => {
     isDescriptionValid.value = true
   }
 })
- 
+
 // --- RAM ---
 watch(() => product.value.ramGb, (newVal) => {
   const val = Number(newVal)
-  if ( !Number.isInteger(val) || val < 0) {
+  if (newVal === null || newVal === undefined || newVal === '') {
+    ramError.value = ''
+    isRamValid.value = true
+    return
+  }
+  if (!Number.isInteger(val) || val < 0) {
     ramError.value = 'Please enter the correct RAM.'
     isRamValid.value = false
   } else if (val > 10000) {
@@ -185,11 +198,16 @@ watch(() => product.value.ramGb, (newVal) => {
     isRamValid.value = true
   }
 })
- 
+
 // --- Screen Size ---
 watch(() => product.value.screenSizeInch, (newVal) => {
   const val = Number(newVal)
-  if ( val < 0) {
+  if (newVal === null || newVal === undefined || newVal === '') {
+    screenSizeError.value = ''
+    isScreenValid.value = true
+    return
+  }
+  if (val < 0) {
     screenSizeError.value = 'Please enter the correct screen size.'
     isScreenValid.value = false
   } else if (!/^\d{1,8}(\.\d{1,2})?$/.test(val.toString())) {
@@ -200,11 +218,16 @@ watch(() => product.value.screenSizeInch, (newVal) => {
     isScreenValid.value = true
   }
 })
- 
+
 // --- Storage ---
 watch(() => product.value.storageGb, (newVal) => {
   const val = Number(newVal)
-  if ( !Number.isInteger(val) || val < 0) {
+  if (newVal === null || newVal === undefined || newVal === '') {
+    storageError.value = ''
+    isStorageValid.value = true
+    return
+  }
+  if (!Number.isInteger(val) || val < 0) {
     storageError.value = 'Please enter the correct storage.'
     isStorageValid.value = false
   } else if (val > 10000) {
@@ -215,9 +238,14 @@ watch(() => product.value.storageGb, (newVal) => {
     isStorageValid.value = true
   }
 })
- 
+
 // --- Color ---
 watch(() => product.value.color, (newVal) => {
+  if (newVal === null || newVal === undefined || typeof newVal !== 'string' || newVal.trim() === '') {
+    colorError.value = ''
+    isColorValid.value = true
+    return
+  }
   if (newVal.trim().length > 40) {
     colorError.value = 'The color must not exceed 40 characters.'
     isColorValid.value = false
@@ -226,11 +254,10 @@ watch(() => product.value.color, (newVal) => {
     isColorValid.value = true
   }
 })
- 
-// --- quantity ---
+
+// --- Quantity ---
 watch(() => product.value.quantity, (newVal) => {
   const val = Number(newVal)
-
   if (newVal === null || newVal === undefined || newVal === '') {
     quantityError.value = 'Product quantity is required.'
     isQuantityValid.value = false
@@ -250,18 +277,30 @@ watch(() => product.value.quantity, (newVal) => {
 })
 
 
+
 const isModified = computed(() => {
   if (!originalProduct.value) return true // ในกรณีเพิ่มสินค้าใหม่
-  return Object.keys(product.value).some(key => String(product.value[key]) !== String(originalProduct.value[key]))
+  // Check if any property in product.value has changed compared to originalProduct.value
+  const productChanged = Object.keys(product.value).some(key => {
+    // Handle potential null/undefined values gracefully
+    const currentValue = String(product.value[key] || '').trim();
+    const originalValue = String(originalProduct.value[key] || '').trim();
+    return currentValue !== originalValue;
+  });
+
+  // Also check if the selected brand ID has changed
+  const originalBrandId = brandList.value.find(brand => brand.brandName === originalProduct.value.brandName)?.id;
+  const brandChanged = selectedBrandId.value !== originalBrandId;
+
+  return productChanged || brandChanged;
 })
 
-const isFormTouched = computed(() => {
-  return Object.values(product.value).some(val => String(val).trim() !== '')
-})
 
 const isValid = () => {
+  // We don't need isFormTouched here, as isValid already checks all required fields
+  // and their validity flags are updated immediately by the watchers.
   return (
-    selectedBrandId.value !== null &&
+    selectedBrandId.value !== null && // Ensure a brand is selected
     isPriceValid.value === true &&
     isModelValid.value === true &&
     isDescriptionValid.value === true &&
@@ -269,20 +308,17 @@ const isValid = () => {
     isScreenValid.value === true &&
     isStorageValid.value === true &&
     isColorValid.value === true &&
-    isQuantityValid.value === true &&
-    isPriceValid.value === true 
+    isQuantityValid.value === true
   );
 };
 
 const submitForm = async () => {
-  if (!isFormTouched.value) {
-    responseMessage.value = 'กรุณากรอกข้อมูลอย่างน้อยหนึ่งช่อง'
-    return
-  }
-
+  // When submitForm is called, all watchers with `immediate: true` have already run
+  // on mount or on input change. So `isValid()` will reflect the current state.
   if (!isValid()) {
-    responseMessage.value = 'กรุณากรอกข้อมูลให้ครบถ้วน'
-    return
+    // Optional: Provide a general error message if needed
+    responseMessage.value = 'กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง';
+    return;
   }
 
   if (isEditMode.value) {
@@ -290,34 +326,28 @@ const submitForm = async () => {
   } else {
     showConfirmationAddPopup.value = true
   }
-
 }
 
 const confirmAddItem = async () => {
-  const isAdding = !isEditMode.value
-  if (isAdding) {
-    showConfirmationAddPopup.value = true
-  } else {
-    showConfirmationAddPopup.value = false
-  }
+  showConfirmationAddPopup.value = false
+  showConfirmationEditPopup.value = false
   isLoading.value = true
 
   const newProduct = {
-    //id:product.value.id,
-    brand: {
-      id: selectedBrandId.value,
-      //brandName: product.value.brandName,
-    },
-    model: product.value.model.trim(),
-    description: product.value.description.trim(),
-    image: mainImage.value,
-    price: parseFloat(product.value.price),
-    ramGb: product.value.ramGb ? parseInt(product.value.ramGb) : null,
-    screenSizeInch: parseFloat(product.value.screenSizeInch),
-    storageGb: product.value.storageGb ? parseInt(product.value.storageGb) : null,
-    quantity: parseInt(product.value.quantity),
-    color: product.value.color.trim() || null,
-  }
+  brand: {
+    id: selectedBrandId.value,
+  },
+  model: product.value.model?.trim() || '', // ถ้า null ให้เป็น ''
+  description: product.value.description?.trim() || '',
+  image: mainImage.value,
+  price: parseFloat(product.value.price),
+  ramGb: product.value.ramGb ? parseInt(product.value.ramGb) : null,
+  screenSizeInch: product.value.screenSizeInch ? parseFloat(product.value.screenSizeInch) : null,
+  storageGb: product.value.storageGb ? parseInt(product.value.storageGb) : null,
+  quantity: parseInt(product.value.quantity),
+  color: product.value.color?.trim() || null, // ถ้าไม่มีค่าหรือเป็น null ก็ส่ง null ไป
+}
+
 if (isEditMode.value) {
   try {
     const result = await editItem(
@@ -359,7 +389,7 @@ if (isEditMode.value) {
     setTimeout(() => {
       isLoading.value = false;
       router.push({
-        path: '/sale-items/list',
+        path: '/sale-items',
         query: { addSuccess: 'true' },
       });
     }, 1000);
@@ -416,9 +446,6 @@ const cancelAddItem = () => {
 
       <div class="space-y-3 text-sm text-black">
         <div class="grid grid-cols-2 gap-2 items-center">
-          <!-- <label class="text-left font-medium">Product ID:</label> -->
-          <!-- <input v-model="product.id" type="number" class="border p-2 rounded w-full" /> -->
-          
           <label class="text-left font-medium">Brand:<span class="text-red-500">*</span></label>
           <select v-if="brandList.length > 0" v-model="selectedBrandId" class="itbms-brand border p-2 rounded w-full">
           <option value="" disabled selected> Select Brand</option>
@@ -437,7 +464,7 @@ const cancelAddItem = () => {
           <input v-model="product.price" min="0" type="number" class="itbms-price border p-2 rounded w-full" />
           <div v-if="priceError"></div>
           <p v-if="priceError" class="text-red-500 text-sm">{{ priceError }}</p>
-          
+
           <label class="text-left font-medium">Ram (GB):</label>
           <input v-model="product.ramGb" type="number" class="itbms-ramGb border p-2 rounded w-full" />
           <div v-if="ramError"></div>
@@ -458,7 +485,7 @@ const cancelAddItem = () => {
           <div v-if="colorError"></div>
           <p v-if="colorError" class="text-red-500 text-sm">{{ colorError }}</p>
 
-          <label class="text-left font-medium">Quantity:</label>
+          <label class="text-left font-medium">Quantity:<span class="text-red-500">*</span></label>
           <input v-model="product.quantity" type="number" class="itbms-quantity border p-2 rounded w-full" />
           <div v-if="quantityError"></div>
           <p v-if="quantityError" class="text-red-500 text-sm">{{ quantityError }}</p>
@@ -471,17 +498,17 @@ const cancelAddItem = () => {
 
         <div class="flex gap-2 mt-4 justify-end">
           <button
-           @click="submitForm"
-           :disabled="!isFormTouched || !isValid() || (isEditMode && !isModified)"
-           :class="[
-             'itbms-save-button rounded-md px-4 py-2 transition-colors duration-300',
-             isFormTouched && isValid() && (!isEditMode || isModified)
-             ? 'bg-green-500 text-white border-2 border-green-500 cursor-pointer hover:bg-transparent hover:text-green-500'
-             : 'bg-gray-300 text-gray-500 border-2 border-gray-300'
-           ]"
-         >
-           Save
-         </button>
+            @click="submitForm"
+            :disabled="!isValid() || (isEditMode && !isModified)"
+            :class="[
+              'itbms-save-button rounded-md px-4 py-2 transition-colors duration-300',
+              (isValid() && (!isEditMode || isModified))
+              ? 'bg-green-500 text-white border-2 border-green-500 cursor-pointer hover:bg-transparent hover:text-green-500'
+              : 'bg-gray-300 text-gray-500 border-2 border-gray-300'
+            ]"
+          >
+            Save
+          </button>
           <router-link :to="isEditMode ? `/sale-items/${product.id}` : '/sale-items'">
             <button
               class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500"
@@ -503,13 +530,12 @@ const cancelAddItem = () => {
       <p class="itbms-message mb-4">Do you want to add this product?</p>
       <div class="flex justify-center gap-4">
           <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
-         <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>  
+         <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>
       </div>
     </div>
   </div>
 </transition>
 
-<!-- Edit popup -->
 <transition name="bounce-popup">
   <div
     v-if="showConfirmationEditPopup"
@@ -520,7 +546,7 @@ const cancelAddItem = () => {
       <p class="itbms-message mb-4">Do you want to save changes to this product?</p>
       <div class="flex justify-center gap-4">
         <button @click="confirmAddItem" class="bg-green-500 text-white border-2 border-green-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-green-500">Yes</button>
-        <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>     
+        <button @click="cancelAddItem" class="bg-red-500 text-white border-2 border-red-500 rounded-md px-4 py-2 cursor-pointer transition-colors duration-300 hover:bg-transparent hover:text-red-500">No</button>
       </div>
     </div>
   </div>
