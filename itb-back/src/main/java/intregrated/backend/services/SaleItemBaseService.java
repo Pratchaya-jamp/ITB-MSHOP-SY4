@@ -7,16 +7,14 @@ import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.repositories.BrandBaseRepo;
 import intregrated.backend.repositories.SaleItemBaseRepo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -166,14 +164,28 @@ public class SaleItemBaseService {
     public Page<SaleItemBaseByIdDto> getPagedSaleItems(List<String> filterBrands, Integer page,
             Integer size, String sortField, String sortDirection) {
 
-        Sort sort;
-        if ("brand.name".equals(sortField)) {
-            sort = Sort.by(Sort.Direction.fromString(sortDirection), "brand.name");
-        } else {
-            sort = Sort.by(Sort.Direction.fromString(sortDirection), sortField);
+        Pageable pageable;
+
+        if ("brand.name".equalsIgnoreCase(sortField)) {
+            pageable = PageRequest.of(page, size);
+            Page<SaleItemBase> result = saleItemBaseRepo.findAllWithBrandNameFilter(
+                    filterBrands != null && !filterBrands.isEmpty() ? filterBrands.stream().map(String::toLowerCase).toList() : null,
+                    pageable
+            );
+
+            Comparator<SaleItemBase> comparator = Comparator.comparing(
+                    (SaleItemBase s) -> s.getBrand() != null && s.getBrand().getName() != null ? s.getBrand().getName().toLowerCase() : "",
+                    sortDirection.equalsIgnoreCase("desc") ? Comparator.reverseOrder() : Comparator.naturalOrder()
+            );
+
+            List<SaleItemBase> sortedList = result.getContent().stream()
+                    .sorted(comparator)
+                    .toList();
+
+            return new PageImpl<>(sortedList, pageable, result.getTotalElements()).map(this::mapToDto);
         }
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
 
         Page<SaleItemBase> result;
         if (filterBrands == null || filterBrands.isEmpty()) {
