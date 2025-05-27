@@ -159,7 +159,7 @@ const cancelDeleteItem = () => {
         </div>
         <div class="itbms-model">
           <strong>Model: </strong>
-          <span :class="{ 'text-gray-400': !product?.model }" :maxlength="60">{{ product?.model || '-' }}</span>
+          <span :class="{ 'text-gray-400': !product?.model }">{{ product?.model || '-' }}</span>
         </div>
         <div class="itbms-price">
           <strong>Price: </strong>
@@ -340,6 +340,11 @@ const cancelDeleteItem = () => {
 }
 .loading-overlay {
   background-color: rgba(0, 0, 0, 0.2); /* หรือค่าอื่น ๆ ที่คุณต้องการ */
+}
+
+span {
+  white-space: normal;
+  word-break: break-word; 
 }
 
 </style>

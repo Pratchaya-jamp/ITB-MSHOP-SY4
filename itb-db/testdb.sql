@@ -156,10 +156,10 @@ alter table sale_item_base
 modify column id int auto_increment;
 
 alter table sale_item_base
-modify column model varchar(100) character set utf8mb4 not null;
+modify column model varchar(60) character set utf8mb4 not null;
 
 alter table sale_item_base
-modify column color varchar(50) character set utf8mb4;
+modify column color varchar(40) character set utf8mb4;
 
 alter table sale_item_base
 modify column description text character set utf8mb4 not null;

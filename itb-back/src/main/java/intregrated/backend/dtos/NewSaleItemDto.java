@@ -19,7 +19,6 @@ public class NewSaleItemDto {
     private Integer price;
     private Integer ramGb;
     private Double screenSizeInch;
-    @NotNull
     private Integer quantity;
     private Integer storageGb;
     private String color;

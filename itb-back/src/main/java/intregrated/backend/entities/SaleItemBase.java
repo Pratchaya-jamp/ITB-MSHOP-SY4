@@ -24,14 +24,14 @@ public class SaleItemBase {
     @JoinColumn(name = "brand_id")
     private BrandBase brand;
 
-    @Size(max = 100)
+    @Size(max = 60)
     @NotNull
-    @Column(name = "model", nullable = false, length = 100)
+    @Column(name = "model", nullable = false, length = 60)
     private String model;
 
-    @Size(max = 200)
+    @Size(max = 65535)
     @NotNull
-    @Column(name = "description", nullable = false, length = 200)
+    @Column(name = "description", nullable = false, length = 65535)
     private String description;
 
     @NotNull
@@ -47,8 +47,8 @@ public class SaleItemBase {
     @Column(name = "storageGb")
     private Integer storageGb;
 
-    @Size(max = 50)
-    @Column(name = "color", length = 50)
+    @Size(max = 40)
+    @Column(name = "color", length = 40)
     private String color;
 
     @NotNull

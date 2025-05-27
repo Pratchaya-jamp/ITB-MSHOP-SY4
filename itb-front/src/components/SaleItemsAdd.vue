@@ -54,7 +54,7 @@ const isRamValid = ref(true) // Initialized to true, assuming it's optional or h
 const isScreenValid = ref(true) // Initialized to true
 const isStorageValid = ref(true) // Initialized to true
 const isColorValid = ref(true) // Initialized to true
-const isQuantityValid = ref(false)
+const isQuantityValid = ref(true)
 
 // ติดตาม Valid แบบ real-time
 const modelError = ref('')
@@ -65,7 +65,7 @@ const screenSizeError = ref('')
 const storageError = ref('')
 const colorError = ref('')
 const quantityError = ref('')
-
+const brandError = ref('')
 
 
 
@@ -134,16 +134,16 @@ onMounted(async () => {
 watch(() => product.value.price, (newVal) => {
   const val = Number(newVal)
   if (newVal === null || newVal === undefined || newVal === '' || isNaN(val)) {
-    priceError.value = 'Please enter the price.'
+    priceError.value = 'Price must be non-negative integer.'
     isPriceValid.value = false
-  } else if (val <= 0) {
-    priceError.value = 'Price must be greater than 0.'
+  } else if (val < 0) {
+    priceError.value = 'Price must be non-negative integer.'
     isPriceValid.value = false
-  } else if (val >= 1000000) {
-    priceError.value = 'The price must not exceed 1,000,000 Baht.'
+  } else if (val >= 10000000000) {
+    priceError.value = 'The price must not exceed 10,000,000,000 Baht.'
     isPriceValid.value = false
   } else if (!Number.isInteger(val)) {
-    priceError.value = 'Prices must be in whole numbers only.'
+    priceError.value = 'Price must be non-negative integer.'
     isPriceValid.value = false
   } else {
     priceError.value = ''
@@ -153,11 +153,12 @@ watch(() => product.value.price, (newVal) => {
 
 // --- Model ---
 watch(() => product.value.model, (newVal) => {
+  const val = newVal.trim()
   if (typeof newVal !== 'string' || newVal.trim() === '') {
-    modelError.value = 'Please enter model name.'
+    modelError.value = 'Model must be 1-60 characters long.'
     isModelValid.value = false
-  } else if (newVal.length > 60) {
-    modelError.value = 'Model name must not exceed 60 characters.'
+  } else if (val.length > 60) {
+    modelError.value = 'Model must be 1-60 characters long.'
     isModelValid.value = false
   } else {
     modelError.value = ''
@@ -168,10 +169,10 @@ watch(() => product.value.model, (newVal) => {
 // --- Description ---
 watch(() => product.value.description, (newVal) => {
   if (typeof newVal !== 'string' || newVal.trim() === '') {
-    descriptionError.value = 'Please fill in the details.'
+    descriptionError.value = 'Description must be 1-16,384 characters long.'
     isDescriptionValid.value = false
-  } else if (newVal.trim().length > 65535) {
-    descriptionError.value = 'Description must not exceed 65535 characters.'
+  } else if (newVal.trim().length > 16384) {
+    descriptionError.value = 'Description must be 1-16,384 characters long.'
     isDescriptionValid.value = false
   } else {
     descriptionError.value = ''
@@ -182,16 +183,17 @@ watch(() => product.value.description, (newVal) => {
 // --- RAM ---
 watch(() => product.value.ramGb, (newVal) => {
   const val = Number(newVal)
-  if (newVal === null || newVal === undefined || newVal === '') {
+  if (newVal === null || newVal === '') {
+    // ถ้าไม่กรอกอะไรเลย ก็ถือว่าผ่าน
     ramError.value = ''
     isRamValid.value = true
     return
   }
-  if (!Number.isInteger(val) || val < 0) {
-    ramError.value = 'Please enter the correct RAM.'
+  if (!Number.isInteger(val) || val <= 0) {
+    ramError.value = 'RAM size must be positive integer or not specified.'
     isRamValid.value = false
-  } else if (val > 10000) {
-    ramError.value = 'RAM must not exceed 10,000 GB.'
+  } else if (val > 1000000000) {
+    ramError.value = 'RAM must not exceed 1,000,000,000 GB.'
     isRamValid.value = false
   } else {
     ramError.value = ''
@@ -202,16 +204,12 @@ watch(() => product.value.ramGb, (newVal) => {
 // --- Screen Size ---
 watch(() => product.value.screenSizeInch, (newVal) => {
   const val = Number(newVal)
-  if (newVal === null || newVal === undefined || newVal === '') {
-    screenSizeError.value = ''
-    isScreenValid.value = true
-    return
-  }
-  if (val < 0) {
-    screenSizeError.value = 'Please enter the correct screen size.'
+
+  if (val <= 0) {
+    screenSizeError.value = 'Screen size must be positive number with at most 2 decimal points or not specified.'
     isScreenValid.value = false
   } else if (!/^\d{1,8}(\.\d{1,2})?$/.test(val.toString())) {
-    screenSizeError.value = 'Screen size must have no more than 2 decimal places.'
+    screenSizeError.value = 'Screen size must be positive number with at most 2 decimal points or not specified.'
     isScreenValid.value = false
   } else {
     screenSizeError.value = ''
@@ -222,16 +220,16 @@ watch(() => product.value.screenSizeInch, (newVal) => {
 // --- Storage ---
 watch(() => product.value.storageGb, (newVal) => {
   const val = Number(newVal)
-  if (newVal === null || newVal === undefined || newVal === '') {
-    storageError.value = ''
-    isStorageValid.value = true
-    return
+  if (newVal === null || newVal === '') {
+     storageError.value = ''
+     isStorageValid.value = true
+     return
   }
-  if (!Number.isInteger(val) || val < 0) {
-    storageError.value = 'Please enter the correct storage.'
+  if (!Number.isInteger(val) || val <= 0) {
+    storageError.value = 'Storage size must be positive integer or not specified.'
     isStorageValid.value = false
-  } else if (val > 10000) {
-    storageError.value = 'Storage must not exceed 10,000 GB.'
+  } else if (val > 1000000000) {
+    storageError.value = 'Storage must not exceed 1,000,000,000 GB.'
     isStorageValid.value = false
   } else {
     storageError.value = ''
@@ -241,13 +239,9 @@ watch(() => product.value.storageGb, (newVal) => {
 
 // --- Color ---
 watch(() => product.value.color, (newVal) => {
-  if (newVal === null || newVal === undefined || typeof newVal !== 'string' || newVal.trim() === '') {
-    colorError.value = ''
-    isColorValid.value = true
-    return
-  }
+
   if (newVal.trim().length > 40) {
-    colorError.value = 'The color must not exceed 40 characters.'
+    colorError.value = 'Color must be 1-40 characters long or not specified.'
     isColorValid.value = false
   } else {
     colorError.value = ''
@@ -259,16 +253,16 @@ watch(() => product.value.color, (newVal) => {
 watch(() => product.value.quantity, (newVal) => {
   const val = Number(newVal)
   if (newVal === null || newVal === undefined || newVal === '') {
-    quantityError.value = 'Product quantity is required.'
+    quantityError.value = 'Quantity must be non-negative integer.'
     isQuantityValid.value = false
   } else if (!Number.isInteger(val)) {
-    quantityError.value = 'Product quantity must be an integer.'
+    quantityError.value = 'Quantity must be non-negative integer.'
     isQuantityValid.value = false
   } else if (val < 0) {
-    quantityError.value = 'Product quantity must not be negative.'
+    quantityError.value = 'Quantity must be non-negative integer.'
     isQuantityValid.value = false
-  } else if (val > 1000000) {
-    quantityError.value = 'The quantity of products must not exceed 1,000,000.'
+  } else if (val > 10000000000) {
+    quantityError.value = 'The quantity of products must not exceed 10,000,000,000.'
     isQuantityValid.value = false
   } else {
     quantityError.value = ''
@@ -276,7 +270,15 @@ watch(() => product.value.quantity, (newVal) => {
   }
 })
 
-
+// --- Brand ---
+const validateBrand = () => {
+  const isValidBrand = brandList.value.some(b => b.id === selectedBrandId.value)
+  if (!isValidBrand) {
+     brandError.value = 'Brand must be selected.'
+  } else {
+    brandError.value = '';
+  }
+}
 
 const isModified = computed(() => {
   if (!originalProduct.value) return true // ในกรณีเพิ่มสินค้าใหม่
@@ -299,8 +301,11 @@ const isModified = computed(() => {
 const isValid = () => {
   // We don't need isFormTouched here, as isValid already checks all required fields
   // and their validity flags are updated immediately by the watchers.
+  const brandIdValid = selectedBrandId.value !== null && brandList.value.some(brand => brand.id === selectedBrandId.value)
+
   return (
-    selectedBrandId.value !== null && // Ensure a brand is selected
+    //selectedBrandId.value !== null && // Ensure a brand is selected
+    brandIdValid &&
     isPriceValid.value === true &&
     isModelValid.value === true &&
     isDescriptionValid.value === true &&
@@ -447,54 +452,56 @@ const cancelAddItem = () => {
       <div class="space-y-3 text-sm text-black">
         <div class="grid grid-cols-2 gap-2 items-center">
           <label class="text-left font-medium">Brand:<span class="text-red-500">*</span></label>
-          <select v-if="brandList.length > 0" v-model="selectedBrandId" class="itbms-brand border p-2 rounded w-full">
-          <option value="" disabled selected> Select Brand</option>
+          <select v-if="brandList.length > 0" v-model="selectedBrandId" class="itbms-brand border p-2 rounded w-full" @blur="validateBrand">
+          <option value=""> Select Brand</option>
           <option v-for="brand in brandList" :key="brand.id" :value="brand.id">
           {{ brand.brandName }}
           </option>
           </select>
-          <div v-else class="border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div>
+          <div v-if="brandError"></div>
+          <p v-if="brandError" class="itbms-message text-red-500 text-sm">{{ brandError }}</p>
+          <!-- <div v-else class="border p-2 rounded w-full text-gray-500 bg-gray-50">No brand found.</div> -->
 
           <label class="text-left font-medium">Model:<span class="text-red-500">*</span></label>
-          <input v-model="product.model" type="text" class="itbms-model border p-2 rounded w-full" maxlength="60" />
+          <input v-model="product.model" type="text" class="itbms-model border p-2 rounded w-full" />
           <div v-if="modelError"></div>
-          <p v-if="modelError" class="text-red-500 text-sm">{{ modelError }}</p>
+          <p v-if="modelError" class="itbms-message text-red-500 text-sm">{{ modelError }}</p>
 
           <label class="text-left font-medium">Price (Baht):<span class="text-red-500">*</span></label>
-          <input v-model="product.price" min="0" type="number" class="itbms-price border p-2 rounded w-full" />
+          <input v-model="product.price" type="number" class="itbms-price border p-2 rounded w-full" />
           <div v-if="priceError"></div>
-          <p v-if="priceError" class="text-red-500 text-sm">{{ priceError }}</p>
+          <p v-if="priceError" class="itbms-message text-red-500 text-sm">{{ priceError }}</p>
 
           <label class="text-left font-medium">Ram (GB):</label>
           <input v-model="product.ramGb" type="number" class="itbms-ramGb border p-2 rounded w-full" />
           <div v-if="ramError"></div>
-          <p v-if="ramError" class="text-red-500 text-sm">{{ ramError }}</p>
+          <p v-if="ramError" class="itbms-message text-red-500 text-sm">{{ ramError }}</p>
 
           <label class="text-left font-medium">Screen Size (in):</label>
           <input v-model="product.screenSizeInch" type="number" class="itbms-screenSizeInch border p-2 rounded w-full" />
           <div v-if="screenSizeError"></div>
-          <p v-if="screenSizeError" class="text-red-500 text-sm">{{ screenSizeError }}</p>
+          <p v-if="screenSizeError" class="itbms-message text-red-500 text-sm">{{ screenSizeError }}</p>
 
           <label class="text-left font-medium">Storage (GB):</label>
           <input v-model="product.storageGb" type="number" class="itbms-storageGb border p-2 rounded w-full" />
           <div v-if="storageError"></div>
-          <p v-if="storageError" class="text-red-500 text-sm">{{ storageError }}</p>
+          <p v-if="storageError" class="itbms-message text-red-500 text-sm">{{ storageError }}</p>
 
           <label class="text-left font-medium">Color:</label>
           <input v-model="product.color" type="text" class="itbms-color border p-2 rounded w-full" />
           <div v-if="colorError"></div>
-          <p v-if="colorError" class="text-red-500 text-sm">{{ colorError }}</p>
+          <p v-if="colorError" class="itbms-message text-red-500 text-sm">{{ colorError }}</p>
 
           <label class="text-left font-medium">Quantity:<span class="text-red-500">*</span></label>
           <input v-model="product.quantity" type="number" class="itbms-quantity border p-2 rounded w-full" />
           <div v-if="quantityError"></div>
-          <p v-if="quantityError" class="text-red-500 text-sm">{{ quantityError }}</p>
+          <p v-if="quantityError" class="itbms-message text-red-500 text-sm">{{ quantityError }}</p>
         </div>
 
         <label class="block font-medium mt-4">Description:<span class="text-red-500">*</span></label>
         <textarea v-model="product.description" rows="3" class="itbms-description border p-2 rounded w-full"></textarea>
         <div v-if="descriptionError"></div>
-          <p v-if="descriptionError" class="text-red-500 text-sm">{{ descriptionError }}</p>
+          <p v-if="descriptionError" class="itbms-message text-red-500 text-sm">{{ descriptionError }}</p>
 
         <div class="flex gap-2 mt-4 justify-end">
           <button
@@ -654,5 +661,10 @@ const cancelAddItem = () => {
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+span {
+  white-space: normal; /* อนุญาตให้ขึ้นบรรทัดใหม่ */
+  word-break: break-word; /* บังคับตัดคำถ้ายาวเกิน */
 }
 </style>
