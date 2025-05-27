@@ -110,23 +110,6 @@ watch(
 )
 
 
-watch(() => route.query.page, async (newPage) => {
-  page.value = Number(newPage) || 1
-  await fetchItems()
-
-  if (items.value.length === 0 && page.value !== 1) {
-    // รอให้ route เปลี่ยนแล้วค่อย fetch ใหม่อีกรอบ
-    await router.push({ path: '/items', query: { page: 1 } })
-    currentPage.value = 0
-    await fetchItems() // โหลดข้อมูลของหน้าใหม่
-  }
-})
- 
-watch(items, (newItems) => {
-  if (newItems.length === 0 && page.value !== 1) {
-    router.push({ path: '/items', query: { page: 1 } })
-  }
-})
 
 watch(currentPage, (newPage) => {
   sessionStorage.setItem('currentPage', newPage)
@@ -201,6 +184,7 @@ const visiblePages = computed(() => {
 function goToPage(page) {
   currentPage.value = page
   updateQueryParams()
+fetchItems()
 }
 
 //edit
@@ -662,7 +646,7 @@ watch(
     </transition>
 
         <!-- ✅ Pagination Navigation Bar -->
-<div v-if="totalPages > 1" class="flex justify-center mt-6 flex-wrap gap-2">
+<div :class="totalPages === 1 ? 'invisible' : 'visible'" class="flex justify-center mt-6 flex-wrap gap-2">
     <!-- First -->
     <button
       @click="() => { lastAction = 'first'; goToPage(0) }"
