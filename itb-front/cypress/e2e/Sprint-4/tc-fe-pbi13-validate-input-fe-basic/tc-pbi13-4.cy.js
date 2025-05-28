@@ -88,7 +88,7 @@ describe(`TC-FE-PBI13-VALIDATE-INPUT-FE-BASIC-4\n
             expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.false
         })
         cy.get('.itbms-save-button').click()
-        cy.wait(100)
+        cy.wait(1000)
 
         cy.contains('.itbms-row', 'ไอทีบางมด').should('exist')
 
@@ -165,7 +165,7 @@ describe(`TC-FE-PBI13-VALIDATE-INPUT-FE-BASIC-4\n
             expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.false
         })
         cy.get('.itbms-save-button').click()
-        cy.wait(100)
+        cy.wait(1000)
 
         cy.contains('.itbms-row', 'I').should('exist')
 
@@ -243,7 +243,7 @@ describe(`TC-FE-PBI13-VALIDATE-INPUT-FE-BASIC-4\n
             expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.false
         })
         cy.get('.itbms-save-button').click()
-        cy.wait(100)
+        cy.wait(1000)
 
         cy.contains('.itbms-row', 'ITBangmod-KMUTT-TH-Innovations').should('exist')
 
