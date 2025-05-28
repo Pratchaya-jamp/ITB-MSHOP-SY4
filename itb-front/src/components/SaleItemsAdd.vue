@@ -133,17 +133,11 @@ onMounted(async () => {
 // --- Price ---
 watch(() => product.value.price, (newVal) => {
   const val = Number(newVal)
-  if (newVal === null || newVal === undefined || newVal === '' || isNaN(val)) {
+  if (newVal === null || newVal === '' || isNaN(val) || !Number.isInteger(val) || val < 0) {
     priceError.value = 'Price must be non-negative integer.'
     isPriceValid.value = false
-  } else if (val < 0) {
-    priceError.value = 'Price must be non-negative integer.'
-    isPriceValid.value = false
-  } else if (val >= 10000000000) {
-    priceError.value = 'The price must not exceed 10,000,000,000 Baht.'
-    isPriceValid.value = false
-  } else if (!Number.isInteger(val)) {
-    priceError.value = 'Price must be non-negative integer.'
+  } else if (val > 2147483647) {
+    priceError.value = `The price must not exceed 2147483647 Baht.`
     isPriceValid.value = false
   } else {
     priceError.value = ''
@@ -153,11 +147,8 @@ watch(() => product.value.price, (newVal) => {
 
 // --- Model ---
 watch(() => product.value.model, (newVal) => {
-  const val = newVal.trim()
-  if (typeof newVal !== 'string' || newVal.trim() === '') {
-    modelError.value = 'Model must be 1-60 characters long.'
-    isModelValid.value = false
-  } else if (val.length > 60) {
+  const val = newVal?.trim() ?? ''
+  if (!val || val.length > 60) {
     modelError.value = 'Model must be 1-60 characters long.'
     isModelValid.value = false
   } else {
@@ -168,10 +159,8 @@ watch(() => product.value.model, (newVal) => {
 
 // --- Description ---
 watch(() => product.value.description, (newVal) => {
-  if (typeof newVal !== 'string' || newVal.trim() === '') {
-    descriptionError.value = 'Description must be 1-16,384 characters long.'
-    isDescriptionValid.value = false
-  } else if (newVal.trim().length > 16384) {
+  const val = newVal?.trim() ?? ''
+  if (!val || val.length > 16384) {
     descriptionError.value = 'Description must be 1-16,384 characters long.'
     isDescriptionValid.value = false
   } else {
@@ -180,20 +169,17 @@ watch(() => product.value.description, (newVal) => {
   }
 })
 
-// --- RAM ---
+// --- RAM (optional) ---
 watch(() => product.value.ramGb, (newVal) => {
   const val = Number(newVal)
   if (newVal === null || newVal === '') {
-    // ถ้าไม่กรอกอะไรเลย ก็ถือว่าผ่าน
     ramError.value = ''
     isRamValid.value = true
-    return
-  }
-  if (!Number.isInteger(val) || val <= 0) {
+  } else if (!Number.isInteger(val) || val <= 0) {
     ramError.value = 'RAM size must be positive integer or not specified.'
     isRamValid.value = false
-  } else if (val > 1000000000) {
-    ramError.value = 'RAM must not exceed 1,000,000,000 GB.'
+  } else if (val > 2147483647) {
+    ramError.value = `RAM must not exceed 2147483647 GB.`
     isRamValid.value = false
   } else {
     ramError.value = ''
@@ -201,35 +187,35 @@ watch(() => product.value.ramGb, (newVal) => {
   }
 })
 
-// --- Screen Size ---
+// --- Screen Size (optional) ---
 watch(() => product.value.screenSizeInch, (newVal) => {
-  const val = Number(newVal)
-
-  if (val <= 0) {
-    screenSizeError.value = 'Screen size must be positive number with at most 2 decimal points or not specified.'
-    isScreenValid.value = false
-  } else if (!/^\d{1,8}(\.\d{1,2})?$/.test(val.toString())) {
-    screenSizeError.value = 'Screen size must be positive number with at most 2 decimal points or not specified.'
-    isScreenValid.value = false
-  } else {
+    const val = Number(newVal)
+    const isValidFormat = /^\d{1,8}(\.\d{1,2})?$/.test(val.toString())
+  if (newVal === null || newVal === '') {
     screenSizeError.value = ''
     isScreenValid.value = true
+  } else if (val <= 0 || !isValidFormat) {
+      screenSizeError.value = 'Screen size must be positive number with at most 2 decimal points or not specified.'
+      isScreenValid.value = false
+    } else {
+      screenSizeError.value = ''
+      isScreenValid.value = true
+    }
   }
-})
+)
 
-// --- Storage ---
+
+// --- Storage (optional) ---
 watch(() => product.value.storageGb, (newVal) => {
   const val = Number(newVal)
   if (newVal === null || newVal === '') {
-     storageError.value = ''
-     isStorageValid.value = true
-     return
-  }
-  if (!Number.isInteger(val) || val <= 0) {
+    storageError.value = ''
+    isStorageValid.value = true
+  } else if (!Number.isInteger(val) || val < 1) {
     storageError.value = 'Storage size must be positive integer or not specified.'
     isStorageValid.value = false
-  } else if (val > 1000000000) {
-    storageError.value = 'Storage must not exceed 1,000,000,000 GB.'
+  } else if (val > 2147483647) {
+    storageError.value = `Storage must not exceed 2147483647 GB.`
     isStorageValid.value = false
   } else {
     storageError.value = ''
@@ -237,10 +223,10 @@ watch(() => product.value.storageGb, (newVal) => {
   }
 })
 
-// --- Color ---
+// --- Color (optional) ---
 watch(() => product.value.color, (newVal) => {
-
-  if (newVal.trim().length > 40) {
+  const val = newVal?.trim() ?? ''
+  if (val.length > 40) {
     colorError.value = 'Color must be 1-40 characters long or not specified.'
     isColorValid.value = false
   } else {
@@ -252,17 +238,14 @@ watch(() => product.value.color, (newVal) => {
 // --- Quantity ---
 watch(() => product.value.quantity, (newVal) => {
   const val = Number(newVal)
-  if (newVal === null || newVal === undefined || newVal === '') {
-    quantityError.value = 'Quantity must be non-negative integer.'
+  if (newVal === null || newVal === '') {
+    quantityError.value = ''
+    isQuantityValid.value = true
+  } else if (!Number.isInteger(val) || val < 0) {
+    quantityError.value = 'itbms-message, Quantity must be non-negative integer.'
     isQuantityValid.value = false
-  } else if (!Number.isInteger(val)) {
-    quantityError.value = 'Quantity must be non-negative integer.'
-    isQuantityValid.value = false
-  } else if (val < 0) {
-    quantityError.value = 'Quantity must be non-negative integer.'
-    isQuantityValid.value = false
-  } else if (val > 10000000000) {
-    quantityError.value = 'The quantity of products must not exceed 10,000,000,000.'
+  } else if (val > 2147483647) {
+    quantityError.value = 'The quantity of products must not exceed 2147483647.'
     isQuantityValid.value = false
   } else {
     quantityError.value = ''
@@ -281,7 +264,7 @@ const validateBrand = () => {
 }
 
 const isModified = computed(() => {
-  if (!originalProduct.value) return true // ในกรณีเพิ่มสินค้าใหม่
+  if (!originalProduct.value) return true 
   // Check if any property in product.value has changed compared to originalProduct.value
   const productChanged = Object.keys(product.value).some(key => {
     // Handle potential null/undefined values gracefully
@@ -492,7 +475,7 @@ const cancelAddItem = () => {
           <div v-if="colorError"></div>
           <p v-if="colorError" class="itbms-message text-red-500 text-sm">{{ colorError }}</p>
 
-          <label class="text-left font-medium">Quantity:<span class="text-red-500">*</span></label>
+          <label class="text-left font-medium">Quantity:</label>
           <input v-model="product.quantity" type="number" class="itbms-quantity border p-2 rounded w-full" />
           <div v-if="quantityError"></div>
           <p v-if="quantityError" class="itbms-message text-red-500 text-sm">{{ quantityError }}</p>

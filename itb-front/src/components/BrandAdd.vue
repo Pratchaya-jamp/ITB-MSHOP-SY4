@@ -1,21 +1,18 @@
 <script setup>
-import { ref, reactive, onMounted, computed,watch } from 'vue';
+import { ref,  onMounted, computed,watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { addItem,editItem, getItems, getItemById } from '@/libs/fetchUtilsOur'
+import { addItem,editItem,  getItemById } from '@/libs/fetchUtilsOur'
 
 const route = useRoute();
 const router = useRouter();
 
-const isEdit = computed(() => !!route.query.edit);
 
-const defaultImage = '/sy4/logobrands/1.png'; // โลโก้ default
 const brandLogo = ref('/sy4/logobrands/1.png');
 
 // State สำหรับควบคุมการแสดง Pop-up
 const originalBrand = ref(null)
 const showConfirmationAddPopup = ref(false)
 const showConfirmationEditPopup = ref(false)
-const brandList = ref([])
 const id = route.params.id
 const isEditMode = ref(false)
 const countdown = ref(3)
@@ -78,12 +75,10 @@ const nameError = ref('')
 const websiteUrlError = ref('')
 const countryOfOriginError = ref('')
 
-// --- brandname ---
+// --- Brand Name ---
 watch(() => brand.value.name, (newVal) => {
-  if (newVal.trim() === '') {
-    nameError.value = 'Brand name must be 1-30 characters long.'
-    isNameValid.value = false
-  } else if (newVal.trim().length > 30) {
+  const name = newVal.trim()
+  if (!name || name.length > 30) {
     nameError.value = 'Brand name must be 1-30 characters long.'
     isNameValid.value = false
   } else {
@@ -91,30 +86,28 @@ watch(() => brand.value.name, (newVal) => {
     isNameValid.value = true
   }
 })
- 
-// --- websiteUrl ---
+
+// --- Website URL ---
 watch(() => brand.value.websiteUrl, (newVal) => {
-const pattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/
-  
-  if (!newVal.trim()) {
+  const url = newVal.trim()
+  const pattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/
+
+  if (!url) {
     websiteUrlError.value = ''
     isWebsiteUrlValid.value = true
-  } else if (newVal.length > 80) {
-    websiteUrlError.value = 'Brand URL must be a valid URL or not specified.'
-    isWebsiteUrlValid.value = false
-  } else if (!pattern.test(newVal)) {
+  } else if (url.length > 80 || !pattern.test(url)) {
     websiteUrlError.value = 'Brand URL must be a valid URL or not specified.'
     isWebsiteUrlValid.value = false
   } else {
     websiteUrlError.value = ''
     isWebsiteUrlValid.value = true
   }
-
 })
 
-// --- countryOfOrigin ---
+// --- Country of Origin ---
 watch(() => brand.value.countryOfOrigin, (newVal) => {
-   if (newVal.trim().length > 80) {
+  const country = newVal.trim()
+  if (country.length > 80) {
     countryOfOriginError.value = 'Brand country of origin must be 1-80 characters long or not specified.'
     iscountryOfOriginValid.value = false
   } else {
@@ -122,6 +115,7 @@ watch(() => brand.value.countryOfOrigin, (newVal) => {
     iscountryOfOriginValid.value = true
   }
 })
+
 
 const isModified = computed(() => {
   if (!originalBrand.value) return true // ในกรณีเพิ่มสินค้าใหม่

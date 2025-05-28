@@ -38,13 +38,6 @@ const availableBrands = computed(() => {
 });
 
 
-// Query parameter sync
-function updateQueryParams() {
-  router.replace({
-    path: route.path
-  })
-}
-
 
 // Fetch
 async function fetchItems() {
@@ -76,13 +69,7 @@ async function fetchbrand() {
   try {
     const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/brands')
     brandList.value = data.sort((a, b) => {
-  //if (a.brandName < b.brandName) {
-    //return -1;
-  //}
-  //if (a.brandName > b.brandName) {
-    //return 1;
-  //}
-  //return 0;
+
    const brandA = a.brandName ? a.brandName.toLowerCase() : ''
    const brandB = b.brandName ? b.brandName.toLowerCase() : ''
 
@@ -104,7 +91,6 @@ watch(
   () => {
     currentPage.value = 0
     lastAction.value = '' // เพื่อให้ visiblePages รีคอมพิวต์ใหม่
- updateQueryParams()
   fetchItems()
  }
 )
@@ -183,8 +169,7 @@ const visiblePages = computed(() => {
 // Pagination
 function goToPage(page) {
   currentPage.value = page
-  updateQueryParams()
-fetchItems()
+  fetchItems()
 }
 
 //edit
@@ -197,24 +182,23 @@ const goToEditItem = (id) => {
 function sortBrandAscending() {
   currentSortOrder.value = 'brandAsc'
   currentPage.value = 0
-  updateQueryParams()
+  fetchItems()
 }
 function sortBrandDescending() {
   currentSortOrder.value = 'brandDesc'
   currentPage.value = 0
-  updateQueryParams()
+  fetchItems()
 }
 function clearBrandSorting() {
   currentSortOrder.value = 'createdOn'
   currentPage.value = 0
-  updateQueryParams()
+  fetchItems()
 }
 
 watch(pageSize, () => {
   currentPage.value = 0  // รีเซ็ตไปหน้าแรกเมื่อเปลี่ยนขนาดหน้า
-  updateQueryParams()
-  fetchItems()
   fixedStart.value = 0
+  fetchItems()
 })
 
 // Filter
@@ -224,19 +208,15 @@ function toggleBrandFilterModal() {
 function removeBrandFromFilter(brand) {
   selectedBrands.value = selectedBrands.value.filter(b => b !== brand)
   currentPage.value = 0
-  updateQueryParams()
+  fetchItems()
 }
 function clearAllBrandFilters() {
   selectedBrands.value = []
   currentPage.value = 0
-  updateQueryParams()
+  fetchItems()
 }
 
-// View toggle
-function toggleViewMode() {
-  isGridView.value = !isGridView.value
-  updateQueryParams()
-}
+
 
 // Navigation
 function addSaleItemButton() {
@@ -393,13 +373,13 @@ watch(
                 </svg>
               </button>
             </span>
-            <input
-              type="text"
-              :placeholder="selectedBrands.length === 0 ? 'Filter by brand(s)' : ''"
-              readonly
-              class="itbms-brand-filter-input py-2 px-3 flex-grow focus:outline-none rounded-l-md text-black bg-white cursor-pointer"
-              @click="toggleBrandFilterModal"
-            />
+	      <input
+               type="text"
+               :placeholder="selectedBrands.length === 0 ? 'Filter by brand(s)' : ''"
+               readonly
+               class="itbms-brand-filter-input h-full w-full px-3 py-0 flex-grow focus:outline-none text-black bg-white cursor-pointer"
+               @click="toggleBrandFilterModal"
+              />
           </div>
           <button @click="toggleBrandFilterModal" class="itbms-brand-filter-button bg-gray-100 hover:bg-gray-200 p-2 rounded-r-none focus:outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
