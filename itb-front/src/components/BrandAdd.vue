@@ -81,10 +81,10 @@ const countryOfOriginError = ref('')
 // --- brandname ---
 watch(() => brand.value.name, (newVal) => {
   if (newVal.trim() === '') {
-    nameError.value = 'Please enter brand name.'
+    nameError.value = 'Brand name must be 1-30 characters long.'
     isNameValid.value = false
   } else if (newVal.trim().length > 30) {
-    nameError.value = 'Brand name must not exceed 30 characters.'
+    nameError.value = 'Brand name must be 1-30 characters long.'
     isNameValid.value = false
   } else {
     nameError.value = ''
@@ -100,10 +100,10 @@ const pattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;
     websiteUrlError.value = ''
     isWebsiteUrlValid.value = true
   } else if (newVal.length > 80) {
-    websiteUrlError.value = 'URL ต้องไม่เกิน 80 ตัวอักษร'
+    websiteUrlError.value = 'Brand URL must be a valid URL or not specified.'
     isWebsiteUrlValid.value = false
   } else if (!pattern.test(newVal)) {
-    websiteUrlError.value = 'URL ไม่ถูกต้อง'
+    websiteUrlError.value = 'Brand URL must be a valid URL or not specified.'
     isWebsiteUrlValid.value = false
   } else {
     websiteUrlError.value = ''
@@ -115,7 +115,7 @@ const pattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;
 // --- countryOfOrigin ---
 watch(() => brand.value.countryOfOrigin, (newVal) => {
    if (newVal.trim().length > 80) {
-    countryOfOriginError.value = 'countryOfOrigin must not exceed 80 characters.'
+    countryOfOriginError.value = 'Brand country of origin must be 1-80 characters long or not specified.'
     iscountryOfOriginValid.value = false
   } else {
     countryOfOriginError.value = ''
@@ -264,43 +264,40 @@ if (isEditMode.value) {
             <input v-model="brand.name" type="text"
               class="itbms-name w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
             
-          <p v-if="nameError" class="text-red-500 text-sm">{{ nameError }}</p>
+          <p v-if="nameError" class="itbms-message text-red-500 text-sm">{{ nameError }}</p>
           </div>
 
           <div class="mb-4">
             <label class="block text-gray-800 font-medium mb-1">WebsiteUrl:</label>
             <input v-model="brand.websiteUrl" type="url"
               class="itbms-websiteUrl w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
-              <p v-if="websiteUrlError" class="text-red-500 text-sm">{{ websiteUrlError }}</p>
+              <p v-if="websiteUrlError" class="itbms-message text-red-500 text-sm">{{ websiteUrlError }}</p>
           </div>
  
-          <div class="mb-4 flex items-center">
+<div class="mb-4 flex items-center">
   <label class="block text-gray-800 font-medium mr-4">isActive:</label>
-  <div
-    class="relative inline-flex items-center cursor-pointer"
-    @click="brand.isActive = !brand.isActive"
-  >
+  <label class="relative inline-flex items-center cursor-pointer w-11 h-6">
     <input
       v-model="brand.isActive"
       type="checkbox"
       id="isActiveSwitch"
-      class="itbms-isActive itbms-checkbox sr-only"
+      class="itbms-isActive itbms-checkbox"
     />
     <div
       class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-indigo-600 transition-colors duration-200 ease-in-out"
     ></div>
     <span
       aria-hidden="true"
-      class="absolute top-0 left-0 h-6 w-6 bg-white border border-gray-300 rounded-full peer-checked:translate-x-5 transition-transform duration-200 ease-in-out"
+      class="absolute top-[2px] left-[2px] h-5 w-5 bg-white border border-gray-300 rounded-full peer-checked:translate-x-5 transition-transform duration-200 ease-in-out"
     ></span>
-  </div>
+  </label>
 </div>
 
           <div class="mb-6">
             <label class="block text-gray-800 font-medium mb-1">countryOfOrigin:</label>
             <input v-model="brand.countryOfOrigin" type="text"
               class="itbms-countryOfOrigin w-full border border-gray-300 rounded px-4 py-2 text-gray-900 placeholder-gray-400" />
-              <p v-if="countryOfOriginError" class="text-red-500 text-sm">{{ countryOfOriginError }}</p>
+              <p v-if="countryOfOriginError" class="itbms-message text-red-500 text-sm">{{ countryOfOriginError }}</p>
           </div>
 
           <div class="flex gap-2 mt-4 justify-end">
@@ -463,17 +460,18 @@ if (isEditMode.value) {
   animation: spin 1s linear infinite;
 }
 
-.sr-only {
+.itbms-isActive {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  opacity: 0;
+  appearance: none;
+  cursor: pointer;
 }
+
 
 input[type="checkbox"].itbms-checkbox + div {
   width: 44px; /* ปรับขนาดตามต้องการ */
@@ -502,5 +500,7 @@ input[type="checkbox"].itbms-checkbox + div + span {
 input[type="checkbox"].itbms-checkbox:checked + div + span {
   transform: translateX(20px); /* ระยะเลื่อนเมื่อ Checked */
 }
+
+
 
 </style>

@@ -126,7 +126,7 @@ const deletebrand = async (item) => {
   if (hasRelated) {
     deleteMessage.value = `Delete ${item.brandName} is not allowed. There are sale items with ${item.brandName} brand.`;
   } else {
-    deleteMessage.value = `Do you want to delete ${item.brandName} brand ?`;
+    deleteMessage.value = `Do you want to delete ${item.brandName} brand?`;
   }
   showDeleteConfirmationPopup.value = true;
 }
