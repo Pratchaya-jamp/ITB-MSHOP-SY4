@@ -6,7 +6,7 @@
 
 ## 👩‍💻 Group Members
 
-* **[Pratchaya Champates] ([66130500058])** - [34]% (หน้าที่หลัก: Infrastructure & Deployment + Frontend)
+* **[Pratchaya Champates] ([66130500058])** - [34]% (หน้าที่หลัก: Infrastructure & Deployment + Frontend (UI Design/Concept))
 * **[Pongsathorn Samklin] ([66130500118])** - [33]% (หน้าที่หลัก: Backend)
 * **[Pawin Nacharean] ([66130500121])** - [33]% (หน้าที่หลัก: Frontend)
     * *Total: 100%*
