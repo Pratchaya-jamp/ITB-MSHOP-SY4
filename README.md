@@ -42,4 +42,7 @@
     * [Docker]
     * [Nginx (Reverse Proxy)]
 
+## ✨ Diagram
+
+* **Infra Architecture:**
 ![Architecture](Architecture.jpg)
