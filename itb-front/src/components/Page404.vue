@@ -5,7 +5,7 @@
       <p class="text-gray-600 mb-6">
         Sorry, the page you are looking for doesn’t exist or has been moved.
       </p>
-      <router-link to="/sale-items" class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+      <router-link to="/" class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
         Go Back Home
       </router-link>
     </div>

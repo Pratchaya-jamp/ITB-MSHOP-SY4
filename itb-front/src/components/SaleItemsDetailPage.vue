@@ -2,7 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute,useRouter } from 'vue-router'
 import { getItemById,deleteItemById } from '@/libs/fetchUtilsOur';
-import Footer from './Footer.vue'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -285,7 +285,7 @@ const cancelDeleteItem = () => {
 </transition>
  </div>
 
-  <Footer />
+
 </template>
 
 

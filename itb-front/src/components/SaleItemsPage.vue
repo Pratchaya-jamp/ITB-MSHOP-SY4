@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItems, deleteItemById } from '@/libs/fetchUtilsOur';
-import Footer from './Footer.vue'
+
 
 const router = useRouter()
 const route = useRoute()
@@ -701,7 +701,7 @@ watch(
   </div>
 
   </div>
-  <Footer />
+
 </template>
 
 <style scoped>

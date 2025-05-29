@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItems } from '@/libs/fetchUtilsOur';
-import Footer from './Footer.vue'
 import { deleteItemById } from '@/libs/fetchUtilsOur'
 
 const router = useRouter()
@@ -488,7 +487,7 @@ watch([pageSize, searchQuery], () => {
   </div>
     
   </div>
-  <Footer />
+  
 <transition name="bounce-popup">
   <div
     v-if="showDeleteConfirmationPopup"

@@ -119,10 +119,7 @@ const scrollTo = (target) => {
   </form>
 </div>
 
-<!-- Footer -->
-<footer class="bg-gray-900 text-white px-6 md:px-20 py-10 text-center animate-fade-in-up">
-  <p class="text-sm">&copy; 2025 ITB MSHOP. All rights reserved.</p>
-</footer>
+
 </template>
 
 <style scoped>
