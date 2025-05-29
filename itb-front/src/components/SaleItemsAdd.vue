@@ -2,7 +2,7 @@
 import { ref, computed,onMounted, watch } from 'vue'
 import { useRouter,useRoute } from 'vue-router'
 import { addItem,editItem, getItems, getItemById } from '@/libs/fetchUtilsOur'
-import Footer from './Footer.vue'
+
 
 const router = useRouter()
 const route = useRoute()
@@ -566,7 +566,7 @@ const cancelAddItem = () => {
   </div>
 </transition>
 </div>
-  <Footer />
+
 </template>
 
 <style scoped>
