@@ -72,8 +72,8 @@ async function getItems(url, options = {}) {
             ...newItem
           })
         })
-        const addedItem = await res.json()
-        return addedItem
+        const data = await res.json()
+        return { status: res.status, data };
       } catch (error) {
         throw new Error('can not add your item')
       }
@@ -90,8 +90,8 @@ async function getItems(url, options = {}) {
             ...editItem
           })
         })
-        const editedItem = await res.json()
-        return editedItem
+        const data = await res.json()
+        return { status: res.status, data };
       } catch (error) {
         throw new Error('can not edit your item')
       }
