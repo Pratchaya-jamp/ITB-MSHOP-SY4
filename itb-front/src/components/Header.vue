@@ -2,24 +2,16 @@
 </script>
 
 <template>
-<header class="bg-gray-900 text-white px-6 md:px-20 py-4 flex justify-between items-center">
-  <div class="text-xl font-bold">🌟ITB MSHOP</div>
-  <nav class="space-x-6 hidden md:block">
-    <a href="#" class="hover:text-yellow-400">
-      <router-link to="/">Home</router-link>
-    </a>
-    <a href="#" class="hover:text-yellow-400">
-      <router-link to="/sale-items">Phones</router-link>
-    </a>
-    <!-- <a href="#" class="hover:text-yellow-400">
-      <router-link to="/brands">Deals</router-link>
-    </a> -->
-    <a href="#" class="hover:text-yellow-400">Services</a>
-    <a href="#" class="hover:text-yellow-400">Contact</a>
-  </nav>
-  <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm hover:bg-yellow-300 transition">Login</button>
-</header>
+    <header class="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm px-6 md:px-20 py-4 flex justify-between items-center transition-all duration-300">
+      <div class="text-2xl font-extrabold text-white">ITB MSHOP</div>
+      <nav class="space-x-6 hidden md:flex items-center">
+        <router-link to="/" class="text-gray-300 hover:text-white transition-colors duration-300">Home</router-link>
+        <router-link to="/sale-items" class="text-gray-300 hover:text-white transition-colors duration-300">Phones</router-link>
+        <a href="#" @click.prevent="scrollTo(services)" class="text-gray-300 hover:text-white transition-colors duration-300">Services</a>
+        <a href="#" @click.prevent="scrollTo(contact)" class="text-gray-300 hover:text-white transition-colors duration-300">Contact</a>
+      </nav>
+      <button class="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300">Login</button>
+    </header>
 </template>
-
 <style scoped>
 </style>
