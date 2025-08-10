@@ -197,7 +197,7 @@ const confirmAddItem = async () => {
                 newbrand
             );
 
-            if (!result || result.status === 'error' || !result.id) {
+            if (result.status !== 200 || !result.data?.id) {
                 throw new Error('Edit failed or invalid data returned');
             }
 
@@ -224,7 +224,7 @@ const confirmAddItem = async () => {
                 newbrand
             );
 
-            if (!result || result.status === 'error' || !result.id) {
+            if (result.status !== 201 || !result.data?.id) {
                 throw new Error('Add failed or invalid data returned');
             }
 

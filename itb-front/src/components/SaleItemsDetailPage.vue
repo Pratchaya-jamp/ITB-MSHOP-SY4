@@ -330,8 +330,8 @@ const iconComponent = computed(() => {
                 class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
                 <div class="rounded-2xl p-8 shadow-xl text-center transition-colors duration-500"
                     :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'">
-                    <h2 class="text-2xl font-bold mb-4 text-red-500">Error 500!</h2>
-                    <p class="itbms-message mb-6 text-lg">The sale item failed to update.</p>
+                    <h2 class="text-2xl font-bold mb-4 text-red-500">The sale item has been fail to Edit!</h2>
+                    <p class="itbms-message mb-6 text-lg">Please try again later.</p>
                     <button @click="closeSuccessPopup"
                         class="bg-blue-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-blue-600 active:scale-95">Done</button>
                 </div>

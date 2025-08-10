@@ -362,7 +362,7 @@ if (isEditMode.value) {
             newProduct
         );
 
-        if (!result || result.status === 'error' || !result.id) {
+        if (result.status !== 200 || !result.data?.id) {
             throw new Error('Edit failed or invalid data returned');
         }
 
@@ -389,7 +389,7 @@ if (isEditMode.value) {
             newProduct
         );
 
-        if (!result || result.status === 'error' || !result.id) {
+        if (result.status !== 201 || !result.data?.id) {
             throw new Error('Add failed or invalid data returned');
         }
 

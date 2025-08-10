@@ -699,8 +699,8 @@ watch(
     <transition name="bounce-popup">
       <div v-if="showfailPopup" class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div class="p-6 rounded-3xl shadow-lg text-center" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
-          <h2 class="text-xl font-semibold mb-4">Error 500!</h2>
-          <p class="itbms-message mb-4">The sale item has been Fail added!</p>
+          <h2 class="text-xl font-semibold mb-4">The sale item has been Fail added!</h2>
+          <p class="itbms-message mb-4">Please try again later.</p>
           <button @click="closeSuccessPopup" class="bg-red-500 text-white border-2 border-red-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-red-500 font-semibold">Done</button>
         </div>
       </div>
