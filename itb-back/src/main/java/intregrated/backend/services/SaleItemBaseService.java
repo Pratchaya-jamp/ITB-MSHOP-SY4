@@ -161,11 +161,15 @@ public class SaleItemBaseService {
         saleItemBaseRepo.deleteById(id);
     }
 
-    public Page<SaleItemBaseByIdDto> getPagedSaleItems(List<String> filterBrands,
-                                                       Integer page,
-                                                       Integer size,
-                                                       String sortField,
-                                                       String sortDirection) {
+    public Page<SaleItemBaseByIdDto> getPagedSaleItems(
+            List<String> filterBrands,
+            List<Integer> filterStorages,
+            Integer filterPriceLower,
+            Integer filterPriceUpper,
+            Integer page,
+            Integer size,
+            String sortField,
+            String sortDirection) {
 
         Sort sort;
         if ("brand.name".equals(sortField)) {
@@ -176,11 +180,18 @@ public class SaleItemBaseService {
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
+        // แปลง filterBrands ให้เป็น lowercase
         List<String> lowerBrands = (filterBrands == null || filterBrands.isEmpty())
                 ? null
                 : filterBrands.stream().map(String::toLowerCase).toList();
 
-        Page<SaleItemBase> result = saleItemBaseRepo.findAllWithBrandNameFilter(lowerBrands, pageable);
+        // เงื่อนไข filterPrice
+        Integer lower = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceLower : null;
+        Integer upper = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceUpper : null;
+
+        Page<SaleItemBase> result = saleItemBaseRepo.findWithFilters(
+                lowerBrands, filterStorages, lower, upper, pageable
+        );
 
         return result.map(this::mapToDto);
     }
