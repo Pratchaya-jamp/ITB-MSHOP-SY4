@@ -19,35 +19,33 @@ public class PaginationSaleItemController {
     @Autowired
     SaleItemBaseService saleItemBaseService;
 
-    @GetMapping("")
-    public ResponseEntity<PageResponseDto<SaleItemBaseByIdDto>> getAllV2SaleItems(
+    @GetMapping
+    public PageResponseDto<SaleItemBaseByIdDto> getPagedSaleItemsV2(
             @RequestParam(required = false) List<String> filterBrands,
-            @RequestParam Integer page,
+            @RequestParam(required = false) List<Integer> filterStorages,
+            @RequestParam(required = false) Integer filterPriceLower,
+            @RequestParam(required = false) Integer filterPriceUpper,
+            @RequestParam(required = true) Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortField,
-            @RequestParam(defaultValue = "asc") String sortDirection) {
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
 
-        if (filterBrands == null) {
-            filterBrands = List.of();
-        }
+        Page<SaleItemBaseByIdDto> pagedResult = saleItemBaseService.getPagedSaleItems(
+                filterBrands, filterStorages, filterPriceLower, filterPriceUpper,
+                page, size, sortField, sortDirection
+        );
 
-        validatePaginationParams(page, size, sortDirection, sortField);
-
-        Page<SaleItemBaseByIdDto> saleItems = saleItemBaseService.getPagedSaleItems(
-                filterBrands, page, size, sortField, sortDirection);
-
-        PageResponseDto<SaleItemBaseByIdDto> response = PageResponseDto.<SaleItemBaseByIdDto>builder()
-                .content(saleItems.getContent())
-                .page(saleItems.getNumber())
-                .size(saleItems.getSize())
-                .totalPages(saleItems.getTotalPages())
-                .totalElements(saleItems.getTotalElements())
-                .first(saleItems.isFirst())
-                .last(saleItems.isLast())
-                .sort(sortField + ": " + sortDirection.toUpperCase())
+        return PageResponseDto.<SaleItemBaseByIdDto>builder()
+                .content(pagedResult.getContent())
+                .page(pagedResult.getNumber())
+                .size(pagedResult.getSize())
+                .totalElements(pagedResult.getTotalElements())
+                .totalPages(pagedResult.getTotalPages())
+                .first(pagedResult.isFirst())
+                .last(pagedResult.isLast())
+                .sort(sortField + ": " + sortDirection)
+                .page(pagedResult.getNumber())
                 .build();
-
-        return ResponseEntity.ok(response);
     }
 
     private void validatePaginationParams(Integer page, Integer size, String sortDirection, String sortField) {
