@@ -452,6 +452,12 @@ const cancelAddItem = () => {
                             'border-blue-500 scale-105': img === mainImage,
                             'border-transparent hover:border-gray-400': img !== mainImage
                         }" @click="mainImage = img" />
+                        
+                </div>
+                <div class="flex justify-center md:justify-start mt-4">
+                    <button class="itbms-upload-button px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-300 bg-orange-500 text-white hover:bg-orange-600 hover:cursor-pointer">
+                        Upload Pictures
+                    </button>
                 </div>
             </div>
             <div class="space-y-4 text-base transition-colors duration-500" :class="theme === 'dark' ? 'text-white' : 'text-gray-950'">
