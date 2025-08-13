@@ -37,24 +37,6 @@ primary key sale_item_base(id),
 foreign key sale_item_base(brand_id) references brand_base(id)
 );
 
-alter table sale_item_base
-modify column id int auto_increment;
-
-CREATE TABLE IF NOT EXISTS sale_item_picture (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    sale_id INT NOT NULL,
-    old_picture_name VARCHAR(255) NOT NULL, -- original uploaded filename
-    new_picture_name VARCHAR(255) NOT NULL, -- unique stored filename
-    file_size_bytes INT NOT NULL,           -- file size in bytes
-    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_sale_item_picture_item FOREIGN KEY (sale_id) REFERENCES sale_item_base(id)
-        ON DELETE CASCADE,
-    CONSTRAINT ck_file_size_bytes CHECK (file_size_bytes <= 2 * 1024 * 1024), -- ≤ 2MB
-    CONSTRAINT ck_old_picture_name CHECK (TRIM(old_picture_name) <> ''),
-    CONSTRAINT ck_new_picture_name CHECK (TRIM(new_picture_name) <> '')
-) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 INSERT INTO brand_base (name, websiteUrl, isActive, countryOfOrigin) VALUES
 ('Samsung', 'https://www.samsung.com', 1, 'South Korea'),
 ('Apple', 'https://www.apple.com', 1, 'United States'),
@@ -169,6 +151,9 @@ where b.id = 1;
 
 alter table sale_item_base
 add unique (id);
+
+alter table sale_item_base
+modify column id int auto_increment;
 
 alter table sale_item_base
 modify column model varchar(60) character set utf8mb4 not null;
