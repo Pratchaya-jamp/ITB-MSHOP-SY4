@@ -246,14 +246,14 @@ const iconComponent = computed(() => {
 
                 <div class="flex flex-col sm:flex-row gap-4 pt-4">
                     <button @click="router.push(`/sale-items/${product.id}/edit`)"
-                        class="itbms-edit-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md"
+                        class="itbms-edit-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
                         :class="theme === 'dark'
                             ? 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600'
                             : 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600'">
                         Edit Product
                     </button>
                     <button @click="deleteproduct"
-                        class="itbms-delete-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md"
+                        class="itbms-delete-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
                         :class="theme === 'dark'
                             ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
                             : 'bg-red-500 text-white border-red-500 hover:bg-red-600'">
@@ -272,9 +272,9 @@ const iconComponent = computed(() => {
                     <p class="itbms-message mb-6 text-lg">Are you sure you want to delete this sale item?</p>
                     <div class="flex justify-center gap-4">
                         <button @click="confirmDelete"
-                            class="itbms-confirm-button bg-green-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-green-600 active:scale-95">Yes</button>
+                            class="itbms-confirm-button bg-green-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-green-600 active:scale-95 hover:cursor-pointer">Yes</button>
                         <button @click="cancelDeleteItem"
-                            class="itbms-cancel-button bg-gray-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-gray-600 active:scale-95">No</button>
+                            class="itbms-cancel-button bg-gray-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-gray-600 active:scale-95 hover:cursor-pointer">No</button>
                     </div>
                 </div>
             </div>
@@ -320,7 +320,7 @@ const iconComponent = computed(() => {
                     <h2 class="text-2xl font-bold mb-4 text-green-500">Success!</h2>
                     <p class="itbms-message mb-6 text-lg">The sale item has been successfully updated!</p>
                     <button @click="closeSuccessPopup"
-                        class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold">Done</button>
+                        class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
                 </div>
             </div>
         </transition>
@@ -333,13 +333,13 @@ const iconComponent = computed(() => {
                     <h2 class="text-2xl font-bold mb-4 text-red-500">The sale item has been fail to Edit!</h2>
                     <p class="itbms-message mb-6 text-lg">Please try again later.</p>
                     <button @click="closeSuccessPopup"
-                        class="bg-blue-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-blue-600 active:scale-95">Done</button>
+                        class="bg-blue-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-blue-600 active:scale-95 hover:cursor-pointer">Done</button>
                 </div>
             </div>
         </transition>
 
         <button @click="toggleTheme"
-            class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-md shadow-lg transition-all duration-300 z-50 hover:shadow-2xl"
+            class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-md shadow-lg transition-all duration-300 z-50 hover:shadow-2xl hover:cursor-pointer"
             :class="theme === 'dark' ? 'bg-gray-700/80 text-white' : 'bg-gray-200/80 text-black'"
             v-html="iconComponent">
         </button>

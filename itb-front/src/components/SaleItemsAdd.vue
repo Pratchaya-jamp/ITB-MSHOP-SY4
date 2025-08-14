@@ -465,7 +465,7 @@ const cancelAddItem = () => {
                     <label class="text-left font-semibold" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-500'">Brand:<span
                             class="text-red-500">*</span></label>
                     <select v-if="brandList.length > 0" v-model="selectedBrandId"
-                        class="itbms-brand p-2 rounded-lg w-full border transition-colors duration-300"
+                        class="itbms-brand p-2 rounded-lg w-full border transition-colors duration-300 hover:cursor-pointer"
                         :class="theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-100 border-gray-300'"
                         @blur="validateBrand">
                         <option value=""> Select Brand</option>
@@ -545,14 +545,14 @@ const cancelAddItem = () => {
                         :class="[
                             'itbms-save-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md',
                             (isValid() && (!isEditMode || isModified))
-                                ? 'bg-green-500 text-white border-green-500 hover:bg-green-600'
+                                ? 'bg-green-500 text-white border-green-500 hover:bg-green-600 hover:cursor-pointer'
                                 : 'bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed'
                         ]">
                         Save
                     </button>
                     <router-link :to="isEditMode ? `/sale-items/${product.id}` : '/sale-items'" class="w-full">
                         <button
-                            class="itbms-cancel-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md"
+                            class="itbms-cancel-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
                             :class="theme === 'dark'
                                 ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
                                 : 'bg-red-500 text-white border-red-500 hover:bg-red-600'">
@@ -570,9 +570,9 @@ const cancelAddItem = () => {
                     <p class="itbms-message mb-6 text-lg">Do you want to add this product?</p>
                     <div class="flex justify-center gap-4">
                         <button @click="confirmAddItem"
-                            class="itbms-confirm-button bg-green-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-green-600 active:scale-95">Yes</button>
+                            class="itbms-confirm-button bg-green-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-green-600 active:scale-95 hover:cursor-pointer">Yes</button>
                         <button @click="cancelAddItem"
-                            class="itbms-cancel-button bg-gray-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-gray-600 active:scale-95">No</button>
+                            class="itbms-cancel-button bg-gray-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-gray-600 active:scale-95 hover:cursor-pointer">No</button>
                     </div>
                 </div>
             </div>
@@ -585,9 +585,9 @@ const cancelAddItem = () => {
                     <p class="itbms-message mb-6 text-lg">Do you want to save changes to this product?</p>
                     <div class="flex justify-center gap-4">
                         <button @click="confirmAddItem"
-                            class="itbms-confirm-button bg-green-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-green-600 active:scale-95">Yes</button>
+                            class="itbms-confirm-button bg-green-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-green-600 active:scale-95 hover:cursor-pointer">Yes</button>
                         <button @click="cancelAddItem"
-                            class="itbms-cancel-button bg-gray-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-gray-600 active:scale-95">No</button>
+                            class="itbms-cancel-button bg-gray-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-gray-600 active:scale-95 hover:cursor-pointer">No</button>
                     </div>
                 </div>
             </div>
@@ -621,7 +621,7 @@ const cancelAddItem = () => {
         </transition>
         
         <button @click="toggleTheme"
-            class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-md shadow-lg transition-all duration-300 z-50 hover:shadow-2xl"
+            class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-md shadow-lg transition-all duration-300 z-50 hover:shadow-2xl hover:cursor-pointer"
             :class="theme === 'dark' ? 'bg-gray-700/80 text-white' : 'bg-gray-200/80 text-black'"
             v-html="iconComponent">
         </button>
