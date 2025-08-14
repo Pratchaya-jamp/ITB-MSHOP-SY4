@@ -29,7 +29,7 @@ const displayedPrice = computed(() => {
   } else if (priceLower.value != null) {
     return `= ${priceLower.value.toLocaleString()} Baht`
   } else if (priceUpper.value != null) {
-    return `≤ ${priceUpper.value.toLocaleString()} Baht`
+    return `<= ${priceUpper.value.toLocaleString()} Baht`
   }
   return ''
 })
@@ -43,19 +43,21 @@ const priceUpper = ref(
   (route.query.filterPriceUpper ? Number(route.query.filterPriceUpper) : null)
 )
 const priceRanges = [
-  { min: 0, max: 5000, label: "0 – 5,000 Baht" },
-  { min: 5001, max: 10000, label: "5,001 – 10,000 Baht" },
-  { min: 10001, max: 20000, label: "10,001 – 20,000 Baht" },
-  { min: 20001, max: 30000, label: "20,001 – 30,000 Baht" },
-  { min: 30001, max: 40000, label: "30,001 – 40,000 Baht" },
-  { min: 40001, max: 50000, label: "40,001 – 50,000 Baht" }
+  { min: 0, max: 5000, label: "0 - 5,000 Baht" },
+  { min: 5001, max: 10000, label: "5,001 - 10,000 Baht" },
+  { min: 10001, max: 20000, label: "10,001 - 20,000 Baht" },
+  { min: 20001, max: 30000, label: "20,001 - 30,000 Baht" },
+  { min: 30001, max: 40000, label: "30,001 - 40,000 Baht" },
+  { min: 40001, max: 50000, label: "40,001 - 50,000 Baht" }
 ]
 
 
 // Storage
 const selectedStorages = ref(
-  JSON.parse(sessionStorage.getItem('selectedStorages') || 'null') ??
-  (route.query.filterStorages ? [].concat(route.query.filterStorages) : [])
+  (
+    JSON.parse(sessionStorage.getItem('selectedStorages') || 'null') ??
+    (route.query.filterStorages ? [].concat(route.query.filterStorages) : [])
+  ).map(s => s === null ? 'Not specified' : (s == 1024 ? '1 TB' : `${s} GB`))
 )
 
 const searchQuery = ref(route.query.search || '')
@@ -99,14 +101,28 @@ async function fetchItems() {
     let lower = priceLower.value != null ? priceLower.value : undefined
     let upper = priceUpper.value != null ? priceUpper.value : undefined
 
-    if (lower != null && upper == null) {
+    if (lower != null && upper != null) {
+      const selectedRange = priceRanges.find(
+        range => range.min === lower && range.max === upper
+      )
+      if (selectedRange) {
+        lower = selectedRange.min
+        upper = selectedRange.max
+      }
+    } else if (lower != null && upper == null) {
       upper = lower
-    }
+    }	    
+    
+    let storagesToSend = selectedStorages.value.map(s => {
+      if (s === 'Not specified') return null
+      if (s === '1 TB') return 1024
+      return parseInt(s)
+    })
 
     const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', {
       params: {
         filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
-        filterStorages: selectedStorages.value.length ? selectedStorages.value : undefined,
+	filterStorages: storagesToSend.length ? storagesToSend : undefined,
         filterPriceLower: lower,
         filterPriceUpper: upper,
         page: currentPage.value,
@@ -158,19 +174,35 @@ async function fetchStorage() {
     })
 
     const allStorages = response.content
-      .map(item => item.storageGb)
-      .filter(s => s != null)
+      .map(item => {
+        if (item.storageGb === null || item.storageGb === undefined) {
+          return 'Not specified'
+        }
 
-    availableStorages.value = [...new Set(allStorages)]
+        if (item.storageGb === 1024) return '1 TB'
+        return `${item.storageGb} GB`
+      })
+
+    const uniqueStorages = [...new Set(allStorages)]
+
+    uniqueStorages.sort((a, b) => {
+      if (a === 'Not specified') return 1
+      if (b === 'Not specified') return -1
+
+      const aValue = a.includes('TB') ? parseInt(a) * 1024 : parseInt(a)
+      const bValue = b.includes('TB') ? parseInt(b) * 1024 : parseInt(b)
+      return aValue - bValue
+    })
+
+    availableStorages.value = uniqueStorages
+
   } catch (err) {
     console.error('Error fetching storages:', err)
   }
 }
 
-watch(
-  [selectedBrands, selectedStorages, searchQuery],
-  () => {
-    currentPage.value = 0
+
+watch( [selectedBrands, selectedStorages, searchQuery], () => {
     lastAction.value = ''
     fetchItems()
   }
@@ -195,7 +227,14 @@ watch(currentSortOrder, (val) => {
 watch(selectedBrands, val => sessionStorage.setItem('selectedBrands', JSON.stringify(val)))
 watch(priceLower, val => sessionStorage.setItem('priceLower', JSON.stringify(val)))
 watch(priceUpper, val => sessionStorage.setItem('priceUpper', JSON.stringify(val)))
-watch(selectedStorages, val => sessionStorage.setItem('selectedStorages', JSON.stringify(val)))
+watch(selectedStorages, val => {
+  const storagesToSave = val.map(s => {
+    if (s === 'Not specified') return null
+    if (s === '1 TB') return 1024  
+    return parseInt(s) || s  
+  })
+  sessionStorage.setItem('selectedStorages', JSON.stringify(storagesToSave))
+})
 
 const fixedStart = ref(0)
 const lastAction = ref('')
@@ -382,6 +421,7 @@ onMounted(() => {
        theme.value = event.newValue;
     }
   })
+  document.addEventListener('click', handleClickOutside)
 })
 
 // --- Delete Item Functions ---
@@ -430,6 +470,22 @@ const closeSuccessPopup = async () => {
   await fetchItems();
 }
 
+const brandFilterRef = ref(null)
+const priceFilterRef = ref(null)
+const storageFilterRef = ref(null)
+
+const handleClickOutside = (event) => {
+  if (showBrandFilterModal.value && brandFilterRef.value && !brandFilterRef.value.contains(event.target)) {
+    showBrandFilterModal.value = false;
+  }
+  if (showPriceFilterModal.value && priceFilterRef.value && !priceFilterRef.value.contains(event.target)) {
+    showPriceFilterModal.value = false;
+  }
+  if (showStorageFilterModal.value && storageFilterRef.value && !storageFilterRef.value.contains(event.target)) {
+    showStorageFilterModal.value = false;
+  }
+}
+
 // Watchers for URL query parameters (for popups)
 watch(
   () => route.query.addSuccess,
@@ -469,124 +525,69 @@ watch(
   },
   { immediate: true }
 )
+
+const activeFilters = computed(() => {
+  const filters = []
+  if (selectedBrands.value.length > 0) {
+    selectedBrands.value.forEach(brand => {
+      filters.push({ type: 'brand', value: brand })
+    })
+  }
+  if (priceLower.value != null || priceUpper.value != null) {
+    let priceLabel = displayedPrice.value;
+    filters.push({ type: 'price', value: priceLabel })
+  }
+  if (selectedStorages.value.length > 0) {
+    selectedStorages.value.forEach(storage => {
+      filters.push({ type: 'storage', value: storage })
+    })
+  }
+  return filters
+})
+
+const removeActiveFilter = (filter) => {
+  if (filter.type === 'brand') {
+    removeBrandFromFilter(filter.value)
+  } else if (filter.type === 'price') {
+    clearPriceFilter()
+  } else if (filter.type === 'storage') {
+    removeStorageFromFilter(filter.value)
+  }
+}
 </script>
 
 <template>
   <div :class="themeClass" class="itbms-sale-items-page min-h-screen font-sans overflow-hidden">
-
     <div class="container mx-auto py-8 px-6 md:px-0 flex flex-col md:flex-row items-center justify-between gap-4">
       <div class="itbms-logo font-extrabold text-3xl">ITB MShop</div>
-
       <div class="flex-grow flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-        <div class="itbms-search-bar flex items-center rounded-full border focus-within:border-orange-500 w-full md:max-w-md" :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
-          <input type="text" placeholder="Search..." v-model="searchQuery" class="itbms-search-input py-2 px-4 w-full focus:outline-none rounded-l-full" :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'" />
-          <button class="itbms-search-button p-2 rounded-r-full transition-colors duration-300" :class="theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="itbms-search-bar flex items-center rounded-full border focus-within:border-orange-500 w-full md:max-w-md"
+          :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
+          <input type="text" placeholder="Search..." v-model="searchQuery"
+            class="itbms-search-input py-2 px-4 w-full focus:outline-none rounded-l-full"
+            :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'" />
+          <button class="itbms-search-button p-2 rounded-r-full transition-colors duration-300"
+            :class="theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+              :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-6a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
-        </div>
-
-        <div class="flex items-center border rounded-full overflow-hidden w-full max-w-2xl">
-          <!-- Brand Filter -->
-          <div class="itbms-brand-filter"
-            :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
-            <div class="flex flex-grow flex-wrap items-center gap-1 p-2 min-h-[40px] max-h-[40px] overflow-y-auto">
-              <span v-for="brand in selectedBrands" :key="brand"
-                class="itbms-brand-item text-sm font-medium px-2.5 py-0.5 rounded-full flex items-center whitespace-nowrap"
-                :class="theme === 'dark' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'">
-                {{ brand }}
-                <button @click.stop="removeBrandFromFilter(brand)"
-                  class="itbms-brand-item-clear ml-1 focus:outline-none"
-                  :class="theme === 'dark' ? 'text-blue-200 hover:text-white' : 'text-blue-800 hover:text-blue-600'">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </span>
-              <input type="text" :placeholder="selectedBrands.length === 0 ? 'Filter by brand(s)' : ''" readonly
-                class="itbms-brand-filter-input h-full w-full px-3 py-0 flex-grow focus:outline-none cursor-pointer"
-                :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'"
-                @click="toggleBrandFilterModal" />
-            </div>
-          </div>
-
-          <!-- Separator -->
-          <div class="border-l border-gray-300 h-6"></div>
-
-        <!-- Price Filter -->
-          <div class="itbms-price-filter"
-            :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
-            <div class="flex flex-grow flex-wrap items-center gap-1 p-2 min-h-[40px] max-h-[40px] overflow-y-auto">
-
-              <span v-if="displayedPrice"
-                class="itbms-price-item text-sm font-medium px-2.5 py-0.5 rounded-full flex items-center whitespace-nowrap"
-                :class="theme === 'dark' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'">
-                {{ displayedPrice }}
-                <button @click.stop="clearPriceFilter()" class="itbms-price-item-clear ml-1 focus:outline-none"
-                  :class="theme === 'dark' ? 'text-blue-200 hover:text-white' : 'text-blue-800 hover:text-blue-600'">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </span>
-
-              <input type="text" :placeholder="!displayedPrice ? 'Filter by price' : ''" readonly
-                class="itbms-price-item-input h-full w-full px-3 py-0 flex-grow focus:outline-none cursor-pointer"
-                :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'"
-                @click="togglePriceFilterModal()" />
-            </div>
-          </div>
-
-          <!-- Separator -->
-          <div class="border-l border-gray-300 h-6"></div>
-
-          <!-- Storage Filter -->
-          <div class="itbms-storage-filter"
-            :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
-            <div class="flex flex-grow flex-wrap items-center gap-1 p-2 min-h-[40px] max-h-[40px] overflow-y-auto">
-              <span v-for="storage in selectedStorages" :key="storage"
-                class="itbms-storage-item text-sm font-medium px-2.5 py-0.5 rounded-full flex items-center whitespace-nowrap"
-                :class="theme === 'dark' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'">
-                {{ storage }}
-                <button @click.stop="removeStorageFromFilter(storage)"
-                  class="itbms-storage-item-clear ml-1 focus:outline-none"
-                  :class="theme === 'dark' ? 'text-blue-200 hover:text-white' : 'text-blue-800 hover:text-blue-600'">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </span>
-              <input type="text" :placeholder="selectedStorages.length === 0 ? 'Filter by storage(s)' : ''" readonly
-                class="itbms-storage-filter-input h-full w-full px-3 py-0 flex-grow focus:outline-none cursor-pointer"
-                :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'"
-                @click="toggleStorageFilterModal" />
-            </div>
-          </div>
-          <button @click="clearAllFilters()"
-          class="itbms-brand-filter-clear text-white p-2 rounded-r-full transition-colors duration-300 border-2 border-red-500 hover:bg-red-600"
-          :class="theme === 'dark' ? 'bg-red-500 hover:text-white' : 'bg-red-500 hover:text-white'">
-          Clear
-        </button>
         </div>
       </div>
 
       <div class="itbms-icons flex flex-col items-end space-y-2">
         <div class="flex items-center space-x-4">
-          <!-- <div @click="toggleTheme" class="itbms-theme-toggle cursor-pointer p-2 rounded-full transition-colors duration-300" :class="theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'" v-html="iconComponent">
-          </div> -->
-
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 cursor-pointer" :class="theme === 'dark' ? 'text-white' : 'text-black'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 cursor-pointer"
+            :class="theme === 'dark' ? 'text-white' : 'text-black'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" class="h-8 w-8 cursor-pointer" :class="theme === 'dark' ? 'text-white' : 'text-black'" viewBox="0 0 128 128">
-            <g><path d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z"/></g>
+          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" class="h-8 w-8 cursor-pointer"
+            :class="theme === 'dark' ? 'text-white' : 'text-black'" viewBox="0 0 128 128">
+            <g><path
+                d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z" />
+            </g>
           </svg>
         </div>
       </div>
@@ -598,58 +599,48 @@ watch(
           <button
             class="itbms-sale-item-add border-2 rounded-full px-6 py-2 cursor-pointer transition-colors duration-300 font-semibold"
             :class="theme === 'dark' ? 'bg-green-500 text-white border-green-500 hover:bg-transparent hover:text-green-500' : 'bg-green-500 text-white border-green-500 hover:bg-transparent hover:text-green-500'"
-            @click="addSaleItemButton"
-          >
+            @click="addSaleItemButton">
             + Add Sell Item
           </button>
-
-          <button
-            v-if="!isGridView"
-            @click="goToManageBrand"
+          <button v-if="!isGridView" @click="goToManageBrand"
             class="itbms-manage-brand border-2 rounded-full px-6 py-2 cursor-pointer transition-colors duration-300 font-semibold"
-            :class="theme === 'dark' ? 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500' : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500'"
-          >
+            :class="theme === 'dark' ? 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500' : 'bg-blue-500 text-white border-blue-500 hover:bg-transparent hover:text-blue-500'">
             Manage Brand
           </button>
         </div>
 
         <div class="flex items-center space-x-4">
-          <button
-            v-if="isGridView"
-            @click="sortBrandAscending"
+          <button v-if="isGridView" @click="sortBrandAscending"
             class="itbms-brand-asc border-2 rounded-full px-4 py-2 cursor-pointer transition-colors duration-300"
             :class="[theme === 'dark' ? 'text-gray-300 border-gray-700 hover:bg-gray-700' : 'text-gray-600 border-gray-300 hover:bg-gray-100', currentSortOrder === 'brandAsc' ? 'bg-blue-500 text-white border-blue-500' : '']"
-            title="Sort by Brand Ascending"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            title="Sort by Brand Ascending">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="w-6 h-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v9.75m0 0-3-3m3 3 3-3" />
             </svg>
             <span class="sr-only">Sort by Brand Ascending</span>
           </button>
 
-          <button
-            v-if="isGridView"
-            @click="sortBrandDescending"
+          <button v-if="isGridView" @click="sortBrandDescending"
             class="itbms-brand-desc border-2 rounded-full px-4 py-2 cursor-pointer transition-colors duration-300"
             :class="[theme === 'dark' ? 'text-gray-300 border-gray-700 hover:bg-gray-700' : 'text-gray-600 border-gray-300 hover:bg-gray-100', currentSortOrder === 'brandDesc' ? 'bg-blue-500 text-white border-blue-500' : '']"
-            title="Sort by Brand Descending"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5 4.5V8.25m0 0-3 3m-3-3-3 3" />
+            title="Sort by Brand Descending">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5 4.5V8.25m0 0-3 3m3-3-3 3" />
             </svg>
             <span class="sr-only">Sort by Brand Descending</span>
           </button>
 
-          <button
-            v-if="isGridView"
-            @click="clearBrandSorting"
+          <button v-if="isGridView" @click="clearBrandSorting"
             class="itbms-brand-none border-2 rounded-full px-4 py-2 cursor-pointer transition-colors duration-300"
             :class="[theme === 'dark' ? 'text-gray-300 border-gray-700 hover:bg-gray-700' : 'text-gray-600 border-gray-300 hover:bg-gray-100', currentSortOrder === 'createdOn' ? 'bg-blue-500 text-white border-blue-500' : '']"
-            title="Clear Sort (Default: Created On)"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            title="Clear Sort (Default: Created On)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="w-6 h-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 .75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V4.5Z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12c0 5.66 4.62 10.25 10.25 10.25S22.75 17.66 22.75 12A10.25 10.25 0 0 0 12 1.75 10.07 10.07 0 0 0 4.25 4.5" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.25 12c0 5.66 4.62 10.25 10.25 10.25S22.75 17.66 22.75 12A10.25 10.25 0 0 0 12 1.75 10.07 10.07 0 0 0 4.25 4.5" />
             </svg>
             <span class="sr-only">Clear Sort</span>
           </button>
@@ -657,18 +648,187 @@ watch(
       </div>
     </div>
 
+    <div class="px-6 md:px-20 mb-6 flex flex-wrap items-center gap-2">
+      <div class="itbms-filters-container flex flex-wrap items-center gap-2">
+        <div class="relative inline-block text-left" ref="brandFilterRef">
+          <button @click="toggleBrandFilterModal"
+            class="itbms-brand-filter flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-300 border"
+            :class="theme === 'dark' ? 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700' : 'bg-white text-gray-950 border-gray-300 hover:bg-gray-100'">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
+            </svg>
+            <span>Brand</span>
+            <span v-if="selectedBrands.length > 0"
+              class="ml-2 text-xs font-bold rounded-full px-2 py-0.5"
+              :class="theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'">
+              {{ selectedBrands.length }}
+            </span>
+          </button>
+
+          <div v-if="showBrandFilterModal" @click.stop
+            class="itbms-brand-filter-modal absolute z-10 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+            :class="theme === 'dark' ? 'bg-gray-800' : 'bg-white'">
+            <div class="py-1">
+              <div class="flex items-center justify-between px-4 py-2">
+                <span class="font-semibold text-sm">Brands</span>
+                <button @click="clearBrandFilter" class="text-xs text-red-500 hover:underline">Clear</button>
+              </div>
+              <div class="max-h-60 overflow-y-auto px-2">
+                <label v-for="brand in availableBrands" :key="brand"
+                  class="flex items-center p-2 rounded-md cursor-pointer hover:bg-gray-100"
+                  :class="theme === 'dark' ? 'hover:bg-gray-700' : ''">
+                  <input type="checkbox" :value="brand" v-model="selectedBrands"
+                    class="form-checkbox h-4 w-4 rounded hover:cursor-pointer"
+                    :class="theme === 'dark' ? 'text-blue-500 bg-gray-900 border-gray-700' : 'text-blue-600 border-gray-300'">
+                  <span class="ml-2 text-sm">{{ brand }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative inline-block text-left" ref="priceFilterRef">
+          <button @click="togglePriceFilterModal"
+            class="itbms-price-filter flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-300 border"
+            :class="theme === 'dark' ? 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700' : 'bg-white text-gray-950 border-gray-300 hover:bg-gray-100'">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.593 12.595 12.427 12 12 12c-.427 0-1.593.593-2.242 1.121-.879.66-1.172 2.103-.767 3.219m-9.155-2.819h2.25c.578 0 1.123.344 1.373.816s.21 1.076-.234 1.486L6.5 21" />
+            </svg>
+            <span>Price</span>
+            <span v-if="displayedPrice"
+              class="ml-2 text-xs font-bold rounded-full px-2 py-0.5"
+              :class="theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'">
+              Selected
+            </span>
+          </button>
+          
+          <div v-if="showPriceFilterModal" @click.stop
+            class="itbms-price-filter-modal absolute z-10 mt-2 w-64 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+            :class="theme === 'dark' ? 'bg-gray-800' : 'bg-white'">
+            <div class="py-1">
+              <div class="flex items-center justify-between px-4 py-2">
+                <span class="font-semibold text-sm">Price Range</span>
+                <button @click="clearPriceFilter" class="text-xs text-red-500 hover:underline">Clear</button>
+              </div>
+              <div class="max-h-60 overflow-y-auto px-2">
+                <label v-for="range in priceRanges" :key="range.label"
+                  class="flex items-center p-2 rounded-md cursor-pointer hover:bg-gray-100"
+                  :class="theme === 'dark' ? 'hover:bg-gray-700' : ''">
+                  <input type="checkbox" :value="range"
+                    @change="selectPriceRange(range)" :checked="priceLower === range.min"
+                    class="form-checkbox h-4 w-4 rounded hover:cursor-pointer"
+                    :class="theme === 'dark' ? 'text-blue-500 bg-gray-900 border-gray-700' : 'text-blue-600 border-gray-300'">
+                  <span class="ml-2 text-sm">{{ range.label }}</span>
+                </label>
+              </div>
+              <div class="px-4 py-2 border-t" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">
+                <div class="text-sm font-semibold mb-2">Custom Range</div>
+                <div class="flex items-center gap-2">
+                  <input type="number" v-model="priceLower" placeholder="Min"
+                    class="itbms-price-item-min w-1/2 p-2 text-sm rounded-md border"
+                    :class="theme === 'dark' ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-950 border-gray-300'">
+                  <span>-</span>
+                  <input type="number" v-model="priceUpper" placeholder="Max"
+                    class="itbms-price-item-max w-1/2 p-2 text-sm rounded-md border"
+                    :class="theme === 'dark' ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-950 border-gray-300'">
+                </div>
+                <button @click="savePriceRange"
+                  class="mt-2 w-full px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative inline-block text-left" ref="storageFilterRef">
+          <button @click="toggleStorageFilterModal"
+            class="itbms-storage-filter flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-300 border"
+            :class="theme === 'dark' ? 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700' : 'bg-white text-gray-950 border-gray-300 hover:bg-gray-100'">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44l-1.259-1.258a1.5 1.5 0 0 0-1.06-.44H4.5A2.25 2.25 0 0 0 2.25 6v5.25M12 12.75h.008v.008H12v-.008Zm1.25 1.25h.008v.008H13.25v-.008Zm-4.25-1.25h.008v.008H9v-.008ZM12 15h.008v.008H12V15Zm-1.25 1.25h.008v.008H10.75v-.008Z" />
+            </svg>
+            <span>Storage Size</span>
+            <span v-if="selectedStorages.length > 0"
+              class="ml-2 text-xs font-bold rounded-full px-2 py-0.5"
+              :class="theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'">
+              {{ selectedStorages.length }}
+            </span>
+          </button>
+
+          <div v-if="showStorageFilterModal" @click.stop
+            class="itbms-storage-filter-modal absolute z-10 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+            :class="theme === 'dark' ? 'bg-gray-800' : 'bg-white'">
+            <div class="py-1">
+              <div class="flex items-center justify-between px-4 py-2">
+                <span class="font-semibold text-sm">Storages</span>
+                <button @click="clearStorageFilter" class="text-xs text-red-500 hover:underline">Clear</button>
+              </div>
+              <div class="max-h-60 overflow-y-auto px-2">
+                <label v-for="storage in availableStorages" :key="storage"
+                  class="flex items-center p-2 rounded-md cursor-pointer hover:bg-gray-100"
+                  :class="theme === 'dark' ? 'hover:bg-gray-700' : ''">
+                  <input type="checkbox" :value="storage" v-model="selectedStorages"
+                    class="form-checkbox h-4 w-4 rounded hover:cursor-pointer"
+                    :class="theme === 'dark' ? 'text-blue-500 bg-gray-900 border-gray-700' : 'text-blue-600 border-gray-300'">
+                  <span class="ml-2 text-sm">{{ storage }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <button @click="clearAllFilters()"
+          class="itbms-brand-filter-clear flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-300 border border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600"
+          :class="theme === 'dark' ? 'hover:bg-gray-700' : ''">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Clear
+        </button>
+      </div>
+    </div>
+
+
     <div class="px-6 md:px-20 mb-6 flex items-center gap-3">
       <label for="page-size" class="text-sm font-medium">Items per page:</label>
-      <select
-        id="page-size"
-        v-model="pageSize"
+      <select id="page-size" v-model="pageSize"
         class="itbms-page-size border-2 rounded-full px-3 py-1 text-sm font-semibold shadow-sm transition duration-200 focus:outline-none focus:ring-2"
-        :class="theme === 'dark' ? 'bg-gray-800 text-gray-300 border-gray-700 focus:ring-orange-500 hover:bg-gray-700' : 'bg-white text-gray-800 border-gray-300 focus:ring-blue-400 hover:bg-gray-100'"
-      >
+        :class="theme === 'dark' ? 'bg-gray-800 text-gray-300 border-gray-700 focus:ring-orange-500 hover:bg-gray-700' : 'bg-white text-gray-800 border-gray-300 focus:ring-blue-400 hover:bg-gray-100'">
         <option :value="5">5</option>
         <option :value="10">10</option>
         <option :value="20">20</option>
       </select>
+    </div>
+
+    <div class="px-6 md:px-20 mb-6 flex flex-wrap items-center gap-2" v-if="activeFilters.length > 0">
+      <div v-for="filter in activeFilters" :key="filter.value" 
+      :class="[
+    {'itbms-brand-item': filter.type === 'brand'},
+    {'itbms-price-item': filter.type === 'price'},
+    {'itbms-storage-size-item': filter.type === 'storage'}
+  ], theme === 'dark' ? 'bg-blue-800 text-white' : 'bg-blue-100 text-blue-800'" 
+  class="flex items-center rounded-full px-3 py-1 text-sm font-medium transition-colors duration-300"
+        >
+        <span>{{ filter.value }}</span>
+        <button @click="removeActiveFilter(filter)" 
+        :class="[
+    {'itbms-brand-item-clear': filter.type === 'brand'},
+    {'itbms-price-item-clear': filter.type === 'price'},
+    {'itbms-storage-size-item-clear': filter.type === 'storage'}
+  ], theme === 'dark' ? 'text-blue-200 hover:text-blue-100' : 'text-blue-500 hover:text-blue-700'"
+        class="ml-2 focus:outline-none transition-colors duration-300"
+          >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <div class="px-6 md:px-20">
@@ -820,7 +980,7 @@ watch(
       </button>
     </div>
 
-    <transition name="modal-fade">
+    <!-- <transition name="modal-fade">
       <div v-if="showBrandFilterModal" class="itbms-bg fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div class="p-6 rounded-3xl shadow-lg w-full max-w-md mx-4" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
           <h3 class="text-xl font-semibold mb-4">Select Brands</h3>
@@ -848,7 +1008,6 @@ watch(
 
           <h3 class="text-xl font-semibold mb-4">Select Prices</h3>
 
-          <!-- Predefined Price Options -->
           <div class="space-y-2 mb-4">
             <label v-for="(range, idx) in priceRanges" :key="idx" class="flex items-center space-x-2">
               <input type="checkbox" :checked="priceLower === range.min && priceUpper === range.max"
@@ -857,7 +1016,6 @@ watch(
             </label>
           </div>
 
-          <!-- Custom Price Range -->
           <div class="flex items-center gap-2 border-t pt-4 border-gray-300">
             <input type="number" placeholder="Min" v-model.number="priceLower"
               class="border rounded px-3 py-1 w-full" />
@@ -867,7 +1025,6 @@ watch(
             <button @click="savePriceRange" class="bg-blue-500 text-white px-4 py-1 rounded">Apply</button>
           </div>
 
-          <!-- Buttons -->
           <div class="mt-6 flex justify-end space-x-2">
             <button @click="showPriceFilterModal = false"
               class="bg-gray-300 text-gray-800 px-6 py-2 rounded-full hover:bg-gray-400 font-semibold">
@@ -894,7 +1051,7 @@ watch(
               <input type="checkbox" :id="'brand-' + size" :value="size" v-model="selectedStorages"
                 class="form-checkbox h-4 w-4 rounded"
                 :class="theme === 'dark' ? 'text-orange-500 bg-gray-700 border-gray-600' : 'text-blue-600 bg-gray-100 border-gray-300'" />
-              <label :for="'size-' + size" class="itbms-storage-item">{{ size }} GB</label>
+              <label :for="'size-' + size" class="itbms-storage-item">{{ size }}</label>
             </div>
             <p v-if="availableStorages.length === 0" class="text-center py-4 w-full col-span-full">No Storages available.
             </p>
@@ -908,7 +1065,7 @@ watch(
           </div>
         </div>
       </div>
-    </transition>
+    </transition> -->
 
     <transition name="bounce-popup">
     <div v-if="showDeleteConfirmationPopup" class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
