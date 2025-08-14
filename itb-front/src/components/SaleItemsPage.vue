@@ -12,6 +12,8 @@ const showfailPopup = ref(false)
 const isGridView = computed(() => route.path !== '/sale-items/list')
 
 const showBrandFilterModal = ref(false)
+const showPriceFilterModal = ref(false)
+const showStorageFilterModal = ref(false)
 const items = ref([])
 const totalPages = ref(0)
 const brandList = ref([])
@@ -19,6 +21,42 @@ const savedPageSize = sessionStorage.getItem('pageSize')
 const savedPage = parseInt(sessionStorage.getItem('currentPage'))
 const currentPage = ref(!isNaN(savedPage) ? savedPage : 0)
 const pageSize = ref(savedPageSize ? parseInt(savedPageSize) : 10)
+
+// Price
+const displayedPrice = computed(() => {
+  if (priceLower.value != null && priceUpper.value != null) {
+    return `${priceLower.value.toLocaleString()} – ${priceUpper.value.toLocaleString()} Baht`
+  } else if (priceLower.value != null) {
+    return `= ${priceLower.value.toLocaleString()} Baht`
+  } else if (priceUpper.value != null) {
+    return `≤ ${priceUpper.value.toLocaleString()} Baht`
+  }
+  return ''
+})
+
+const priceLower = ref(
+  JSON.parse(sessionStorage.getItem('priceLower') || 'null') ??
+  (route.query.filterPriceLower ? Number(route.query.filterPriceLower) : null)
+)
+const priceUpper = ref(
+  JSON.parse(sessionStorage.getItem('priceUpper') || 'null') ??
+  (route.query.filterPriceUpper ? Number(route.query.filterPriceUpper) : null)
+)
+const priceRanges = [
+  { min: 0, max: 5000, label: "0 – 5,000 Baht" },
+  { min: 5001, max: 10000, label: "5,001 – 10,000 Baht" },
+  { min: 10001, max: 20000, label: "10,001 – 20,000 Baht" },
+  { min: 20001, max: 30000, label: "20,001 – 30,000 Baht" },
+  { min: 30001, max: 40000, label: "30,001 – 40,000 Baht" },
+  { min: 40001, max: 50000, label: "40,001 – 50,000 Baht" }
+]
+
+
+// Storage
+const selectedStorages = ref(
+  JSON.parse(sessionStorage.getItem('selectedStorages') || 'null') ??
+  (route.query.filterStorages ? [].concat(route.query.filterStorages) : [])
+)
 
 const searchQuery = ref(route.query.search || '')
 const selectedBrands = ref(
@@ -28,6 +66,8 @@ const selectedBrands = ref(
 
 const savedSort = sessionStorage.getItem('sortOrder')
 const currentSortOrder = ref(savedSort || 'createdOn')
+
+const availableStorages = ref([])
 
 const availableBrands = computed(() => {
   return brandList.value
@@ -56,9 +96,19 @@ const iconComponent = computed(() => {
 // Fetch
 async function fetchItems() {
   try {
+    let lower = priceLower.value != null ? priceLower.value : undefined
+    let upper = priceUpper.value != null ? priceUpper.value : undefined
+
+    if (lower != null && upper == null) {
+      upper = lower
+    }
+
     const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', {
       params: {
         filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
+        filterStorages: selectedStorages.value.length ? selectedStorages.value : undefined,
+        filterPriceLower: lower,
+        filterPriceUpper: upper,
         page: currentPage.value,
         size: pageSize.value,
         sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
@@ -66,8 +116,8 @@ async function fetchItems() {
           currentSortOrder.value === 'brandAsc'
             ? 'asc'
             : currentSortOrder.value === 'brandDesc'
-            ? 'desc'
-            : 'asc',
+              ? 'desc'
+              : 'asc',
       },
     })
 
@@ -98,8 +148,27 @@ async function fetchbrand() {
   }
 }
 
+async function fetchStorage() {
+  try {
+    const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', {
+      params: {
+        page: 0,
+        size: 9999
+      }
+    })
+
+    const allStorages = response.content
+      .map(item => item.storageGb)
+      .filter(s => s != null)
+
+    availableStorages.value = [...new Set(allStorages)]
+  } catch (err) {
+    console.error('Error fetching storages:', err)
+  }
+}
+
 watch(
-  [selectedBrands, searchQuery],
+  [selectedBrands, selectedStorages, searchQuery],
   () => {
     currentPage.value = 0
     lastAction.value = ''
@@ -122,6 +191,11 @@ watch(selectedBrands, (newVal) => {
 watch(currentSortOrder, (val) => {
   sessionStorage.setItem('sortOrder', val)
 })
+
+watch(selectedBrands, val => sessionStorage.setItem('selectedBrands', JSON.stringify(val)))
+watch(priceLower, val => sessionStorage.setItem('priceLower', JSON.stringify(val)))
+watch(priceUpper, val => sessionStorage.setItem('priceUpper', JSON.stringify(val)))
+watch(selectedStorages, val => sessionStorage.setItem('selectedStorages', JSON.stringify(val)))
 
 const fixedStart = ref(0)
 const lastAction = ref('')
@@ -210,6 +284,7 @@ watch(pageSize, () => {
 })
 
 // Filter
+// Brand filter function
 function toggleBrandFilterModal() {
   showBrandFilterModal.value = !showBrandFilterModal.value
 }
@@ -218,8 +293,60 @@ function removeBrandFromFilter(brand) {
   currentPage.value = 0
   fetchItems()
 }
-function clearAllBrandFilters() {
+function clearBrandFilter() {
   selectedBrands.value = []
+  currentPage.value = 0
+  fetchItems()
+}
+// Price filter function
+
+function selectPriceRange(range) {
+  priceLower.value = range.min
+  priceUpper.value = range.max
+  savePriceRange()
+}
+
+function savePriceRange() {
+  sessionStorage.setItem('priceLower', JSON.stringify(priceLower.value))
+  sessionStorage.setItem('priceUpper', JSON.stringify(priceUpper.value))
+  fetchItems()
+  showPriceFilterModal.value = false
+}
+
+function togglePriceFilterModal() {
+  showPriceFilterModal.value = !showPriceFilterModal.value
+}
+function clearPriceFilter() {
+  priceLower.value = null
+  priceUpper.value = null
+  sessionStorage.removeItem('priceLower')
+  sessionStorage.removeItem('priceUpper')
+  currentPage.value = 0
+  fetchItems()
+}
+// storage filter function
+function toggleStorageFilterModal() {
+  showStorageFilterModal.value = !showStorageFilterModal.value
+}
+function removeStorageFromFilter(storage) {
+  selectedStorages.value = selectedStorages.value.filter(s => s !== storage)
+  currentPage.value = 0
+  fetchItems()
+}
+function clearStorageFilter() {
+  selectedStorages.value = []
+  currentPage.value = 0
+  fetchItems()
+}
+
+// clear all filter
+function clearAllFilters() {
+  selectedBrands.value = []
+  selectedStorages.value = []
+  priceLower.value = null
+  priceUpper.value = null
+  sessionStorage.removeItem('priceLower')
+  sessionStorage.removeItem('priceUpper')
   currentPage.value = 0
   fetchItems()
 }
@@ -241,6 +368,7 @@ watch([searchQuery, selectedBrands, currentSortOrder, currentPage], fetchItems, 
 onMounted(() => {
   fetchItems()
   fetchbrand()
+  fetchStorage()
 
   // Load theme from localStorage on component mount
   const savedTheme = localStorage.getItem('theme')
@@ -348,7 +476,7 @@ watch(
 
     <div class="container mx-auto py-8 px-6 md:px-0 flex flex-col md:flex-row items-center justify-between gap-4">
       <div class="itbms-logo font-extrabold text-3xl">ITB MShop</div>
-      
+
       <div class="flex-grow flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
         <div class="itbms-search-bar flex items-center rounded-full border focus-within:border-orange-500 w-full md:max-w-md" :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
           <input type="text" placeholder="Search..." v-model="searchQuery" class="itbms-search-input py-2 px-4 w-full focus:outline-none rounded-l-full" :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'" />
@@ -359,41 +487,101 @@ watch(
           </button>
         </div>
 
-        <div class="itbms-brand-filter flex items-center rounded-full border w-full md:max-w-sm" :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
-          <div class="flex flex-grow flex-wrap items-center gap-1 p-2 min-h-[40px] max-h-[40px] overflow-y-auto">
-            <span v-for="brand in selectedBrands" :key="brand" class="itbms-filter-item text-sm font-medium px-2.5 py-0.5 rounded-full flex items-center whitespace-nowrap" :class="theme === 'dark' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'">
-              {{ brand }}
-              <button @click.stop="removeBrandFromFilter(brand)" class="itbms-filter-item-clear ml-1 focus:outline-none" :class="theme === 'dark' ? 'text-blue-200 hover:text-white' : 'text-blue-800 hover:text-blue-600'">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-              </button>
-            </span>
-            <input
-              type="text"
-              :placeholder="selectedBrands.length === 0 ? 'Filter by brand(s)' : ''"
-              readonly
-              class="itbms-brand-filter-input h-full w-full px-3 py-0 flex-grow focus:outline-none cursor-pointer"
-              :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'"
-              @click="toggleBrandFilterModal"
-            />
+        <div class="flex items-center border rounded-full overflow-hidden w-full max-w-2xl">
+          <!-- Brand Filter -->
+          <div class="itbms-brand-filter"
+            :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
+            <div class="flex flex-grow flex-wrap items-center gap-1 p-2 min-h-[40px] max-h-[40px] overflow-y-auto">
+              <span v-for="brand in selectedBrands" :key="brand"
+                class="itbms-brand-item text-sm font-medium px-2.5 py-0.5 rounded-full flex items-center whitespace-nowrap"
+                :class="theme === 'dark' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'">
+                {{ brand }}
+                <button @click.stop="removeBrandFromFilter(brand)"
+                  class="itbms-brand-item-clear ml-1 focus:outline-none"
+                  :class="theme === 'dark' ? 'text-blue-200 hover:text-white' : 'text-blue-800 hover:text-blue-600'">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </span>
+              <input type="text" :placeholder="selectedBrands.length === 0 ? 'Filter by brand(s)' : ''" readonly
+                class="itbms-brand-filter-input h-full w-full px-3 py-0 flex-grow focus:outline-none cursor-pointer"
+                :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'"
+                @click="toggleBrandFilterModal" />
+            </div>
           </div>
-          <button @click="toggleBrandFilterModal" class="itbms-brand-filter-button p-2 transition-colors duration-300" :class="theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 rounded-r-full' : 'bg-gray-100 hover:bg-gray-200 rounded-r-full'">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V19l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-          </button>
-          <button @click="clearAllBrandFilters()" class="itbms-brand-filter-clear text-white p-2 rounded-r-full transition-colors duration-300 border-2 border-red-500 hover:bg-red-600" :class="theme === 'dark' ? 'bg-red-500 hover:text-white' : 'bg-red-500 hover:text-white'">
-            Clear
-          </button>
+
+          <!-- Separator -->
+          <div class="border-l border-gray-300 h-6"></div>
+
+        <!-- Price Filter -->
+          <div class="itbms-price-filter"
+            :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
+            <div class="flex flex-grow flex-wrap items-center gap-1 p-2 min-h-[40px] max-h-[40px] overflow-y-auto">
+
+              <span v-if="displayedPrice"
+                class="itbms-price-item text-sm font-medium px-2.5 py-0.5 rounded-full flex items-center whitespace-nowrap"
+                :class="theme === 'dark' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'">
+                {{ displayedPrice }}
+                <button @click.stop="clearPriceFilter()" class="itbms-price-item-clear ml-1 focus:outline-none"
+                  :class="theme === 'dark' ? 'text-blue-200 hover:text-white' : 'text-blue-800 hover:text-blue-600'">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </span>
+
+              <input type="text" :placeholder="!displayedPrice ? 'Filter by price' : ''" readonly
+                class="itbms-price-item-input h-full w-full px-3 py-0 flex-grow focus:outline-none cursor-pointer"
+                :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'"
+                @click="togglePriceFilterModal()" />
+            </div>
+          </div>
+
+          <!-- Separator -->
+          <div class="border-l border-gray-300 h-6"></div>
+
+          <!-- Storage Filter -->
+          <div class="itbms-storage-filter"
+            :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
+            <div class="flex flex-grow flex-wrap items-center gap-1 p-2 min-h-[40px] max-h-[40px] overflow-y-auto">
+              <span v-for="storage in selectedStorages" :key="storage"
+                class="itbms-storage-item text-sm font-medium px-2.5 py-0.5 rounded-full flex items-center whitespace-nowrap"
+                :class="theme === 'dark' ? 'bg-blue-800 text-blue-100' : 'bg-blue-100 text-blue-800'">
+                {{ storage }}
+                <button @click.stop="removeStorageFromFilter(storage)"
+                  class="itbms-storage-item-clear ml-1 focus:outline-none"
+                  :class="theme === 'dark' ? 'text-blue-200 hover:text-white' : 'text-blue-800 hover:text-blue-600'">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </span>
+              <input type="text" :placeholder="selectedStorages.length === 0 ? 'Filter by storage(s)' : ''" readonly
+                class="itbms-storage-filter-input h-full w-full px-3 py-0 flex-grow focus:outline-none cursor-pointer"
+                :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'"
+                @click="toggleStorageFilterModal" />
+            </div>
+          </div>
+          <button @click="clearAllFilters()"
+          class="itbms-brand-filter-clear text-white p-2 rounded-r-full transition-colors duration-300 border-2 border-red-500 hover:bg-red-600"
+          :class="theme === 'dark' ? 'bg-red-500 hover:text-white' : 'bg-red-500 hover:text-white'">
+          Clear
+        </button>
         </div>
       </div>
-      
+
       <div class="itbms-icons flex flex-col items-end space-y-2">
         <div class="flex items-center space-x-4">
           <!-- <div @click="toggleTheme" class="itbms-theme-toggle cursor-pointer p-2 rounded-full transition-colors duration-300" :class="theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'" v-html="iconComponent">
           </div> -->
-          
+
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 cursor-pointer" :class="theme === 'dark' ? 'text-white' : 'text-black'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
@@ -403,7 +591,7 @@ watch(
         </div>
       </div>
     </div>
-    
+
     <div class="px-6 md:px-20 mt-8">
       <div class="flex flex-col md:flex-row items-start justify-between mb-6 gap-4">
         <div class="flex flex-wrap gap-4">
@@ -414,7 +602,7 @@ watch(
           >
             + Add Sell Item
           </button>
-          
+
           <button
             v-if="!isGridView"
             @click="goToManageBrand"
@@ -424,7 +612,7 @@ watch(
             Manage Brand
           </button>
         </div>
-        
+
         <div class="flex items-center space-x-4">
           <button
             v-if="isGridView"
@@ -468,7 +656,7 @@ watch(
         </div>
       </div>
     </div>
-    
+
     <div class="px-6 md:px-20 mb-6 flex items-center gap-3">
       <label for="page-size" class="text-sm font-medium">Items per page:</label>
       <select
@@ -561,7 +749,7 @@ watch(
         </table>
       </div>
     </div>
-    
+
     <div :class="totalPages === 1 ? 'invisible' : 'visible'" class="flex justify-center mt-6 flex-wrap gap-2 px-6 md:px-20 mb-8 overflow-hidden">
       <button
         @click="() => { lastAction = 'first'; goToPage(0) }"
@@ -645,7 +833,78 @@ watch(
           </div>
           <div class="mt-6 flex justify-end space-x-2">
             <button @click="showBrandFilterModal = false" class="bg-gray-300 text-gray-800 px-6 py-2 rounded-full hover:bg-gray-400 transition-colors duration-300 font-semibold">Close</button>
-            <button @click="clearAllBrandFilters()" class="bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition-colors duration-300 font-semibold">Clear All</button>
+            <button @click="clearBrandFilter()" class="bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition-colors duration-300 font-semibold">Clear All</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="modal-fade">
+      <div v-if="showPriceFilterModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+
+        <div class="p-6 rounded-3xl shadow-lg w-full max-w-md mx-4"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+
+          <h3 class="text-xl font-semibold mb-4">Select Prices</h3>
+
+          <!-- Predefined Price Options -->
+          <div class="space-y-2 mb-4">
+            <label v-for="(range, idx) in priceRanges" :key="idx" class="flex items-center space-x-2">
+              <input type="checkbox" :checked="priceLower === range.min && priceUpper === range.max"
+                @change="selectPriceRange(range)" class="form-checkbox h-4 w-4 rounded text-blue-600" />
+              <span>{{ range.label }}</span>
+            </label>
+          </div>
+
+          <!-- Custom Price Range -->
+          <div class="flex items-center gap-2 border-t pt-4 border-gray-300">
+            <input type="number" placeholder="Min" v-model.number="priceLower"
+              class="border rounded px-3 py-1 w-full" />
+            <span>-</span>
+            <input type="number" placeholder="Max" v-model.number="priceUpper"
+              class="border rounded px-3 py-1 w-full" />
+            <button @click="savePriceRange" class="bg-blue-500 text-white px-4 py-1 rounded">Apply</button>
+          </div>
+
+          <!-- Buttons -->
+          <div class="mt-6 flex justify-end space-x-2">
+            <button @click="showPriceFilterModal = false"
+              class="bg-gray-300 text-gray-800 px-6 py-2 rounded-full hover:bg-gray-400 font-semibold">
+              Close
+            </button>
+            <button @click="clearPriceFilter"
+              class="bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 font-semibold">
+              Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="modal-fade">
+      <div v-if="showStorageFilterModal"
+        class="itbms-bg fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="p-6 rounded-3xl shadow-lg w-full max-w-md mx-4"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+          <h3 class="text-xl font-semibold mb-4">Select Storages</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 max-h-60 overflow-y-auto border rounded-xl p-2"
+            :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-300'">
+            <div v-for="size in availableStorages" :key="size" class="flex items-center space-x-2 py-1">
+              <input type="checkbox" :id="'brand-' + size" :value="size" v-model="selectedStorages"
+                class="form-checkbox h-4 w-4 rounded"
+                :class="theme === 'dark' ? 'text-orange-500 bg-gray-700 border-gray-600' : 'text-blue-600 bg-gray-100 border-gray-300'" />
+              <label :for="'size-' + size" class="itbms-storage-item">{{ size }} GB</label>
+            </div>
+            <p v-if="availableStorages.length === 0" class="text-center py-4 w-full col-span-full">No Storages available.
+            </p>
+          </div>
+          <div class="mt-6 flex justify-end space-x-2">
+            <button @click="showStorageFilterModal = false"
+              class="bg-gray-300 text-gray-800 px-6 py-2 rounded-full hover:bg-gray-400 transition-colors duration-300 font-semibold">Close</button>
+            <button @click="clearStorageFilter()"
+              class="bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition-colors duration-300 font-semibold">Clear
+              All</button>
           </div>
         </div>
       </div>
@@ -663,7 +922,7 @@ watch(
       </div>
     </div>
     </transition>
-    
+
     <transition name="fade-background">
       <div v-if="isDeleting" class="fixed top-0 left-0 w-full h-full bg-black flex items-center justify-center z-50 loading-overlay">
         <div class="p-6 rounded-3xl shadow-lg text-center" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
@@ -675,7 +934,7 @@ watch(
         </div>
       </div>
     </transition>
-    
+
     <transition name="bounce-popup">
       <div v-if="showAddSuccessPopup" class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div class="p-6 rounded-3xl shadow-lg text-center" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
@@ -685,7 +944,7 @@ watch(
         </div>
       </div>
     </transition>
-    
+
     <transition name="bounce-popup">
       <div v-if="showDeleteSuccessPopup" class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div class="p-6 rounded-3xl shadow-lg text-center" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
