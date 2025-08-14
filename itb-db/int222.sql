@@ -47,7 +47,9 @@ CREATE TABLE IF NOT EXISTS sale_item_picture (
     old_picture_name VARCHAR(255) NOT NULL, -- original uploaded filename
     new_picture_name VARCHAR(255) NOT NULL, -- unique stored filename
     file_size_bytes INT NOT NULL,           -- file size in bytes
+    picture_order int not null,
     createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn datetime not null default current_timestamp on update current_timestamp,
 
     CONSTRAINT fk_sale_item_picture_item FOREIGN KEY sale_item_picture(sale_id) REFERENCES sale_item_base(id)
         ON DELETE CASCADE,
