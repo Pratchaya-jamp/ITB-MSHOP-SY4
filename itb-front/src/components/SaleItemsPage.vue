@@ -53,11 +53,11 @@ const priceRanges = [
 
 
 // Storage
+const storageRanges = ['32 GB', '64 GB', '128 GB', '256 GB', '512Gb', '1 TB', 'Not specified']
+
 const selectedStorages = ref(
-  (
     JSON.parse(sessionStorage.getItem('selectedStorages') || 'null') ??
     (route.query.filterStorages ? [].concat(route.query.filterStorages) : [])
-  ).map(s => s === null ? 'Not specified' : (s == 1024 ? '1 TB' : `${s} GB`))
 )
 
 const searchQuery = ref(route.query.search || '')
@@ -69,7 +69,6 @@ const selectedBrands = ref(
 const savedSort = sessionStorage.getItem('sortOrder')
 const currentSortOrder = ref(savedSort || 'createdOn')
 
-const availableStorages = ref([])
 
 const availableBrands = computed(() => {
   return brandList.value
@@ -164,44 +163,6 @@ async function fetchbrand() {
   }
 }
 
-async function fetchStorage() {
-  try {
-    const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', {
-      params: {
-        page: 0,
-        size: 9999
-      }
-    })
-
-    const allStorages = response.content
-      .map(item => {
-        if (item.storageGb === null || item.storageGb === undefined) {
-          return 'Not specified'
-        }
-
-        if (item.storageGb === 1024) return '1 TB'
-        return `${item.storageGb} GB`
-      })
-
-    const uniqueStorages = [...new Set(allStorages)]
-
-    uniqueStorages.sort((a, b) => {
-      if (a === 'Not specified') return 1
-      if (b === 'Not specified') return -1
-
-      const aValue = a.includes('TB') ? parseInt(a) * 1024 : parseInt(a)
-      const bValue = b.includes('TB') ? parseInt(b) * 1024 : parseInt(b)
-      return aValue - bValue
-    })
-
-    availableStorages.value = uniqueStorages
-
-  } catch (err) {
-    console.error('Error fetching storages:', err)
-  }
-}
-
-
 watch( [selectedBrands, selectedStorages, searchQuery], () => {
     lastAction.value = ''
     fetchItems()
@@ -227,14 +188,7 @@ watch(currentSortOrder, (val) => {
 watch(selectedBrands, val => sessionStorage.setItem('selectedBrands', JSON.stringify(val)))
 watch(priceLower, val => sessionStorage.setItem('priceLower', JSON.stringify(val)))
 watch(priceUpper, val => sessionStorage.setItem('priceUpper', JSON.stringify(val)))
-watch(selectedStorages, val => {
-  const storagesToSave = val.map(s => {
-    if (s === 'Not specified') return null
-    if (s === '1 TB') return 1024  
-    return parseInt(s) || s  
-  })
-  sessionStorage.setItem('selectedStorages', JSON.stringify(storagesToSave))
-})
+watch(selectedStorages, val => sessionStorage.setItem('selectedStorages', JSON.stringify(val)))
 
 const fixedStart = ref(0)
 const lastAction = ref('')
@@ -407,7 +361,6 @@ watch([searchQuery, selectedBrands, currentSortOrder, currentPage], fetchItems, 
 onMounted(() => {
   fetchItems()
   fetchbrand()
-  fetchStorage()
 
   // Load theme from localStorage on component mount
   const savedTheme = localStorage.getItem('theme')
@@ -769,7 +722,7 @@ const removeActiveFilter = (filter) => {
                 <button @click="clearStorageFilter" class="text-xs text-red-500 hover:underline">Clear</button>
               </div>
               <div class="max-h-60 overflow-y-auto px-2">
-                <label v-for="storage in availableStorages" :key="storage"
+                <label v-for="storage in storageRanges" :key="storage"
                   class="flex items-center p-2 rounded-md cursor-pointer hover:bg-gray-100"
                   :class="theme === 'dark' ? 'hover:bg-gray-700' : ''">
                   <input type="checkbox" :value="storage" v-model="selectedStorages"
