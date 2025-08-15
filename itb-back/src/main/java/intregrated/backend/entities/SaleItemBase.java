@@ -9,6 +9,7 @@ import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
@@ -66,4 +67,6 @@ public class SaleItemBase {
     @Column(name = "updatedOn", nullable = false)
     private Instant updatedOn;
 
+    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<SaleItemPicture> pictures;
 }
