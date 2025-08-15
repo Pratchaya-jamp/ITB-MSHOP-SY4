@@ -3,6 +3,7 @@ package intregrated.backend.dtos;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,4 +23,6 @@ public class SaleItemBaseByIdDto {
     private String color;
     private Instant createdOn;
     private Instant updatedOn;
+
+    private List<SaleItemImageDto> saleItemImages;
 }
