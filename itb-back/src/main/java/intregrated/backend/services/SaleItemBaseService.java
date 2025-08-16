@@ -1,6 +1,7 @@
 package intregrated.backend.services;
 
 import intregrated.backend.FileStorageProperties;
+import intregrated.backend.dtos.ImageInfoDto;
 import intregrated.backend.dtos.NewSaleItemDto;
 import intregrated.backend.dtos.SaleItemBaseByIdDto;
 import intregrated.backend.dtos.SaleItemImageDto;
@@ -28,6 +29,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -54,7 +57,9 @@ public class SaleItemBaseService {
         return saleItemBaseRepo.findAll();
     }
 
-    @Transactional(readOnly = true)
+
+
+    @Transactional
     public SaleItemBaseByIdDto getSaleItemBaseRepoById(Integer id) {
         SaleItemBase saleItem = saleItemBaseRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -64,16 +69,14 @@ public class SaleItemBaseService {
         List<SaleItemImageDto> imageDtos = saleItemPictureRepo
                 .findBySale_IdOrderByPictureOrderAsc(id)
                 .stream()
-                .map(pic -> new SaleItemImageDto(
-                        pic.getNewPictureName(),
-                        pic.getPictureOrder()
-                ))
+                .map(pic -> new SaleItemImageDto(pic.getNewPictureName(), pic.getPictureOrder()))
                 .toList();
 
+        // Map entity → DTO
         return SaleItemBaseByIdDto.builder()
                 .id(saleItem.getId())
                 .model(saleItem.getModel())
-                .brandName(saleItem.getBrand().getName())
+                .brandName(saleItem.getBrand() != null ? saleItem.getBrand().getName() : null)
                 .description(saleItem.getDescription())
                 .price(saleItem.getPrice())
                 .ramGb(saleItem.getRamGb())
@@ -85,9 +88,10 @@ public class SaleItemBaseService {
                 .color(saleItem.getColor())
                 .createdOn(saleItem.getCreatedOn())
                 .updatedOn(saleItem.getUpdatedOn())
-                .saleItemImages(imageDtos) // ✅ ดึงรูปมาใส่
+                .saleItemImages(imageDtos)
                 .build();
     }
+
 
     @Transactional
     public SaleItemBaseByIdDto createSaleItem(NewSaleItemDto newSaleItem, MultipartFile[] pictures) {
@@ -202,139 +206,109 @@ public class SaleItemBaseService {
 
 
 
-    public SaleItemBaseByIdDto editSaleItem(Integer id, NewSaleItemDto newSaleItem) {
+    @Transactional
+    public SaleItemBaseByIdDto editSaleItem(Integer id, NewSaleItemDto newSaleItem, List<ImageInfoDto> imageInfos) {
         SaleItemBase existing = saleItemBaseRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "SaleItem with id " + id + " not found"));
 
-        existing.setModel(newSaleItem.getModel().trim());
-        existing.setDescription(newSaleItem.getDescription().trim());
+        // --- อัปเดตข้อมูลสินค้า ---
+        existing.setModel(newSaleItem.getModel() != null ? newSaleItem.getModel().trim() : null);
+        existing.setDescription(newSaleItem.getDescription() != null ? newSaleItem.getDescription().trim() : null);
         existing.setPrice(newSaleItem.getPrice());
-        existing.setRamGb(newSaleItem.getRamGb() != null ? newSaleItem.getRamGb() : null);
-        existing.setStorageGb(newSaleItem.getStorageGb() != null ? newSaleItem.getStorageGb() : null);
-        existing.setScreenSizeInch(
-                newSaleItem.getScreenSizeInch() != null ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch()) : null);
-        if (newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0) {
-            existing.setQuantity(1);
-        } else {
-            existing.setQuantity(newSaleItem.getQuantity());
-        }
-        if (newSaleItem.getColor() == null || newSaleItem.getColor().trim().isEmpty()) {
-            existing.setColor(null);
-        } else {
-            existing.setColor(newSaleItem.getColor().trim());
-        }
+        existing.setRamGb(newSaleItem.getRamGb());
+        existing.setStorageGb(newSaleItem.getStorageGb());
+        existing.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null
+                ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch())
+                : null);
+        existing.setQuantity((newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0)
+                ? 1
+                : newSaleItem.getQuantity());
+        existing.setColor((newSaleItem.getColor() == null || newSaleItem.getColor().trim().isEmpty())
+                ? null
+                : newSaleItem.getColor().trim());
         existing.setUpdatedOn(Instant.now());
 
+        // --- อัปเดต brand ---
         if (newSaleItem.getBrand() != null && newSaleItem.getBrand().getId() != null) {
             BrandBase brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                             "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
             existing.setBrand(brand);
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Brand id must be provided.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand id must be provided.");
         }
 
-        SaleItemBase saved = saleItemBaseRepo.saveAndFlush(existing);
+        SaleItemBase savedSaleItem = saleItemBaseRepo.saveAndFlush(existing);
 
+        // --- จัดการรูป ---
+        List<SaleItemImageDto> imageDtos = new ArrayList<>();
+
+        if (imageInfos != null && !imageInfos.isEmpty()) {
+            // ลบรูปเก่าก่อน
+            saleItemPictureRepo.deleteBySaleItemId(savedSaleItem.getId());
+
+            for (ImageInfoDto img : imageInfos) {
+                MultipartFile file = img.getImageFile();
+                if (file != null && !file.isEmpty()) {
+                    String originalName = file.getOriginalFilename();
+                    String extension = FilenameUtils.getExtension(originalName).toLowerCase();
+
+                    // ตรวจสอบนามสกุลไฟล์
+                    if (!Arrays.asList(fileStorageProperties.getAllowFileTypes()).contains(extension.toUpperCase())) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "File type not allowed: " + extension);
+                    }
+
+                    // ✅ ตั้งชื่อไฟล์ใหม่ เช่น 86.1.jpg
+                    String newFileName = savedSaleItem.getId() + "." + img.getOrder() + "." + extension;
+                    Path targetPath = Paths.get(fileStorageProperties.getUploadDir()).resolve(newFileName);
+
+                    try {
+                        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not save file");
+                    }
+
+                    // บันทึกลง DB
+                    SaleItemPicture picEntity = new SaleItemPicture();
+                    picEntity.setSale(savedSaleItem);
+                    picEntity.setOldPictureName(originalName);
+                    picEntity.setNewPictureName(newFileName);
+                    picEntity.setFileSizeBytes((int) file.getSize());
+                    picEntity.setPictureOrder(img.getOrder());
+                    picEntity.setCreatedOn(Instant.now());
+                    picEntity.setUpdatedOn(Instant.now());
+                    saleItemPictureRepo.save(picEntity);
+
+                    // เพิ่มเข้า DTO
+                    imageDtos.add(new SaleItemImageDto(newFileName, img.getOrder()));
+                }
+            }
+        }
+
+        // --- Return DTO ---
         return SaleItemBaseByIdDto.builder()
-                .id(saved.getId())
-                .model(saved.getModel().trim())
-                .brandName(saved.getBrand().getName())
-                .description(saved.getDescription().trim())
-                .price(saved.getPrice())
-                .ramGb(saved.getRamGb())
-                .screenSizeInch(saved.getScreenSizeInch() != null ? saved.getScreenSizeInch().doubleValue() : null)
-                .quantity(saved.getQuantity())
-                .storageGb(saved.getStorageGb())
-                .color(saved.getColor())
-                .createdOn(saved.getCreatedOn())
-                .updatedOn(saved.getUpdatedOn())
+                .id(savedSaleItem.getId())
+                .model(savedSaleItem.getModel())
+                .brandName(savedSaleItem.getBrand().getName())
+                .description(savedSaleItem.getDescription())
+                .price(savedSaleItem.getPrice())
+                .ramGb(savedSaleItem.getRamGb())
+                .screenSizeInch(savedSaleItem.getScreenSizeInch() != null
+                        ? savedSaleItem.getScreenSizeInch().doubleValue()
+                        : null)
+                .quantity(savedSaleItem.getQuantity())
+                .storageGb(savedSaleItem.getStorageGb())
+                .color(savedSaleItem.getColor())
+                .saleItemImages(imageDtos)
+                .createdOn(savedSaleItem.getCreatedOn())
+                .updatedOn(savedSaleItem.getUpdatedOn())
                 .build();
     }
 
-//    public SaleItemBaseByIdDto editSaleItem(Integer id, NewSaleItemDto newSaleItem, MultipartFile[] imageInfos) {
-//        SaleItemBase existing = saleItemBaseRepo.findById(id)
-//                .orElseThrow(() -> new ResponseStatusException(
-//                        HttpStatus.NOT_FOUND,
-//                        "SaleItem with id " + id + " not found"));
-//
-//        // อัปเดตข้อมูลสินค้าเหมือนเดิม
-//        existing.setModel(newSaleItem.getModel().trim());
-//        existing.setDescription(newSaleItem.getDescription().trim());
-//        existing.setPrice(newSaleItem.getPrice());
-//        existing.setRamGb(newSaleItem.getRamGb());
-//        existing.setStorageGb(newSaleItem.getStorageGb());
-//        existing.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch()) : null);
-//        existing.setQuantity(newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0 ? 1 : newSaleItem.getQuantity());
-//        existing.setColor((newSaleItem.getColor() == null || newSaleItem.getColor().trim().isEmpty()) ? null : newSaleItem.getColor().trim());
-//        existing.setUpdatedOn(Instant.now());
-//
-//        // อัปเดต brand
-//        if (newSaleItem.getBrand() != null && newSaleItem.getBrand().getId() != null) {
-//            BrandBase brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
-//                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-//                            "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
-//            existing.setBrand(brand);
-//        } else {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand id must be provided.");
-//        }
-//
-//        if (imageInfos != null && imageInfos.length > 0) {
-//            // ลบรูปเก่าของสินค้านี้ก่อน
-//            saleItemPictureRepo.deleteBySaleItemId(existing.getId());
-//
-//            // เพิ่มรูปใหม่
-//            for (int i = 0; i < imageInfos.length; i++) {
-//                MultipartFile file = imageInfos[i];
-//
-//                SaleItemPicture picture = new SaleItemPicture();
-//                picture.setSale(existing); // setSale() เพราะ field ชื่อ sale
-//
-//                // เก็บชื่อไฟล์เก่า (original name)
-//                picture.setOldPictureName(file.getOriginalFilename());
-//
-//                // สร้างชื่อไฟล์ใหม่กันซ้ำ เช่น ใช้ timestamp นำหน้า
-//                picture.setNewPictureName(System.currentTimeMillis() + "_" + file.getOriginalFilename());
-//
-//                // เก็บขนาดไฟล์ (เป็น byte)
-//                picture.setFileSizeBytes((int) file.getSize());
-//
-//                // กำหนดลำดับของรูป (เริ่มจาก 1)
-//                picture.setPictureOrder(i + 1);
-//
-//                // วันที่สร้างและแก้ไข
-//                picture.setCreatedOn(Instant.now());
-//                picture.setUpdatedOn(Instant.now());
-//
-//                saleItemPictureRepo.save(picture);
-//
-//                // ✅ ถ้าต้องเก็บไฟล์จริงในโฟลเดอร์
-//                // Path path = Paths.get("/path/to/images/" + picture.getNewPictureName());
-//                // Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-//            }
-//        }
-//
-//
-//        SaleItemBase saved = saleItemBaseRepo.saveAndFlush(existing);
-//
-//        return SaleItemBaseByIdDto.builder()
-//                .id(saved.getId())
-//                .model(saved.getModel().trim())
-//                .brandName(saved.getBrand().getName())
-//                .description(saved.getDescription().trim())
-//                .price(saved.getPrice())
-//                .ramGb(saved.getRamGb())
-//                .screenSizeInch(saved.getScreenSizeInch() != null ? saved.getScreenSizeInch().doubleValue() : null)
-//                .quantity(saved.getQuantity())
-//                .storageGb(saved.getStorageGb())
-//                .color(saved.getColor())
-//                .createdOn(saved.getCreatedOn())
-//                .updatedOn(saved.getUpdatedOn())
-//                .build();
-//    }
+
 
 
 //    public void deleteSaleItem(Integer id) {

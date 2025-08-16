@@ -17,3 +17,5 @@ public interface SaleItemPictureRepo extends JpaRepository<SaleItemPicture, Inte
     @Query("DELETE FROM SaleItemPicture p WHERE p.sale.id = :saleId")
     void deleteBySaleItemId(@Param("saleId") Integer saleId);
 }
+
+

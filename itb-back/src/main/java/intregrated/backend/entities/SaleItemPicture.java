@@ -47,12 +47,12 @@ public class SaleItemPicture {
 
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "createdOn", nullable = false)
+    @Column(name = "createdon", nullable = false)
     private Instant createdOn;
 
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "updatedOn", nullable = false)
+    @Column(name = "updatedon", nullable = false)
     private Instant updatedOn;
 
 }
