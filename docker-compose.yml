@@ -25,6 +25,8 @@ services:
       - db
     networks:
       - itb-net
+    volumes:
+      - ./product-images:/app/product-images
 
   db:
     image: mysql:latest
