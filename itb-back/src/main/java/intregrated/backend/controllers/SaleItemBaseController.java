@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import intregrated.backend.dtos.NewSaleItemDto;
 import intregrated.backend.dtos.SaleItemBaseByIdDto;
 import intregrated.backend.dtos.SaleItemBaseDto;
+import intregrated.backend.dtos.SaleItemWithImageInfo;
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.services.SaleItemBaseService;
 import intregrated.backend.utils.ListMapper;
@@ -56,19 +57,22 @@ public class SaleItemBaseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<SaleItemBaseByIdDto> editSaleItem(@PathVariable Integer id, @RequestBody NewSaleItemDto newSaleItem) {
-        SaleItemBaseByIdDto editUpdated = saleItemBaseService.editSaleItem(id, newSaleItem);
-        return ResponseEntity.ok(editUpdated);
+
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<SaleItemBaseByIdDto> editSaleItem(
+            @PathVariable Integer id,
+            @ModelAttribute SaleItemWithImageInfo request) {
+
+        SaleItemBaseByIdDto updated = saleItemBaseService
+                .editSaleItem(id, request.getSaleItem(), request.getImageInfos());
+
+        return ResponseEntity.ok(updated);
     }
 
-//    @PutMapping("/{id}")
-//    public SaleItemBaseByIdDto editSaleItem(
-//            @PathVariable Integer id,
-//            @RequestPart("EditSaleItem") NewSaleItemDto newSaleItem,
-//            @RequestPart(value = "imageInfos", required = false) MultipartFile[] imageInfos) {
-//        return saleItemBaseService.editSaleItem(id, newSaleItem, imageInfos);
-//    }
+
+
+
 
 
     @DeleteMapping("/{id}")
