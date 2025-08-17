@@ -3,13 +3,16 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: ./itb-front
+      context: .
+      dockerfile: ./itb-front/dockerfile
     ports:
       - "80:80"
     depends_on:
       - backend
     networks:
       - itb-net
+    volumes:
+      - ./product-images:/usr/share/nginx/html/product-images
 
   backend:
     build:

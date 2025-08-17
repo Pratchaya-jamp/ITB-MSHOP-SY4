@@ -1,15 +1,16 @@
 # Stage 1: Build the Vue application
 FROM node:lts-alpine AS builder
 WORKDIR /app
-COPY package*.json .
+COPY ./itb-front/package*.json .
 RUN npm install
-COPY . .
+COPY ./itb-front .
 RUN npm run build
 
 # Stage 2: Serve the built application using Nginx with custom config
 FROM nginx:alpine
 RUN mkdir /app
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/itb-front.conf
+COPY ./itb-front/nginx.conf /etc/nginx/conf.d/itb-front.conf
+COPY ./product-images /usr/share/nginx/html/product-images
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
