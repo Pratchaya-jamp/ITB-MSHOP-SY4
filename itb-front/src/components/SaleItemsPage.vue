@@ -115,13 +115,12 @@ async function fetchItems() {
     let storagesToSend = selectedStorages.value.map(s => {
       if (s === 'Not specified') return null
       if (s === '1 TB') return 1024
-      if (s === '512 GB') return 512
-      return parseInt(s.replace(' GB', ''))
+      return parseInt(s)
     })
 
     const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', {
-	      filterStorages: storagesToSend.length ? storagesToSend : undefined,
-	      filterStorages: storagesToSend.length ? storagesToSend : undefined,
+	      params: {
+        filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
 	      filterStorages: storagesToSend.length ? storagesToSend : undefined,
         filterPriceLower: lower,
         filterPriceUpper: upper,
@@ -134,7 +133,8 @@ async function fetchItems() {
             : currentSortOrder.value === 'brandDesc'
               ? 'desc'
               : 'asc',
-      })
+      }
+    })
 
     items.value = response.content
     totalPages.value = response.totalPages
@@ -356,7 +356,23 @@ const goToPhoneDetails = (id) => {
 }
 
 // Watch fetch trigger
-watch([searchQuery, selectedBrands, currentSortOrder, currentPage], fetchItems, { immediate: true })
+watch(
+  [
+    searchQuery,
+    selectedBrands,
+    selectedStorages,
+    currentSortOrder,
+    currentPage,
+    pageSize,
+  ],
+  () => {
+    // ป้องกันการเรียกใช้ fetchItems ซ้ำซ้อน
+    if (currentPage.value === null || typeof currentPage.value !== 'number') {
+        return;
+    }
+    fetchItems();
+  }
+)
 
 onMounted(() => {
   fetchItems()
