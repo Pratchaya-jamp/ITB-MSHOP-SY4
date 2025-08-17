@@ -30,94 +30,98 @@ async function getItems(url, options = {}) {
   }
 }
 
-    
-    async function getItemById(url, id) {
-      try {
-        //console.log(`🔍 Fetching from: ${url}/${id}`);
 
-        const data = await fetch(`${url}/${id}`)
+async function getItemById(url, id) {
+  try {
+    //console.log(`🔍 Fetching from: ${url}/${id}`);
 
-        if (!data.ok) {
-          if (data.status === 404) return undefined;
-          throw new Error(`HTTP error`);
-        }
+    const data = await fetch(`${url}/${id}`)
 
-        const item = await data.json()
-        return item
-      } catch (error) {
-        console.error("Error fetching item:", error);
-        return undefined;
-      }
-    }
-    
-    async function deleteItemById(url, id) {
-      try {
-        const res = await fetch(`${url}/${id}`, {
-          method: 'DELETE'
-        })
-        return res.status
-      } catch (error) {
-        throw new Error('can not delete your item')
-      }
-    }
-    
-    async function addItem(url, newItem) {
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...newItem
-          })
-        })
-        const data = await res.json()
-        return { status: res.status, data };
-      } catch (error) {
-        throw new Error('can not add your item')
-      }
-    }
-    
-    async function editItem(url, id, editItem) {
-      try {
-        const res = await fetch(`${url}/${id}`, {
-          method: 'PUT',
-          headers: {
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...editItem
-          })
-        })
-        const data = await res.json()
-        return { status: res.status, data };
-      } catch (error) {
-        throw new Error('can not edit your item')
-      }
+    if (!data.ok) {
+      if (data.status === 404) return undefined;
+      throw new Error(`HTTP error`);
     }
 
-    async function patchItem(url, id, partialItem) {
-      try {
-        const res = await fetch(`${url}/${id}`, {
-          method: 'PATCH',
-          headers: {
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...partialItem
-          })
-        });
-    
-        if (!res.ok) {
-          throw new Error('Failed to patch the item');
-        }
-    
-        const patchedItem = await res.json();
-        return patchedItem;
-      } catch (error) {
-        throw new Error('can not patch your item');
-      }
-    }    
-    
-    export { getItems, getItemById, deleteItemById, addItem, editItem, patchItem }
+    const item = await data.json()
+    return item
+  } catch (error) {
+    console.error("Error fetching item:", error);
+    return undefined;
+  }
+}
+
+async function deleteItemById(url, id) {
+  try {
+    const res = await fetch(`${url}/${id}`, {
+      method: 'DELETE'
+    })
+    return res.status
+  } catch (error) {
+    throw new Error('can not delete your item')
+  }
+}
+
+async function addItem(url, newItem, isMultipart = false) {
+  try {
+    const options = { method: 'POST' }
+
+    if (isMultipart) {
+      // newItem ต้องเป็น FormData
+      options.body = newItem
+    } else {
+      options.headers = { 'Content-Type': 'application/json' }
+      options.body = JSON.stringify(newItem)
+    }
+
+    const res = await fetch(url, options)
+    const data = res.status !== 204 ? await res.json() : null
+    return { status: res.status, data }
+  } catch (error) {
+    throw new Error('Cannot add your item: ' + error.message)
+  }
+}
+
+async function editItem(url, id, updatedItem, isMultipart = false) {
+  try {
+    const options = { method: 'PUT' }
+
+    if (isMultipart) {
+      // updatedItem เป็น FormData
+      options.body = updatedItem
+    } else {
+      options.headers = { 'Content-Type': 'application/json' }
+      options.body = JSON.stringify(updatedItem)
+    }
+
+    const res = await fetch(`${url}/${id}`, options)
+    const data = res.status !== 204 ? await res.json() : null
+    return { status: res.status, data }
+  } catch (error) {
+    throw new Error('Cannot edit your item: ' + error.message)
+  }
+}
+
+async function patchItem(url, id, partialItem) {
+  try {
+    const res = await fetch(`${url}/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        ...partialItem
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to patch the item');
+    }
+
+    const patchedItem = await res.json();
+    return patchedItem;
+  } catch (error) {
+    throw new Error('can not patch your item');
+  }
+}
+
+export { getItems, getItemById, deleteItemById, addItem, editItem, patchItem }

@@ -53,7 +53,7 @@ const priceRanges = [
 
 
 // Storage
-const storageRanges = ['32 GB', '64 GB', '128 GB', '256 GB', '512Gb', '1 TB', 'Not specified']
+const storageRanges = ['32 GB', '64 GB', '128 GB', '256 GB', '512 GB', '1 TB', 'Not specified']
 
 const selectedStorages = ref(
     JSON.parse(sessionStorage.getItem('selectedStorages') || 'null') ??
@@ -115,13 +115,14 @@ async function fetchItems() {
     let storagesToSend = selectedStorages.value.map(s => {
       if (s === 'Not specified') return null
       if (s === '1 TB') return 1024
-      return parseInt(s)
+      if (s === '512 GB') return 512
+      return parseInt(s.replace(' GB', ''))
     })
 
     const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', {
-      params: {
-        filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
-	filterStorages: storagesToSend.length ? storagesToSend : undefined,
+	      filterStorages: storagesToSend.length ? storagesToSend : undefined,
+	      filterStorages: storagesToSend.length ? storagesToSend : undefined,
+	      filterStorages: storagesToSend.length ? storagesToSend : undefined,
         filterPriceLower: lower,
         filterPriceUpper: upper,
         page: currentPage.value,
@@ -133,8 +134,7 @@ async function fetchItems() {
             : currentSortOrder.value === 'brandDesc'
               ? 'desc'
               : 'asc',
-      },
-    })
+      })
 
     items.value = response.content
     totalPages.value = response.totalPages
