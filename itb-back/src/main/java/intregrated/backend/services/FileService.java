@@ -1,11 +1,15 @@
+// FileService.java (Updated)
 package intregrated.backend.services;
 
 import intregrated.backend.FileStorageProperties;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.io.IOException; // มีอยู่แล้ว
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,7 +29,21 @@ public class FileService {
             }
         } catch (IOException ex) {
             throw new RuntimeException(
-                    "Can’t create the directory where the uploaded files will be stored.", ex);
+                    "Can't create the directory where the uploaded files will be stored.", ex);
+        }
+    }
+
+    public Resource loadFileAsResource(String fileName) throws IOException { // เพิ่ม throws IOException
+        try {
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+            if (resource.exists()) {
+                return resource;
+            } else {
+                throw new IOException("File not found " + fileName);
+            }
+        } catch (MalformedURLException ex) {
+            throw new IOException("File not found " + fileName, ex);
         }
     }
 }

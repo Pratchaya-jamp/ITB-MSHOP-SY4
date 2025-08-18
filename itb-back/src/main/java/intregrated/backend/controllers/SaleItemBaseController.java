@@ -71,10 +71,6 @@ public class SaleItemBaseController {
     }
 
 
-
-
-
-
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteSaleItem(@PathVariable Integer id) {

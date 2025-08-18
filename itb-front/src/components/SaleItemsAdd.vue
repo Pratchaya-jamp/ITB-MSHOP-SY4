@@ -222,15 +222,14 @@ onMounted(async () => {
             const existingImages = data.saleItemImages
                 .sort((a, b) => a.imageViewOrder - b.imageViewOrder)
                 .map(img => ({
-                    id: img.id, // เพิ่ม id เพื่อใช้ในการลบ
-                    name: img.fileName,
-                    url: `/sy4/product-images/${img.fileName}`,
-                    isExisting: true // Flag เพื่อระบุว่าเป็นรูปภาพเก่า
-                }));
+                id: img.id,
+                name: img.fileName,
+                url: `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/images/${img.fileName}`,
+                isExisting: true
+          }));
 
             pictures.value = existingImages;
 
-            // ตั้งค่ารูปภาพหลักเป็นรูปแรก
             if (pictures.value.length > 0) {
                 mainImage.value = pictures.value[0].url;
             }

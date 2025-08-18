@@ -11,10 +11,8 @@ const id = route.params.id
 
 const imageLoading = ref(true);
 const imageError = ref(false);
-const thumbnailErrors = ref([]);
 const productImages = ref([])
 
-const imageList = ref([])
 const mainImage = ref('')
 const showNotFoundPopup = ref(false)
 const isDeleting = ref(false)
@@ -51,10 +49,6 @@ const toggleTheme = () => {
     applyTheme(newTheme)
 }
 
-const handleThumbnailError = (index) => {
-    thumbnailErrors.value[index] = true
-};
-
 // function handleProductImages(images) {
 //     if (!images) return
 //     productImages.value = images
@@ -89,8 +83,8 @@ onMounted(async () => {
         if (data.saleItemImages && data.saleItemImages.length > 0) {
             const sortedImages = data.saleItemImages
                 .sort((a, b) => a.imageViewOrder - b.imageViewOrder)
-                .map(img => `/sy4/product-images/${img.fileName}`)
-            
+                .map(img => `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/images/${img.fileName}`)
+      
             productImages.value = sortedImages
             mainImage.value = sortedImages[0]
         }

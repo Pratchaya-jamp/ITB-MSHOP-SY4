@@ -56,8 +56,8 @@ const priceRanges = [
 const storageRanges = ['32 GB', '64 GB', '128 GB', '256 GB', '512 GB', '1 TB', 'Not specified']
 
 const selectedStorages = ref(
-    JSON.parse(sessionStorage.getItem('selectedStorages') || 'null') ??
-    (route.query.filterStorages ? [].concat(route.query.filterStorages) : [])
+  JSON.parse(sessionStorage.getItem('selectedStorages') || 'null') ??
+  (route.query.filterStorages ? [].concat(route.query.filterStorages) : [])
 )
 
 const searchQuery = ref(route.query.search || '')
@@ -110,8 +110,8 @@ async function fetchItems() {
       }
     } else if (lower != null && upper == null) {
       upper = lower
-    }	    
-    
+    }
+
     let storagesToSend = selectedStorages.value.map(s => {
       if (s === 'Not specified') return null
       if (s === '1 TB') return 1024
@@ -119,9 +119,9 @@ async function fetchItems() {
     })
 
     const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', {
-	      params: {
+      params: {
         filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
-	      filterStorages: storagesToSend.length ? storagesToSend : undefined,
+        filterStorages: storagesToSend.length ? storagesToSend : undefined,
         filterPriceLower: lower,
         filterPriceUpper: upper,
         page: currentPage.value,
@@ -163,10 +163,10 @@ async function fetchbrand() {
   }
 }
 
-watch( [selectedBrands, selectedStorages, searchQuery], () => {
-    lastAction.value = ''
-    fetchItems()
-  }
+watch([selectedBrands, selectedStorages, searchQuery], () => {
+  lastAction.value = ''
+  fetchItems()
+}
 )
 
 watch(currentPage, (newPage) => {
@@ -368,7 +368,7 @@ watch(
   () => {
     // ป้องกันการเรียกใช้ fetchItems ซ้ำซ้อน
     if (currentPage.value === null || typeof currentPage.value !== 'number') {
-        return;
+      return;
     }
     fetchItems();
   }
@@ -387,7 +387,7 @@ onMounted(() => {
 
   window.addEventListener('storage', (event) => {
     if (event.key === 'theme') {
-       theme.value = event.newValue;
+      theme.value = event.newValue;
     }
   })
   document.addEventListener('click', handleClickOutside)
@@ -530,7 +530,8 @@ const removeActiveFilter = (filter) => {
     <div class="container mx-auto py-8 px-6 md:px-0 flex flex-col md:flex-row items-center justify-between gap-4">
       <div class="itbms-logo font-extrabold text-3xl">ITB MShop</div>
       <div class="flex-grow flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-        <div class="itbms-search-bar flex items-center rounded-full border focus-within:border-orange-500 w-full md:max-w-md"
+        <div
+          class="itbms-search-bar flex items-center rounded-full border focus-within:border-orange-500 w-full md:max-w-md"
           :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
           <input type="text" placeholder="Search..." v-model="searchQuery"
             class="itbms-search-input py-2 px-4 w-full focus:outline-none rounded-l-full"
@@ -540,7 +541,8 @@ const removeActiveFilter = (filter) => {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
               :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-6a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-6a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
         </div>
@@ -549,12 +551,15 @@ const removeActiveFilter = (filter) => {
       <div class="itbms-icons flex flex-col items-end space-y-2">
         <div class="flex items-center space-x-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 cursor-pointer"
-            :class="theme === 'dark' ? 'text-white' : 'text-black'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            :class="theme === 'dark' ? 'text-white' : 'text-black'" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" class="h-8 w-8 cursor-pointer"
             :class="theme === 'dark' ? 'text-white' : 'text-black'" viewBox="0 0 128 128">
-            <g><path
+            <g>
+              <path
                 d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z" />
             </g>
           </svg>
@@ -585,7 +590,8 @@ const removeActiveFilter = (filter) => {
             title="Sort by Brand Ascending">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
               stroke="currentColor" class="w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v9.75m0 0-3-3m3 3 3-3" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v9.75m0 0-3-3m3 3 3-3" />
             </svg>
             <span class="sr-only">Sort by Brand Ascending</span>
           </button>
@@ -596,7 +602,8 @@ const removeActiveFilter = (filter) => {
             title="Sort by Brand Descending">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
               stroke="currentColor" class="w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5 4.5V8.25m0 0-3 3m3-3-3 3" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5 4.5V8.25m0 0-3 3m3-3-3 3" />
             </svg>
             <span class="sr-only">Sort by Brand Descending</span>
           </button>
@@ -607,7 +614,8 @@ const removeActiveFilter = (filter) => {
             title="Clear Sort (Default: Created On)">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
               stroke="currentColor" class="w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 .75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V4.5Z" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 4.5a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 .75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V4.5Z" />
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M2.25 12c0 5.66 4.62 10.25 10.25 10.25S22.75 17.66 22.75 12A10.25 10.25 0 0 0 12 1.75 10.07 10.07 0 0 0 4.25 4.5" />
             </svg>
@@ -629,8 +637,7 @@ const removeActiveFilter = (filter) => {
                 d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
             </svg>
             <span>Brand</span>
-            <span v-if="selectedBrands.length > 0"
-              class="ml-2 text-xs font-bold rounded-full px-2 py-0.5"
+            <span v-if="selectedBrands.length > 0" class="ml-2 text-xs font-bold rounded-full px-2 py-0.5"
               :class="theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'">
               {{ selectedBrands.length }}
             </span>
@@ -668,13 +675,12 @@ const removeActiveFilter = (filter) => {
                 d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.593 12.595 12.427 12 12 12c-.427 0-1.593.593-2.242 1.121-.879.66-1.172 2.103-.767 3.219m-9.155-2.819h2.25c.578 0 1.123.344 1.373.816s.21 1.076-.234 1.486L6.5 21" />
             </svg>
             <span>Price</span>
-            <span v-if="displayedPrice"
-              class="ml-2 text-xs font-bold rounded-full px-2 py-0.5"
+            <span v-if="displayedPrice" class="ml-2 text-xs font-bold rounded-full px-2 py-0.5"
               :class="theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'">
               Selected
             </span>
           </button>
-          
+
           <div v-if="showPriceFilterModal" @click.stop
             class="itbms-price-filter-modal absolute z-10 mt-2 w-64 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hover:cursor-pointer"
             :class="theme === 'dark' ? 'bg-gray-800' : 'bg-white'">
@@ -687,9 +693,8 @@ const removeActiveFilter = (filter) => {
                 <label v-for="range in priceRanges" :key="range.label"
                   class="flex items-center p-2 rounded-md cursor-pointer hover:bg-gray-100"
                   :class="theme === 'dark' ? 'hover:bg-gray-700' : ''">
-                  <input type="checkbox" :value="range"
-                    @change="selectPriceRange(range)" :checked="priceLower === range.min"
-                    class="form-checkbox h-4 w-4 rounded hover:cursor-pointer"
+                  <input type="checkbox" :value="range" @change="selectPriceRange(range)"
+                    :checked="priceLower === range.min" class="form-checkbox h-4 w-4 rounded hover:cursor-pointer"
                     :class="theme === 'dark' ? 'text-blue-500 bg-gray-900 border-gray-700' : 'text-blue-600 border-gray-300'">
                   <span class="ml-2 text-sm">{{ range.label }}</span>
                 </label>
@@ -722,8 +727,7 @@ const removeActiveFilter = (filter) => {
                 d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44l-1.259-1.258a1.5 1.5 0 0 0-1.06-.44H4.5A2.25 2.25 0 0 0 2.25 6v5.25M12 12.75h.008v.008H12v-.008Zm1.25 1.25h.008v.008H13.25v-.008Zm-4.25-1.25h.008v.008H9v-.008ZM12 15h.008v.008H12V15Zm-1.25 1.25h.008v.008H10.75v-.008Z" />
             </svg>
             <span>Storage Size</span>
-            <span v-if="selectedStorages.length > 0"
-              class="ml-2 text-xs font-bold rounded-full px-2 py-0.5"
+            <span v-if="selectedStorages.length > 0" class="ml-2 text-xs font-bold rounded-full px-2 py-0.5"
               :class="theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'">
               {{ selectedStorages.length }}
             </span>
@@ -750,7 +754,7 @@ const removeActiveFilter = (filter) => {
             </div>
           </div>
         </div>
-        
+
         <button @click="clearAllFilters()"
           class="itbms-brand-filter-clear flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-300 border border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 hover:cursor-pointer"
           :class="theme === 'dark' ? 'hover:bg-gray-700' : ''">
@@ -776,23 +780,19 @@ const removeActiveFilter = (filter) => {
     </div>
 
     <div class="px-6 md:px-20 mb-6 flex flex-wrap items-center gap-2" v-if="activeFilters.length > 0">
-      <div v-for="filter in activeFilters" :key="filter.value" 
-      :class="[
-    {'itbms-brand-item': filter.type === 'brand'},
-    {'itbms-price-item': filter.type === 'price'},
-    {'itbms-storage-size-item': filter.type === 'storage'}
-  ], theme === 'dark' ? 'bg-blue-800 text-white' : 'bg-blue-100 text-blue-800'" 
-  class="flex items-center rounded-full px-3 py-1 text-sm font-medium transition-colors duration-300"
-        >
+      <div v-for="filter in activeFilters" :key="filter.value" :class="[
+        { 'itbms-brand-item': filter.type === 'brand' },
+        { 'itbms-price-item': filter.type === 'price' },
+        { 'itbms-storage-size-item': filter.type === 'storage' }
+      ], theme === 'dark' ? 'bg-blue-800 text-white' : 'bg-blue-100 text-blue-800'"
+        class="flex items-center rounded-full px-3 py-1 text-sm font-medium transition-colors duration-300">
         <span>{{ filter.value }}</span>
-        <button @click="removeActiveFilter(filter)" 
-        :class="[
-    {'itbms-brand-item-clear': filter.type === 'brand'},
-    {'itbms-price-item-clear': filter.type === 'price'},
-    {'itbms-storage-size-item-clear': filter.type === 'storage'}
-  ], theme === 'dark' ? 'text-blue-200 hover:text-blue-100' : 'text-blue-500 hover:text-blue-700'"
-        class="ml-2 focus:outline-none transition-colors duration-300"
-          >
+        <button @click="removeActiveFilter(filter)" :class="[
+          { 'itbms-brand-item-clear': filter.type === 'brand' },
+          { 'itbms-price-item-clear': filter.type === 'price' },
+          { 'itbms-storage-size-item-clear': filter.type === 'storage' }
+        ], theme === 'dark' ? 'text-blue-200 hover:text-blue-100' : 'text-blue-500 hover:text-blue-700'"
+          class="ml-2 focus:outline-none transition-colors duration-300">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -804,23 +804,18 @@ const removeActiveFilter = (filter) => {
       <div v-if="isGridView" class="p-6">
         <div v-if="items && items.length === 0" class="text-center">No sale items found.</div>
         <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          <div
-            v-for="(item, index) in items"
-            :key="item.id"
+          <div v-for="(item, index) in items" :key="item.id"
             class="itbms-row rounded-3xl p-6 shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl cursor-pointer"
             :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-950'"
-            :style="{ animationDelay: (index * 50) + 'ms' }"
-            @click="goToPhoneDetails(item.id)"
-          >
-            <img
-              :src="'/sy4/phone/iPhone.png'"
-              alt="phone"
-              class="w-full h-40 object-contain mb-4 rounded-xl"
-            />
-            <div class="itbms-brand font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">{{ item.brandName }}</div>
+            :style="{ animationDelay: (index * 50) + 'ms' }" @click="goToPhoneDetails(item.id)">
+            <img :src="'/sy4/phone/iPhone.png'" alt="phone" class="w-full h-40 object-contain mb-4 rounded-xl" />
+            <div
+              class="itbms-brand font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">
+              {{ item.brandName }}</div>
             <div class="itbms-model text-sm font-semibold">{{ item.model }}</div>
             <div class="text-sm">
-              <span class="itbms-ramGb">{{ item.ramGb || '-' }}</span>/<span class="itbms-storageGb">{{ item.storageGb || '-' }}</span> GB
+              <span class="itbms-ramGb">{{ item.ramGb || '-' }}</span>/<span class="itbms-storageGb">{{ item.storageGb
+                || '-' }}</span> GB
             </div>
             <div class="itbms-price mt-2 font-extrabold text-2xl">{{ item.price.toLocaleString() }}</div>
             <div class="itbms-price-unit text-sm font-light opacity-80">Baht</div>
@@ -844,32 +839,24 @@ const removeActiveFilter = (filter) => {
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="item in items"
-              :key="item.id"
-              class="itbms-row transition-colors duration-200"
-              :class="theme === 'dark' ? 'bg-gray-900 text-gray-200 hover:bg-gray-800' : 'bg-white text-gray-800 hover:bg-gray-100'"
-            >
+            <tr v-for="item in items" :key="item.id" class="itbms-row transition-colors duration-200"
+              :class="theme === 'dark' ? 'bg-gray-900 text-gray-200 hover:bg-gray-800' : 'bg-white text-gray-800 hover:bg-gray-100'">
               <td class="px-4 py-3">{{ item.id }}</td>
               <td class="px-4 py-3">{{ item.brandName }}</td>
               <td class="px-4 py-3">{{ item.model }}</td>
-              <td class="px-4 py-3">{{ item.ramGb || '-'}}</td>
+              <td class="px-4 py-3">{{ item.ramGb || '-' }}</td>
               <td class="px-4 py-3">{{ item.storageGb || '-' }}</td>
-              <td class="px-4 py-3">{{ item.color || '-'}}</td>
+              <td class="px-4 py-3">{{ item.color || '-' }}</td>
               <td class="px-4 py-3">{{ item.price.toLocaleString() }}</td>
               <td class="px-4 py-3 space-x-2">
-                <button
-                  @click.stop="goToEditItem(item.id)"
+                <button @click.stop="goToEditItem(item.id)"
                   class="itbms-edit-button font-semibold border-2 rounded-full px-4 py-1 transition-colors duration-300"
-                  :class="theme === 'dark' ? 'bg-yellow-500 text-white border-yellow-500 hover:bg-transparent hover:text-yellow-500' : 'bg-yellow-500 text-white border-yellow-500 hover:bg-transparent hover:text-yellow-500'"
-                >
+                  :class="theme === 'dark' ? 'bg-yellow-500 text-white border-yellow-500 hover:bg-transparent hover:text-yellow-500' : 'bg-yellow-500 text-white border-yellow-500 hover:bg-transparent hover:text-yellow-500'">
                   Edit
                 </button>
-                <button
-                  @click.stop="deleteproduct(item)"
+                <button @click.stop="deleteproduct(item)"
                   class="itbms-delete-button font-semibold border-2 rounded-full px-4 py-1 transition-colors duration-300"
-                  :class="theme === 'dark' ? 'bg-red-500 text-white border-red-500 hover:bg-transparent hover:text-red-500' : 'bg-red-500 text-white border-red-500 hover:bg-transparent hover:text-red-500'"
-                >
+                  :class="theme === 'dark' ? 'bg-red-500 text-white border-red-500 hover:bg-transparent hover:text-red-500' : 'bg-red-500 text-white border-red-500 hover:bg-transparent hover:text-red-500'">
                   Delete
                 </button>
               </td>
@@ -879,72 +866,57 @@ const removeActiveFilter = (filter) => {
       </div>
     </div>
 
-    <div :class="totalPages === 1 ? 'invisible' : 'visible'" class="flex justify-center mt-6 flex-wrap gap-2 px-6 md:px-20 mb-8 overflow-hidden">
-      <button
-        @click="() => { lastAction = 'first'; goToPage(0) }"
-        :disabled="currentPage === 0"
+    <div :class="totalPages === 1 ? 'invisible' : 'visible'"
+      class="flex justify-center mt-6 flex-wrap gap-2 px-6 md:px-20 mb-8 overflow-hidden">
+      <button @click="() => { lastAction = 'first'; goToPage(0) }" :disabled="currentPage === 0"
         class="itbms-page-first rounded-full px-4 py-2 border-2 text-sm transition-colors duration-300 font-semibold"
         :class="[
           currentPage === 0
             ? 'bg-gray-700 text-gray-400 border-gray-700 opacity-70 cursor-not-allowed'
             : 'bg-gradient-to-r from-orange-500 to-red-500 text-white border-transparent hover:from-orange-600 hover:to-red-600 hover:cursor-pointer'
-        ]"
-      >
+        ]">
         &lt;&lt; First
       </button>
 
-      <button
-        @click="() => { lastAction = 'prev'; goToPage(currentPage - 1) }"
-        :disabled="currentPage === 0"
+      <button @click="() => { lastAction = 'prev'; goToPage(currentPage - 1) }" :disabled="currentPage === 0"
         class="itbms-page-prev rounded-full px-4 py-2 border-2 text-sm transition-colors duration-300 font-semibold"
         :class="[
           currentPage === 0
             ? 'bg-gray-700 text-gray-400 border-gray-700 opacity-70 cursor-not-allowed'
             : 'bg-gradient-to-r from-orange-500 to-red-500 text-white border-transparent hover:from-orange-600 hover:to-red-600 hover:cursor-pointer'
-        ]"
-      >
+        ]">
         &lt; Prev
       </button>
 
-      <button
-        v-for="page in visiblePages"
-        :key="'page-' + page"
-        @click="() => { lastAction = ''; goToPage(page - 1) }"
-        class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm"
-        :class="[
+      <button v-for="page in visiblePages" :key="'page-' + page" @click="() => { lastAction = ''; goToPage(page - 1) }"
+        class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm" :class="[
           currentPage === page - 1
             ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
             : theme === 'dark'
-            ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:cursor-pointer'
-            : 'bg-white text-gray-800 hover:bg-gray-100 hover:cursor-pointer'
-        ]"
-      >
+              ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:cursor-pointer'
+              : 'bg-white text-gray-800 hover:bg-gray-100 hover:cursor-pointer'
+        ]">
         {{ page }}
       </button>
 
-      <button
-        @click="() => { lastAction = 'next'; goToPage(currentPage + 1) }"
+      <button @click="() => { lastAction = 'next'; goToPage(currentPage + 1) }"
         :disabled="currentPage === totalPages - 1"
         class="itbms-page-next rounded-full px-4 py-2 border-2 text-sm transition-colors duration-300 font-semibold"
         :class="[
           currentPage === totalPages - 1
             ? 'bg-gray-700 text-gray-400 border-gray-700 opacity-70 cursor-not-allowed'
             : 'bg-gradient-to-r from-orange-500 to-red-500 text-white border-transparent hover:from-orange-600 hover:to-red-600 hover:cursor-pointer'
-        ]"
-      >
+        ]">
         Next &gt;
       </button>
 
-      <button
-        @click="() => { lastAction = 'last';goToPage(totalPages - 1)}"
-        :disabled="currentPage === totalPages - 1"
+      <button @click="() => { lastAction = 'last'; goToPage(totalPages - 1) }" :disabled="currentPage === totalPages - 1"
         class="itbms-page-last rounded-full px-4 py-2 border-2 text-sm transition-colors duration-300 font-semibold"
         :class="[
           currentPage === totalPages - 1
             ? 'bg-gray-700 text-gray-400 border-gray-700 opacity-70 cursor-not-allowed'
             : 'bg-gradient-to-r from-orange-500 to-red-500 text-white border-transparent hover:from-orange-600 hover:to-red-600 hover:cursor-pointer'
-        ]"
-      >
+        ]">
         Last &gt;&gt;
       </button>
     </div>
@@ -1037,24 +1009,32 @@ const removeActiveFilter = (filter) => {
     </transition> -->
 
     <transition name="bounce-popup">
-    <div v-if="showDeleteConfirmationPopup" class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div class="rounded-3xl p-8 shadow-lg text-center" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
-        <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
-        <p class="itbms-message mb-4">Do you want to delete this sale item?</p>
-        <div class="flex justify-center gap-4">
-          <button @click="confirmDelete" class="itbms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Yes</button>
-          <button @click="cancelDeleteItem" class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-red-500 font-semibold hover:cursor-pointer">No</button>
+      <div v-if="showDeleteConfirmationPopup"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="rounded-3xl p-8 shadow-lg text-center"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+          <h2 class="text-xl font-semibold mb-4">Confirm delete the product</h2>
+          <p class="itbms-message mb-4">Do you want to delete this sale item?</p>
+          <div class="flex justify-center gap-4">
+            <button @click="confirmDelete"
+              class="itbms-confirm-button bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Yes</button>
+            <button @click="cancelDeleteItem"
+              class="itbms-cancel-button bg-red-500 text-white border-2 border-red-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-red-500 font-semibold hover:cursor-pointer">No</button>
+          </div>
         </div>
       </div>
-    </div>
     </transition>
 
     <transition name="fade-background">
-      <div v-if="isDeleting" class="fixed top-0 left-0 w-full h-full bg-black flex items-center justify-center z-50 loading-overlay">
-        <div class="p-6 rounded-3xl shadow-lg text-center" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
-          <svg class="animate-spin h-8 w-8 text-orange-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <div v-if="isDeleting"
+        class="fixed top-0 left-0 w-full h-full bg-black flex items-center justify-center z-50 loading-overlay">
+        <div class="p-6 rounded-3xl shadow-lg text-center"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+          <svg class="animate-spin h-8 w-8 text-orange-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"/>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z" />
           </svg>
           <p class="itbms-message text-sm font-medium">Deleting product...</p>
         </div>
@@ -1062,36 +1042,48 @@ const removeActiveFilter = (filter) => {
     </transition>
 
     <transition name="bounce-popup">
-      <div v-if="showAddSuccessPopup" class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div class="p-6 rounded-3xl shadow-lg text-center" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+      <div v-if="showAddSuccessPopup"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="p-6 rounded-3xl shadow-lg text-center"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
           <h2 class="text-xl font-semibold mb-4">Success!</h2>
           <p class="itbms-message mb-4">The sale item has been successfully added!</p>
-          <button @click="closeSuccessPopup" class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
+          <button @click="closeSuccessPopup"
+            class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
         </div>
       </div>
     </transition>
 
     <transition name="bounce-popup">
-      <div v-if="showDeleteSuccessPopup" class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div class="p-6 rounded-3xl shadow-lg text-center" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+      <div v-if="showDeleteSuccessPopup"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="p-6 rounded-3xl shadow-lg text-center"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
           <h2 class="text-xl font-semibold mb-4">Success!</h2>
           <p class="itbms-message mb-4">The sale item has been successfully deleted!</p>
-          <button @click="closeSuccessPopup" class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
+          <button @click="closeSuccessPopup"
+            class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
         </div>
       </div>
     </transition>
 
     <transition name="bounce-popup">
-      <div v-if="showfailPopup" class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div class="p-6 rounded-3xl shadow-lg text-center" :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+      <div v-if="showfailPopup"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="p-6 rounded-3xl shadow-lg text-center"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
           <h2 class="text-xl font-semibold mb-4">The sale item has been Fail added!</h2>
           <p class="itbms-message mb-4">Please try again later.</p>
-          <button @click="closeSuccessPopup" class="bg-red-500 text-white border-2 border-red-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-red-500 font-semibold hover:cursor-pointer">Done</button>
+          <button @click="closeSuccessPopup"
+            class="bg-red-500 text-white border-2 border-red-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-red-500 font-semibold hover:cursor-pointer">Done</button>
         </div>
       </div>
     </transition>
 
-    <button @click="toggleTheme" class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-sm shadow-lg transition-all duration-300 z-50 hover:cursor-pointer" :class="theme === 'dark' ? 'bg-gray-700/80 hover:bg-gray-600/80 text-white' : 'bg-gray-200/80 hover:bg-gray-300/80 text-black'" v-html="iconComponent">
+    <button @click="toggleTheme"
+      class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-sm shadow-lg transition-all duration-300 z-50 hover:cursor-pointer"
+      :class="theme === 'dark' ? 'bg-gray-700/80 hover:bg-gray-600/80 text-white' : 'bg-gray-200/80 hover:bg-gray-300/80 text-black'"
+      v-html="iconComponent">
     </button>
   </div>
 </template>
@@ -1108,6 +1100,7 @@ const removeActiveFilter = (filter) => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1127,6 +1120,7 @@ const removeActiveFilter = (filter) => {
 .itbms-list-item:hover {
   transform: scale(1.02);
 }
+
 .itbms-list-item {
   opacity: 0;
   animation: fadeInUp 0.5s ease forwards;
@@ -1193,6 +1187,7 @@ const removeActiveFilter = (filter) => {
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
 .loading-overlay {
   background-color: rgba(0, 0, 0, 0.2);
 }

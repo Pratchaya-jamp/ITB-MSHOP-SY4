@@ -83,7 +83,10 @@ async function addItem(url, newItem, isMultipart = false) {
 
 async function editItem(url, id, updatedItem, isMultipart = false) {
   try {
-    const options = { method: 'PUT' }
+    const options = {
+      method: 'PUT',
+      headers: {}
+    }
 
     if (isMultipart) {
       // updatedItem เป็น FormData
