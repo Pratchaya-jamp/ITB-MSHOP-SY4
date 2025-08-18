@@ -1,10 +1,7 @@
 package intregrated.backend.services;
 
 import intregrated.backend.FileStorageProperties;
-import intregrated.backend.dtos.ImageInfoDto;
-import intregrated.backend.dtos.NewSaleItemDto;
-import intregrated.backend.dtos.SaleItemBaseByIdDto;
-import intregrated.backend.dtos.SaleItemImageDto;
+import intregrated.backend.dtos.*;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.entities.SaleItemPicture;
@@ -206,8 +203,115 @@ public class SaleItemBaseService {
 
 
 
+    // @Transactional
+    // public SaleItemBaseByIdDto editSaleItem(Integer id, NewSaleItemDto newSaleItem, List<ImageInfoDto> imageInfos) {
+    //     SaleItemBase existing = saleItemBaseRepo.findById(id)
+    //             .orElseThrow(() -> new ResponseStatusException(
+    //                     HttpStatus.NOT_FOUND,
+    //                     "SaleItem with id " + id + " not found"));
+
+    //     // --- อัปเดตข้อมูลสินค้า ---
+    //     existing.setModel(newSaleItem.getModel() != null ? newSaleItem.getModel().trim() : null);
+    //     existing.setDescription(newSaleItem.getDescription() != null ? newSaleItem.getDescription().trim() : null);
+    //     existing.setPrice(newSaleItem.getPrice());
+    //     existing.setRamGb(newSaleItem.getRamGb());
+    //     existing.setStorageGb(newSaleItem.getStorageGb());
+    //     existing.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null
+    //             ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch())
+    //             : null);
+    //     existing.setQuantity((newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0)
+    //             ? 1
+    //             : newSaleItem.getQuantity());
+    //     existing.setColor((newSaleItem.getColor() == null || newSaleItem.getColor().trim().isEmpty())
+    //             ? null
+    //             : newSaleItem.getColor().trim());
+    //     existing.setUpdatedOn(Instant.now());
+
+    //     // --- อัปเดต brand ---
+    //     if (newSaleItem.getBrand() != null && newSaleItem.getBrand().getId() != null) {
+    //         BrandBase brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
+    //                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+    //                         "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
+    //         existing.setBrand(brand);
+    //     } else {
+    //         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand id must be provided.");
+    //     }
+
+    //     SaleItemBase savedSaleItem = saleItemBaseRepo.saveAndFlush(existing);
+
+    //     // --- จัดการรูป ---
+    //     List<SaleItemImageDto> imageDtos = new ArrayList<>();
+
+    //     if (imageInfos != null && !imageInfos.isEmpty()) {
+    //         // ลบรูปเก่าก่อน
+    //         saleItemPictureRepo.deleteBySaleItemId(savedSaleItem.getId());
+
+    //         for (ImageInfoDto img : imageInfos) {
+    //             MultipartFile file = img.getImageFile();
+    //             if (file != null && !file.isEmpty()) {
+    //                 String originalName = file.getOriginalFilename();
+    //                 String extension = FilenameUtils.getExtension(originalName).toLowerCase();
+
+    //                 // ตรวจสอบนามสกุลไฟล์
+    //                 if (!Arrays.asList(fileStorageProperties.getAllowFileTypes()).contains(extension.toUpperCase())) {
+    //                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+    //                             "File type not allowed: " + extension);
+    //                 }
+
+    //                 // ✅ ตั้งชื่อไฟล์ใหม่ เช่น 86.1.jpg
+    //                 String newFileName = savedSaleItem.getId() + "." + img.getOrder() + "." + extension;
+    //                 Path targetPath = Paths.get(fileStorageProperties.getUploadDir()).resolve(newFileName);
+
+    //                 try {
+    //                     Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+    //                 } catch (IOException e) {
+    //                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not save file");
+    //                 }
+
+    //                 // บันทึกลง DB
+    //                 SaleItemPicture picEntity = new SaleItemPicture();
+    //                 picEntity.setSale(savedSaleItem);
+    //                 picEntity.setOldPictureName(originalName);
+    //                 picEntity.setNewPictureName(newFileName);
+    //                 picEntity.setFileSizeBytes((int) file.getSize());
+    //                 picEntity.setPictureOrder(img.getOrder());
+    //                 picEntity.setCreatedOn(Instant.now());
+    //                 picEntity.setUpdatedOn(Instant.now());
+    //                 saleItemPictureRepo.save(picEntity);
+
+    //                 // เพิ่มเข้า DTO
+    //                 imageDtos.add(new SaleItemImageDto(newFileName, img.getOrder()));
+    //             }
+    //         }
+    //     }
+
+    //     // --- Return DTO ---
+    //     return SaleItemBaseByIdDto.builder()
+    //             .id(savedSaleItem.getId())
+    //             .model(savedSaleItem.getModel())
+    //             .brandName(savedSaleItem.getBrand().getName())
+    //             .description(savedSaleItem.getDescription())
+    //             .price(savedSaleItem.getPrice())
+    //             .ramGb(savedSaleItem.getRamGb())
+    //             .screenSizeInch(savedSaleItem.getScreenSizeInch() != null
+    //                     ? savedSaleItem.getScreenSizeInch().doubleValue()
+    //                     : null)
+    //             .quantity(savedSaleItem.getQuantity())
+    //             .storageGb(savedSaleItem.getStorageGb())
+    //             .color(savedSaleItem.getColor())
+    //             .saleItemImages(imageDtos)
+    //             .createdOn(savedSaleItem.getCreatedOn())
+    //             .updatedOn(savedSaleItem.getUpdatedOn())
+    //             .build();
+    // }
+
     @Transactional
-    public SaleItemBaseByIdDto editSaleItem(Integer id, NewSaleItemDto newSaleItem, List<ImageInfoDto> imageInfos) {
+    public SaleItemBaseByIdDto editSaleItem(Integer id, SaleItemWithImageInfo request) {
+        // --- Extract incoming data ---
+        NewSaleItemDto newSaleItem = request.getSaleItem();
+        List<SaleItemImageRequest> imageInfos = request.getImageInfos();
+
+        // --- หา SaleItem ที่จะอัปเดต ---
         SaleItemBase existing = saleItemBaseRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -240,28 +344,34 @@ public class SaleItemBaseService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand id must be provided.");
         }
 
+        // --- บันทึกสินค้า ---
         SaleItemBase savedSaleItem = saleItemBaseRepo.saveAndFlush(existing);
 
         // --- จัดการรูป ---
         List<SaleItemImageDto> imageDtos = new ArrayList<>();
 
         if (imageInfos != null && !imageInfos.isEmpty()) {
-            // ลบรูปเก่าก่อน
+            // ลบรูปเก่าออกก่อน
             saleItemPictureRepo.deleteBySaleItemId(savedSaleItem.getId());
 
-            for (ImageInfoDto img : imageInfos) {
+            for (SaleItemImageRequest img : imageInfos) {
                 MultipartFile file = img.getImageFile();
                 if (file != null && !file.isEmpty()) {
                     String originalName = file.getOriginalFilename();
                     String extension = FilenameUtils.getExtension(originalName).toLowerCase();
 
-                    // ตรวจสอบนามสกุลไฟล์
-                    if (!Arrays.asList(fileStorageProperties.getAllowFileTypes()).contains(extension.toUpperCase())) {
+                    // ตรวจสอบชนิดไฟล์ (normalize ทั้งสองด้าน)
+                    boolean allowed = Arrays.stream(fileStorageProperties.getAllowFileTypes())
+                            .map(String::toLowerCase)
+                            .toList()
+                            .contains(extension);
+
+                    if (!allowed) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                 "File type not allowed: " + extension);
                     }
 
-                    // ✅ ตั้งชื่อไฟล์ใหม่ เช่น 86.1.jpg
+                    // ตั้งชื่อไฟล์ใหม่ เช่น 86.1.jpg
                     String newFileName = savedSaleItem.getId() + "." + img.getOrder() + "." + extension;
                     Path targetPath = Paths.get(fileStorageProperties.getUploadDir()).resolve(newFileName);
 
@@ -282,7 +392,7 @@ public class SaleItemBaseService {
                     picEntity.setUpdatedOn(Instant.now());
                     saleItemPictureRepo.save(picEntity);
 
-                    // เพิ่มเข้า DTO
+                    // เพิ่มเข้า response DTO
                     imageDtos.add(new SaleItemImageDto(newFileName, img.getOrder()));
                 }
             }
@@ -302,7 +412,7 @@ public class SaleItemBaseService {
                 .quantity(savedSaleItem.getQuantity())
                 .storageGb(savedSaleItem.getStorageGb())
                 .color(savedSaleItem.getColor())
-                .saleItemImages(imageDtos)
+                .saleItemImages(imageDtos) // use response DTO not request DTO
                 .createdOn(savedSaleItem.getCreatedOn())
                 .updatedOn(savedSaleItem.getUpdatedOn())
                 .build();

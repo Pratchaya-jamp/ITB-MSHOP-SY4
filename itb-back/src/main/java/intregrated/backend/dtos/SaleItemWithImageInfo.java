@@ -10,5 +10,5 @@ import java.util.List;
 @Setter
 public class SaleItemWithImageInfo {
     private NewSaleItemDto saleItem;
-    private List<ImageInfoDto> imageInfos;
+    private List<SaleItemImageRequest> imageInfos;
 }
