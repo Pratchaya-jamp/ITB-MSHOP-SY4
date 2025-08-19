@@ -11,8 +11,8 @@ services:
       - backend
     networks:
       - itb-net
-    volumes:
-      - ./product-images:/usr/share/nginx/html/product-images
+    # volumes:
+    #   - ./product-images:/usr/share/nginx/html/product-images
 
   backend:
     build:
@@ -28,8 +28,8 @@ services:
       - db
     networks:
       - itb-net
-    volumes:
-      - ./product-images:/app/product-images
+    # volumes:
+    #   - ./product-images:/app/product-images
 
   db:
     image: mysql:latest
