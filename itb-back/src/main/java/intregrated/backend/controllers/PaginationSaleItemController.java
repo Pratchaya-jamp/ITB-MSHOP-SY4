@@ -35,6 +35,7 @@ public class PaginationSaleItemController {
         // ตรวจสอบ pagination params
         validatePaginationParams(page, size, sortDirection, sortField);
 
+<<<<<<< HEAD
         boolean storageIsNullFlag = false;
         List<Integer> storages = new ArrayList<>();
 
@@ -49,6 +50,37 @@ public class PaginationSaleItemController {
             if (storages.isEmpty()) {
                 storages = null; // เพื่อไม่ให้ส่ง list ว่างไป
             }
+=======
+    // boolean storageIsNullFlag = false;
+    // List<Integer> storages = new ArrayList<>();
+
+    // if (filterStorages != null && !filterStorages.isEmpty()) {
+    //     for (String storage : filterStorages) {
+    //         if ("null".equalsIgnoreCase(storage)) {
+    //             storageIsNullFlag = true;
+    //         } else {
+    //             storages.add(Integer.valueOf(storage));
+    //         }
+    //     }
+    //     if (storages.isEmpty()) {
+    //         storages = null; // เพื่อไม่ให้ส่ง list ว่างไป
+    //     }
+    // }
+    
+    // จัดการ filterStorages
+    boolean storageIsNullFlag = false;
+    List<Integer> storages = null;
+    
+    if (filterStorages != null && !filterStorages.isEmpty()) {
+        // ถ้ามีค่าเดียวและเป็น "null" → หา storageGb IS NULL
+        if (filterStorages.size() == 1 && "null".equalsIgnoreCase(filterStorages.get(0))) {
+            storageIsNullFlag = true;
+        } else {
+            // แปลงเป็น Integer list
+            storages = filterStorages.stream()
+                    .map(Integer::valueOf)
+                    .toList();
+>>>>>>> parent of 928caa9 (Revert "update edit saleItem")
         }
 
         Page<SaleItemBaseByIdDto> pagedResult = saleItemBaseService.getPagedSaleItems(
