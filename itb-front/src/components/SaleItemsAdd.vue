@@ -593,34 +593,43 @@ const confirmEditItem = async () => {
   showConfirmationEditPopup.value = false
   isLoading.value = true
 
-  const selectedBrand = brandList.value.find(b => b.id === selectedBrandId.value)
+  const selectedBrand = brandList.value.find(brand => brand.id === selectedBrandId.value);
+
+  const saleItem = {
+    brand: selectedBrand ? { id: selectedBrand.id } : null,
+    model: product.value.model?.trim() || '',
+    description: product.value.description?.trim() || '',
+    price: parseFloat(product.value.price),
+    ramGb: product.value.ramGb ? parseInt(product.value.ramGb) : null,
+    screenSizeInch: product.value.screenSizeInch ? parseFloat(product.value.screenSizeInch) : null,
+    storageGb: product.value.storageGb ? parseInt(product.value.storageGb) : null,
+    quantity: parseInt(product.value.quantity),
+    color: product.value.color?.trim() || ''
+  }
+
   const formData = new FormData()
+  //  แตก saleItem เป็น field
+  if (saleItem.brand?.id) formData.append('saleItem.brand.id', saleItem.brand.id)
+  formData.append('saleItem.model', saleItem.model)
+  formData.append('saleItem.description', saleItem.description)
+  formData.append('saleItem.price', saleItem.price.toString())
+  if (saleItem.ramGb !== null) formData.append('saleItem.ramGb', saleItem.ramGb.toString())
+  if (saleItem.screenSizeInch !== null) formData.append('saleItem.screenSizeInch', saleItem.screenSizeInch.toString())
+  if (saleItem.storageGb !== null) formData.append('saleItem.storageGb', saleItem.storageGb.toString())
+  formData.append('saleItem.quantity', saleItem.quantity.toString())
+  formData.append('saleItem.color', saleItem.color)
 
-  // --- saleItem fields ---
-  if (selectedBrand) formData.append('saleItem.brand.id', selectedBrand.id)
-  formData.append('saleItem.model', product.value.model || '')
-  formData.append('saleItem.description', product.value.description || '')
-  formData.append('saleItem.price', product.value.price?.toString() || '0')
-  formData.append('saleItem.quantity', product.value.quantity?.toString() || '0')
-  if (product.value.ramGb) formData.append('saleItem.ramGb', product.value.ramGb.toString())
-  if (product.value.screenSizeInch) formData.append('saleItem.screenSizeInch', product.value.screenSizeInch.toString())
-  if (product.value.storageGb) formData.append('saleItem.storageGb', product.value.storageGb.toString())
-  formData.append('saleItem.color', product.value.color || '')
-
-  // --- imageInfos ---
-  pictures.value.forEach((pic, index) => {
+  //  Edit mode → new/keep/delete
+  pictures.value.forEach((picture, index) => {
     formData.append(`imageInfos[${index}].order`, index.toString())
-    formData.append(`imageInfos[${index}].pictureName`, pic.name || `image-${index}`)
-    formData.append(`imageInfos[${index}].status`, pic.status)
-    if (pic.file) {
-      formData.append(`imageInfos[${index}].imageFile`, pic.file, pic.file.name)
+    formData.append(`imageInfos[${index}].fileName`, picture.name || `image-${index}`)
+    formData.append(`imageInfos[${index}].status`, picture.status)
+
+    if (picture.status === 'new' && picture.file) {
+      formData.append(`imageInfos[${index}].imageFile`, picture.file)
     }
+    // keep / delete → ไม่ส่งไฟล์
   })
-
-for (let [key, value] of formData.entries()) {
-  console.log(key, value instanceof File ? `File: ${value.name}` : value)
-}
-
 
   try {
     const result = await editItem(
@@ -630,21 +639,21 @@ for (let [key, value] of formData.entries()) {
       true
     )
 
-    if (result.status !== 200 || !result.data?.id) throw new Error('Edit failed')
+    if (result.status !== 200 || !result.data?.id) {
+      throw new Error('Edit failed or invalid data returned')
+    }
 
-    isLoading.value = false
-    router.push({ path: `/sale-items/${route.params.id}`, query: { editSuccess: 'true' } })
+    setTimeout(() => {
+      isLoading.value = false
+      router.push({ path: `/sale-items/${id}`, query: { editSuccess: 'true' } })
+    }, 1000)
   } catch (err) {
     console.error(err)
     responseMessage.value = 'เกิดข้อผิดพลาดในการแก้ไขสินค้า'
     isLoading.value = false
+    router.push({ path: `/sale-items/${id}`, query: { editFail: 'true' } })
   }
 }
-
-
-
-
-
 
 
 
