@@ -628,8 +628,8 @@ const confirmEditItem = async () => {
 
   // --- imageInfos ---
   pictures.value.forEach((pic, index) => {
-    formData.append(`imageInfos[${index}].order`, index.toString())
-    formData.append(`imageInfos[${index}].pictureName`, pic.name || `image-${index}`)
+    formData.append(`imageInfos[${index}].order`, (index + 1).toString())
+    formData.append(`imageInfos[${index}].fileName`, pic.name || `image-${index}`)
     formData.append(`imageInfos[${index}].status`, pic.status)
     if (pic.file) {
       formData.append(`imageInfos[${index}].imageFile`, pic.file, pic.file.name)
@@ -652,7 +652,8 @@ for (let [key, value] of formData.entries()) {
     if (result.status !== 200 || !result.data?.id) throw new Error('Edit failed')
 
     isLoading.value = false
-    router.push({ path: `/sale-items/${route.params.id}`, query: { editSuccess: 'true' } })
+    await router.push({ path: `/sale-items/${route.params.id}`, query: { editSuccess: 'true' } })
+    router.go(0)
   } catch (err) {
     console.error(err)
     responseMessage.value = 'เกิดข้อผิดพลาดในการแก้ไขสินค้า'
