@@ -11,6 +11,6 @@ FROM nginx:alpine
 RUN mkdir /app
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY ./itb-front/nginx.conf /etc/nginx/conf.d/itb-front.conf
-COPY ./product-images /usr/share/nginx/html/product-images
+# COPY ./product-images /usr/share/nginx/html/product-images
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

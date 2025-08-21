@@ -99,6 +99,7 @@ const iconComponent = computed(() => {
 })
 
 // --- Upload Handler ---
+// --- Upload Handler ---
 function handleFileUpload(event) {
     const input = event.target
     if (!input.files) return
@@ -122,10 +123,12 @@ function handleFileUpload(event) {
             warningMessage.value = 'Maximum 4 pictures are allowed.'
             break
         }
+
         pictures.value.push({
             name: file.name,
             file,
             previewUrl: URL.createObjectURL(file),
+            status: 'new' // <-- เพิ่มตรงนี้
         })
     }
 
@@ -144,6 +147,11 @@ function moveUp(index) {
     newPictures[index] = newPictures[index - 1]
     newPictures[index - 1] = temp
 
+    // กำหนด status = 'move' เฉพาะรูปที่ไม่ใช่ new
+    newPictures.forEach(pic => {
+        if (pic.status !== 'new') pic.status = 'move'
+    })
+
     pictures.value = newPictures;
     mainImage.value = pictures.value[0].previewUrl
 }
@@ -155,6 +163,11 @@ function moveDown(index) {
     newPictures[index] = newPictures[index + 1]
     newPictures[index + 1] = temp
 
+    // กำหนด status = 'move' เฉพาะรูปที่ไม่ใช่ new
+    newPictures.forEach(pic => {
+        if (pic.status !== 'new') pic.status = 'move'
+    })
+
     pictures.value = newPictures;
     mainImage.value = pictures.value[0].previewUrl
 }
@@ -163,6 +176,9 @@ function moveDown(index) {
 function removePicture(index) {
     const removed = pictures.value.splice(index, 1)[0]
     if (removed) {
+        // กำหนด status เป็น remove
+        removed.status = 'remove'
+
         URL.revokeObjectURL(removed.previewUrl)
     }
 
@@ -181,6 +197,9 @@ const currentMainImage = computed(() => {
     const firstImage = pictures.value[0];
     return firstImage ? (firstImage.previewUrl || firstImage.url) : placeholder;
 });
+
+
+
 
 onMounted(async () => {
     try {
