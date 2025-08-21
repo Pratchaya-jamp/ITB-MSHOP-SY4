@@ -49,6 +49,9 @@ public class SaleItemBaseService {
     @Autowired
     private FileStorageProperties fileStorageProperties;
 
+    @Autowired
+    private FileService fileService;
+
 
 
     @Value("${file.upload-dir}")
@@ -198,592 +201,286 @@ public class SaleItemBaseService {
                 .quantity(savedSaleItem.getQuantity())
                 .storageGb(savedSaleItem.getStorageGb())
                 .color(savedSaleItem.getColor())
-                .saleItemImages(imageDtos) // ✅ ส่ง list ของรูป
+                .saleItemImages(imageDtos) // ส่ง list ของรูป
                 .createdOn(savedSaleItem.getCreatedOn())
                 .updatedOn(savedSaleItem.getUpdatedOn())
                 .build();
     }
 
+    private static final int MAX_ORDER = 4;
 
+    @Transactional
+    public SaleItemBaseByIdDto editSaleItem(Integer id, SaleItemWithImageInfo request) {
+        // 1) Load entity
+        SaleItemBase sale = saleItemBaseRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sale item not found: " + id));
 
+        // 2) Update sale attributes
+        applySaleAttributes(sale, request.getSaleItem());
+        sale.setUpdatedOn(Instant.now());
+        saleItemBaseRepo.saveAndFlush(sale);
 
-    // @Transactional
-    // public SaleItemBaseByIdDto editSaleItem(Integer id, NewSaleItemDto newSaleItem, List<ImageInfoDto> imageInfos) {
-    //     SaleItemBase existing = saleItemBaseRepo.findById(id)
-    //             .orElseThrow(() -> new ResponseStatusException(
-    //                     HttpStatus.NOT_FOUND,
-    //                     "SaleItem with id " + id + " not found"));
+        // 3) Load old pictures (DB)
+        List<SaleItemPicture> existing = saleItemPictureRepo.findBySale_IdOrderByPictureOrderAsc(id);
+        Map<String, SaleItemPicture> byNewName = existing.stream()
+                .collect(Collectors.toMap(SaleItemPicture::getNewPictureName, p -> p, (a, b) -> a));
+        Set<String> existingNames = new HashSet<>(byNewName.keySet());
 
-    //     // --- อัปเดตข้อมูลสินค้า ---
-    //     existing.setModel(newSaleItem.getModel() != null ? newSaleItem.getModel().trim() : null);
-    //     existing.setDescription(newSaleItem.getDescription() != null ? newSaleItem.getDescription().trim() : null);
-    //     existing.setPrice(newSaleItem.getPrice());
-    //     existing.setRamGb(newSaleItem.getRamGb());
-    //     existing.setStorageGb(newSaleItem.getStorageGb());
-    //     existing.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null
-    //             ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch())
-    //             : null);
-    //     existing.setQuantity((newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0)
-    //             ? 1
-    //             : newSaleItem.getQuantity());
-    //     existing.setColor((newSaleItem.getColor() == null || newSaleItem.getColor().trim().isEmpty())
-    //             ? null
-    //             : newSaleItem.getColor().trim());
-    //     existing.setUpdatedOn(Instant.now());
+        // กรณีไม่ส่ง imageInfos → ลบทั้งหมด
+        if (request.getImageInfos() == null || request.getImageInfos().isEmpty()) {
+            // delete files
+            for (SaleItemPicture p : existing) {
+                fileService.deleteFile(p.getNewPictureName());
+            }
+            // delete DB
+            saleItemPictureRepo.deleteBySaleItemId(id);
+            return mapToDto(sale);
+        }
 
-    //     // --- อัปเดต brand ---
-    //     if (newSaleItem.getBrand() != null && newSaleItem.getBrand().getId() != null) {
-    //         BrandBase brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
-    //                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-    //                         "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
-    //         existing.setBrand(brand);
-    //     } else {
-    //         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand id must be provided.");
-    //     }
+        // 4) Validate + Normalize input
+        List<SaleItemImageRequest> imageInfos = request.getImageInfos();
+        // กรองรายการที่ไม่มีสถานะ/ออเดอร์
+        imageInfos = imageInfos.stream()
+                .filter(Objects::nonNull)
+                .filter(i -> i.getOrder() != null && i.getOrder() >= 1 && i.getOrder() <= MAX_ORDER)
+                .filter(i -> i.getStatus() != null && !i.getStatus().isBlank())
+                .toList();
 
-    //     SaleItemBase savedSaleItem = saleItemBaseRepo.saveAndFlush(existing);
+        // Check duplicate order (สุดท้าย 1 order มี 1 รูป)
+        Map<Integer, Long> dupOrderCheck = imageInfos.stream()
+                .collect(Collectors.groupingBy(SaleItemImageRequest::getOrder, Collectors.counting()));
+        dupOrderCheck.forEach((ord, cnt) -> {
+            if (cnt > 1) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Duplicate entries for order " + ord + " in imageInfos");
+            }
+        });
 
-    //     // --- จัดการรูป ---
-    //     List<SaleItemImageDto> imageDtos = new ArrayList<>();
+        // 5) เตรียมแผนการเปลี่ยนแปลง
+        // - keepTargets: รายชื่อไฟล์สุดท้ายที่จะต้องอยู่หลังจบกระบวนการ (ไว้ลบส่วนที่เหลือ)
+        // - moves: รายการที่จะย้าย/เปลี่ยนชื่อจากไฟล์เดิม
+        // - creates: รายการไฟล์ใหม่ (new)
+        Set<String> keepTargets = new HashSet<>();
+        List<MovePlan> moves = new ArrayList<>();
+        List<CreatePlan> creates = new ArrayList<>();
 
-    //     if (imageInfos != null && !imageInfos.isEmpty()) {
-    //         // ลบรูปเก่าก่อน
-    //         saleItemPictureRepo.deleteBySaleItemId(savedSaleItem.getId());
+        // สร้าง map: order -> targetFinalName
+        Map<Integer, String> targetNameByOrder = new HashMap<>();
 
-    //         for (ImageInfoDto img : imageInfos) {
-    //             MultipartFile file = img.getImageFile();
-    //             if (file != null && !file.isEmpty()) {
-    //                 String originalName = file.getOriginalFilename();
-    //                 String extension = FilenameUtils.getExtension(originalName).toLowerCase();
+        for (SaleItemImageRequest req : imageInfos) {
+            final int order = req.getOrder();
+            final String status = req.getStatus().trim().toLowerCase();
+            final String ext = resolveExtension(req.getFileName(), req.getImageFile()); // .jpg/.png ...
+            final String finalName = buildFinalName(id, order, ext);
+            targetNameByOrder.put(order, finalName);
 
-    //                 // ตรวจสอบนามสกุลไฟล์
-    //                 if (!Arrays.asList(fileStorageProperties.getAllowFileTypes()).contains(extension.toUpperCase())) {
-    //                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-    //                             "File type not allowed: " + extension);
-    //                 }
+            switch (status) {
+                case "keep" -> {
+                    // ต้องมี fileName อ้างอิง
+                    String srcName = req.getFileName();
+                    if (srcName == null || !existingNames.contains(srcName)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "KEEP requires an existing fileName for order " + order);
+                    }
+                    if (srcName.equals(finalName)) {
+                        // ไม่ต้องย้าย
+                        keepTargets.add(finalName);
+                    } else {
+                        moves.add(new MovePlan(srcName, finalName));
+                        keepTargets.add(finalName);
+                    }
+                }
+                case "move" -> {
+                    String srcName = req.getFileName();
+                    if (srcName == null || !existingNames.contains(srcName)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "MOVE requires an existing fileName for order " + order);
+                    }
+                    if (!srcName.equals(finalName)) {
+                        moves.add(new MovePlan(srcName, finalName));
+                    }
+                    keepTargets.add(finalName);
+                }
+                case "new" -> {
+                    MultipartFile file = req.getImageFile();
+                    if (file == null || file.isEmpty()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "NEW requires imageFile for order " + order);
+                    }
+                    creates.add(new CreatePlan(file, finalName, req.getFileName())); // fileName (ถ้ามี) จะถือว่าเป็นของเก่าที่ถูกแทนที่
+                    keepTargets.add(finalName);
+                }
+                case "keepall", "skip" -> {
+                    // เผื่อมี client ส่งมาแบบนี้ ข้ามไปเฉยๆ
+                }
+                default -> {
+                    if (!Set.of("keep", "move", "new").contains(status)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Unsupported status: " + status);
+                    }
+                }
+            }
+        }
 
-    //                 // ✅ ตั้งชื่อไฟล์ใหม่ เช่น 86.1.jpg
-    //                 String newFileName = savedSaleItem.getId() + "." + img.getOrder() + "." + extension;
-    //                 Path targetPath = Paths.get(fileStorageProperties.getUploadDir()).resolve(newFileName);
+        // 6) สองเฟสสำหรับย้ายไฟล์เดิม (กันชนกันเอง)
+        // 6.1 เปลี่ยนชื่อไฟล์ที่ "ต้องย้าย" เป็น temp ก่อน (ถ้าต้นทาง = ปลายทาง ไม่ทำ)
+        Map<String, String> tempMapping = new HashMap<>(); // src -> temp
+        for (MovePlan mv : moves) {
+            if (mv.src().equals(mv.dest())) continue;
+            String temp = mv.src() + ".reOrder-" + UUID.randomUUID();
+            fileService.renameFile(mv.src(), temp);
+            tempMapping.put(mv.src(), temp);
+        }
 
-    //                 try {
-    //                     Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-    //                 } catch (IOException e) {
-    //                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not save file");
-    //                 }
+        // 6.2 ย้ายจาก temp → final
+        for (MovePlan mv : moves) {
+            if (mv.src().equals(mv.dest())) continue;
+            String actualSrc = tempMapping.getOrDefault(mv.src(), mv.src());
+            fileService.renameFile(actualSrc, mv.dest());
+        }
 
-    //                 // บันทึกลง DB
-    //                 SaleItemPicture picEntity = new SaleItemPicture();
-    //                 picEntity.setSale(savedSaleItem);
-    //                 picEntity.setOldPictureName(originalName);
-    //                 picEntity.setNewPictureName(newFileName);
-    //                 picEntity.setFileSizeBytes((int) file.getSize());
-    //                 picEntity.setPictureOrder(img.getOrder());
-    //                 picEntity.setCreatedOn(Instant.now());
-    //                 picEntity.setUpdatedOn(Instant.now());
-    //                 saleItemPictureRepo.save(picEntity);
+        // 7) จัดการ NEW (บันทึกไฟล์ใหม่ลงชื่อปลายทาง REPLACE_EXISTING)
+        for (CreatePlan cp : creates) {
+            fileService.saveFile(cp.file(), cp.finalName());
+        }
 
-    //                 // เพิ่มเข้า DTO
-    //                 imageDtos.add(new SaleItemImageDto(newFileName, img.getOrder()));
-    //             }
-    //         }
-    //     }
+        // 8) อัปเดต DB
+        // 8.1 เตรียม map newName -> SaleItemPicture (ของเดิม)
+        Map<String, SaleItemPicture> currentByName = saleItemPictureRepo.findBySale_IdOrderByPictureOrderAsc(id)
+                .stream().collect(Collectors.toMap(SaleItemPicture::getNewPictureName, p -> p, (a,b)->a));
 
-    //     // --- Return DTO ---
-    //     return SaleItemBaseByIdDto.builder()
-    //             .id(savedSaleItem.getId())
-    //             .model(savedSaleItem.getModel())
-    //             .brandName(savedSaleItem.getBrand().getName())
-    //             .description(savedSaleItem.getDescription())
-    //             .price(savedSaleItem.getPrice())
-    //             .ramGb(savedSaleItem.getRamGb())
-    //             .screenSizeInch(savedSaleItem.getScreenSizeInch() != null
-    //                     ? savedSaleItem.getScreenSizeInch().doubleValue()
-    //                     : null)
-    //             .quantity(savedSaleItem.getQuantity())
-    //             .storageGb(savedSaleItem.getStorageGb())
-    //             .color(savedSaleItem.getColor())
-    //             .saleItemImages(imageDtos)
-    //             .createdOn(savedSaleItem.getCreatedOn())
-    //             .updatedOn(savedSaleItem.getUpdatedOn())
-    //             .build();
-    // }
+        // 8.2 อัปเดต/เพิ่มรูปตาม targetNameByOrder
+        List<SaleItemPicture> toUpsert = new ArrayList<>();
 
-    private SaleItemBaseByIdDto buildSaleItemDto(SaleItemBase saleItem) {
-        // Get current images for this sale item
-        List<SaleItemPicture> currentPictures = saleItemPictureRepo.findBySale_IdOrderByPictureOrderAsc(saleItem.getId());
+        for (int ord = 1; ord <= MAX_ORDER; ord++) {
+            String finalName = targetNameByOrder.get(ord);
+            Double randomNumber = Math.random()*10;
+            String newImageName = Double.toString(randomNumber);
+            if (finalName == null) continue; // ไม่มีคำสั่งสำหรับ order นี้
 
-        // Convert to DTOs
+            SaleItemPicture pic = currentByName.get(finalName);
+            if (pic == null) {
+                // อาจเป็นรูปที่เพิ่ง MOVE มา (ชื่อใหม่) หรือ NEW
+                pic = new SaleItemPicture();
+                pic.setSale(sale);
+                pic.setOldPictureName(newImageName);
+                pic.setNewPictureName(finalName);
+                pic.setPictureOrder(ord);
+                pic.setCreatedOn(Instant.now());
+            } else {
+                // ของเดิม → แค่อัปเดต order ให้ตรง (กรณี keep แต่เปลี่ยนลำดับ)
+                pic.setPictureOrder(ord);
+            }
+
+            // คำนวณขนาดไฟล์จริง
+            try {
+                long sz = fileService.sizeOf(finalName);
+                pic.setFileSizeBytes((int) Math.min(sz, Integer.MAX_VALUE));
+            } catch (IOException e) {
+                // ถ้าหาไม่ได้ ให้ใช้ของเดิมถ้ามี
+                if (pic.getFileSizeBytes() == null) pic.setFileSizeBytes(0);
+            }
+
+            pic.setUpdatedOn(Instant.now());
+            toUpsert.add(pic);
+        }
+
+        if (!toUpsert.isEmpty()) {
+            saleItemPictureRepo.saveAll(toUpsert);
+        }
+
+        // 9) ลบรูปที่ไม่อยู่ใน keepTargets (ทั้งไฟล์ + DB)
+        List<SaleItemPicture> toDelete = saleItemPictureRepo.findBySale_IdAndNewPictureNameNotIn(id, keepTargets);
+        for (SaleItemPicture p : toDelete) {
+            fileService.deleteFile(p.getNewPictureName());
+        }
+        if (!toDelete.isEmpty()) {
+            saleItemPictureRepo.deleteBySale_IdAndNewPictureNameNotIn(id, keepTargets);
+        }
+
+        List<SaleItemPicture> currentPictures = saleItemPictureRepo.findBySale_IdOrderByPictureOrderAsc(sale.getId());
+
         List<SaleItemImageDto> imageDtos = currentPictures.stream()
                 .map(pic -> new SaleItemImageDto(pic.getNewPictureName(), pic.getPictureOrder()))
                 .collect(Collectors.toList());
 
         return SaleItemBaseByIdDto.builder()
-                .id(saleItem.getId())
-                .model(saleItem.getModel())
-                .brandName(saleItem.getBrand().getName())
-                .description(saleItem.getDescription())
-                .price(saleItem.getPrice())
-                .ramGb(saleItem.getRamGb())
-                .screenSizeInch(saleItem.getScreenSizeInch() != null
-                        ? saleItem.getScreenSizeInch().doubleValue()
+                .id(sale.getId())
+                .model(sale.getModel())
+                .brandName(sale.getBrand() != null ? sale.getBrand().getName() : null)
+                .description(sale.getDescription())
+                .price(sale.getPrice())
+                .ramGb(sale.getRamGb())
+                .screenSizeInch(sale.getScreenSizeInch() != null
+                        ? sale.getScreenSizeInch().doubleValue()
                         : null)
-                .quantity(saleItem.getQuantity())
-                .storageGb(saleItem.getStorageGb())
-                .color(saleItem.getColor())
+                .quantity(sale.getQuantity())
+                .storageGb(sale.getStorageGb())
+                .color(sale.getColor())
+                .createdOn(sale.getCreatedOn())
+                .updatedOn(sale.getUpdatedOn())
                 .saleItemImages(imageDtos)
-                .createdOn(saleItem.getCreatedOn())
-                .updatedOn(saleItem.getUpdatedOn())
                 .build();
     }
 
-    private void updateSaleItemFields(SaleItemBase existing, NewSaleItemDto newSaleItem) {
-        // Update basic fields
-        existing.setModel(newSaleItem.getModel() != null ? newSaleItem.getModel().trim() : null);
-        existing.setDescription(newSaleItem.getDescription() != null ? newSaleItem.getDescription().trim() : null);
-        existing.setPrice(newSaleItem.getPrice());
-        existing.setRamGb(newSaleItem.getRamGb());
-        existing.setStorageGb(newSaleItem.getStorageGb());
-        existing.setScreenSizeInch(newSaleItem.getScreenSizeInch() != null
-                ? BigDecimal.valueOf(newSaleItem.getScreenSizeInch())
-                : null);
-        existing.setQuantity((newSaleItem.getQuantity() == null || newSaleItem.getQuantity() < 0)
-                ? 1
-                : newSaleItem.getQuantity());
-        existing.setColor((newSaleItem.getColor() == null || newSaleItem.getColor().trim().isEmpty())
-                ? null
-                : newSaleItem.getColor().trim());
-        existing.setUpdatedOn(Instant.now());
+    // ---------- Helpers ----------
 
+    private void applySaleAttributes(SaleItemBase s, NewSaleItemDto dto) {
+        s.setModel(dto.getModel() != null ? dto.getModel().trim() : null);
+        s.setDescription(dto.getDescription() != null ? dto.getDescription().trim() : null);
+        s.setPrice(dto.getPrice());
+        s.setRamGb(dto.getRamGb());
+        s.setStorageGb(dto.getStorageGb());
+        s.setScreenSizeInch(dto.getScreenSizeInch() != null
+                ? BigDecimal.valueOf(dto.getScreenSizeInch())
+                : null);
+        s.setQuantity((dto.getQuantity() == null || dto.getQuantity() < 0)
+                ? 1
+                : dto.getQuantity());
+
+        s.setColor((dto.getColor() == null || dto.getColor().trim().isEmpty())
+                ? null
+                : dto.getColor().trim());
         // Update brand
-        if (newSaleItem.getBrand() != null && newSaleItem.getBrand().getId() != null) {
-            BrandBase brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
+        if (dto.getBrand() != null && dto.getBrand().getId() != null) {
+            BrandBase brand = brandBaseRepo.findById(dto.getBrand().getId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                            "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
-            existing.setBrand(brand);
+                            "Brand with id " + dto.getBrand().getId() + " not found"));
+            s.setBrand(brand);
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand id must be provided.");
         }
     }
 
-    private void validateDuplicateOrders(List<SaleItemImageRequest> imageInfos) {
-        if (imageInfos == null || imageInfos.isEmpty()) {
-            return;
-        }
-
-        Set<Integer> seenOrders = new HashSet<>();
-        List<Integer> duplicateOrders = new ArrayList<>();
-
-        for (SaleItemImageRequest img : imageInfos) {
-            Integer order = img.getOrder();
-            if (order != null) {
-                if (seenOrders.contains(order)) {
-                    duplicateOrders.add(order);
-                } else {
-                    seenOrders.add(order);
-                }
-            }
-        }
-
-        if (!duplicateOrders.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Duplicate picture orders found: " + duplicateOrders.toString());
-        }
+    private String buildFinalName(Integer saleId, Integer order, String ext) {
+        String safeExt = (ext == null || ext.isBlank()) ? ".jpg" : (ext.startsWith(".") ? ext : "." + ext);
+        return saleId + "." + order + safeExt.toLowerCase();
     }
 
-    @Transactional
-    public SaleItemBaseByIdDto editSaleItem(Integer id, SaleItemWithImageInfo request) {
-        // --- Extract incoming data ---
-        NewSaleItemDto newSaleItem = request.getSaleItem();
-        List<SaleItemImageRequest> imageInfos = request.getImageInfos();
-
-        // --- หา SaleItem ที่จะอัปเดต ---
-        SaleItemBase existing = saleItemBaseRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "SaleItem with id " + id + " not found"));
-
-        // --- Update fields ---
-        updateSaleItemFields(existing, newSaleItem);
-        SaleItemBase savedSaleItem = saleItemBaseRepo.saveAndFlush(existing);
-
-        // --- Handle empty imageInfos case (delete all images) ---
-        if (imageInfos == null || imageInfos.isEmpty()) {
-            System.out.println("=== DELETING ALL IMAGES ===");
-            cleanupOldFiles(savedSaleItem.getId(), new HashSet<>());
-            return buildSaleItemDto(savedSaleItem);
+    private String resolveExtension(String fileName, MultipartFile file) {
+        // ถ้ามีไฟล์ใหม่ให้ใช้จาก original filename
+        if (file != null && file.getOriginalFilename() != null) {
+            String ext = extOf(file.getOriginalFilename());
+            if (ext != null) return ext;
         }
-
-        // --- Existing pictures ---
-        List<SaleItemPicture> existingPictures =
-                saleItemPictureRepo.findBySale_IdOrderByPictureOrderAsc(savedSaleItem.getId());
-
-        Map<String, SaleItemPicture> existingByFileName = existingPictures.stream()
-                .collect(Collectors.toMap(SaleItemPicture::getNewPictureName, Function.identity()));
-
-        // --- Validate duplicate orders ---
-        validateDuplicateOrders(imageInfos);
-
-        Set<String> keepFileNames = new HashSet<>();
-        Instant now = Instant.now();
-
-        // --- Handle image actions ---
-        for (SaleItemImageRequest img : imageInfos) {
-            String status = img.getStatus() == null ? "" : img.getStatus().trim().toLowerCase();
-
-            switch (status) {
-                case "keep" -> handleKeep(img, existingByFileName, now, keepFileNames);
-                case "move" -> handleMove(img, existingByFileName, savedSaleItem, now, keepFileNames);
-                case "new"  -> handleNew(img, existingPictures, savedSaleItem, now, keepFileNames);
-                default -> { /* ignore or throw error */ }
-            }
-
-            // อัปเดต existingByFileName map หลังจากการดำเนินการแต่ละครั้ง
-            existingPictures = saleItemPictureRepo.findBySale_IdOrderByPictureOrderAsc(savedSaleItem.getId());
-            existingByFileName = existingPictures.stream()
-                    .collect(Collectors.toMap(SaleItemPicture::getNewPictureName, Function.identity()));
+        // ถ้ามีชื่อไฟล์เดิมให้ยืม extension เดิม
+        if (fileName != null) {
+            String ext = extOf(fileName);
+            if (ext != null) return ext;
         }
-
-        // --- Cleanup ---
-        cleanupOldFiles(savedSaleItem.getId(), keepFileNames);
-
-        // --- Return DTO ---
-        return buildSaleItemDto(savedSaleItem);
+        return ".jpg";
     }
 
-    private void handleKeep(SaleItemImageRequest img, Map<String, SaleItemPicture> existingByFileName,
-                            Instant now, Set<String> keepFileNames) {
-
-        String fileName = img.getFileName();
-        if (fileName == null || fileName.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "File name is required for keep operation");
-        }
-
-        SaleItemPicture existingPic = existingByFileName.get(fileName);
-        if (existingPic == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Picture with fileName '" + fileName + "' not found for keep operation");
-        }
-
-        // ตรวจสอบว่าไฟล์จริงยังอยู่หรือไม่
-        Path currentFilePath = Paths.get(fileStorageProperties.getUploadDir()).resolve(fileName);
-        if (!Files.exists(currentFilePath)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Physical file '" + fileName + "' not found in storage");
-        }
-
-        // เก็บไฟล์ไว้ - ไม่ต้องทำอะไร แค่ add เข้า keepFileNames
-        keepFileNames.add(fileName);
-
-        // อัปเดตเวลา updatedOn
-        existingPic.setUpdatedOn(now);
-        saleItemPictureRepo.save(existingPic);
+    private String extOf(String name) {
+        if (name == null) return null;
+        int i = name.lastIndexOf('.');
+        if (i == -1 || i == name.length() - 1) return null;
+        return name.substring(i); // รวมจุด เช่น ".jpg"
     }
 
-    private void handleNew(SaleItemImageRequest img, List<SaleItemPicture> existingPictures,
-                           SaleItemBase savedSaleItem, Instant now, Set<String> keepFileNames) {
-
-        MultipartFile file = img.getImageFile();
-        if (file == null || file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Image file is required for new operation");
-        }
-
-        Integer order = img.getOrder();
-        if (order == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Order is required for new operation");
-        }
-
-        String originalName = file.getOriginalFilename();
-        String extension = FilenameUtils.getExtension(originalName).toLowerCase();
-
-        // ตรวจสอบนามสกุลไฟล์
-        if (!Arrays.asList(fileStorageProperties.getAllowFileTypes()).contains(extension.toUpperCase())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "File type not allowed: " + extension);
-        }
-
-        // สร้างชื่อไฟล์ใหม่
-        String newFileName = savedSaleItem.getId() + "." + order + "." + extension;
-        Path targetPath = Paths.get(fileStorageProperties.getUploadDir()).resolve(newFileName);
-
-        try {
-            // บันทึกไฟล์ใหม่ (ทับอันเก่าถ้ามี)
-            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-            // หา existing picture ที่มี order เดียวกัน (ถ้ามี)
-            SaleItemPicture existingPicWithSameOrder = existingPictures.stream()
-                    .filter(pic -> order.equals(pic.getPictureOrder()))
-                    .findFirst()
-                    .orElse(null);
-
-            if (existingPicWithSameOrder != null) {
-                // อัปเดต record เดิม
-                existingPicWithSameOrder.setOldPictureName(originalName);
-                existingPicWithSameOrder.setNewPictureName(newFileName);
-                existingPicWithSameOrder.setFileSizeBytes((int) file.getSize());
-                existingPicWithSameOrder.setUpdatedOn(now);
-                saleItemPictureRepo.save(existingPicWithSameOrder);
-            } else {
-                // สร้าง record ใหม่
-                SaleItemPicture newPicture = new SaleItemPicture();
-                newPicture.setSale(savedSaleItem);
-                newPicture.setOldPictureName(originalName);
-                newPicture.setNewPictureName(newFileName);
-                newPicture.setFileSizeBytes((int) file.getSize());
-                newPicture.setPictureOrder(order);
-                newPicture.setCreatedOn(now);
-                newPicture.setUpdatedOn(now);
-                saleItemPictureRepo.save(newPicture);
-            }
-
-            // เพิ่มชื่อไฟล์ใหม่เข้า keepFileNames
-            keepFileNames.add(newFileName);
-
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Could not save new file: " + newFileName);
-        }
-    }
-
-    private void handleMove(SaleItemImageRequest img, Map<String, SaleItemPicture> existingByFileName,
-                            SaleItemBase savedSaleItem, Instant now, Set<String> keepFileNames) {
-
-        String fileName = img.getFileName();
-        Integer newOrder = img.getOrder();
-
-        System.out.println("=== HANDLE MOVE DEBUG ===");
-        System.out.println("Original fileName: " + fileName);
-        System.out.println("New order: " + newOrder);
-        System.out.println("SaleItem ID: " + savedSaleItem.getId());
-
-        if (fileName == null || fileName.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "File name is required for move operation");
-        }
-
-        SaleItemPicture existingPic = existingByFileName.get(fileName);
-        if (existingPic == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Picture with fileName '" + fileName + "' not found for move operation");
-        }
-
-        if (newOrder == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "New order is required for move operation");
-        }
-
-        System.out.println("Current order: " + existingPic.getPictureOrder());
-        System.out.println("Requested new order: " + newOrder);
-
-        // ถ้า order ใหม่เหมือนเดิม ก็แค่เก็บไฟล์ไว้
-        if (newOrder.equals(existingPic.getPictureOrder())) {
-            System.out.println("Order unchanged, keeping file: " + fileName);
-            keepFileNames.add(fileName);
-            existingPic.setUpdatedOn(now);
-            saleItemPictureRepo.save(existingPic);
-            return;
-        }
-
-        Path uploadDir = Paths.get(fileStorageProperties.getUploadDir());
-        Path currentFilePath = uploadDir.resolve(fileName);
-
-        System.out.println("Current file path: " + currentFilePath);
-        System.out.println("File exists before move: " + Files.exists(currentFilePath));
-
-        if (!Files.exists(currentFilePath)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Physical file '" + fileName + "' not found in storage");
-        }
-
-        try {
-            // หา picture record ที่อยู่ใน order ปลายทางที่เราต้องการย้ายไป
-            SaleItemPicture targetPicture = existingByFileName.values().stream()
-                    .filter(pic -> newOrder.equals(pic.getPictureOrder()) && !pic.equals(existingPic))
-                    .findFirst()
-                    .orElse(null);
-
-            System.out.println("Target picture found: " + (targetPicture != null));
-            if (targetPicture != null) {
-                System.out.println("Target picture details - fileName: " + targetPicture.getNewPictureName() + ", order: " + targetPicture.getPictureOrder());
-            }
-
-            // ถ้ามี record อื่นอยู่ใน order ปลายทางแล้ว ต้องทำ swap
-            if (targetPicture != null) {
-                System.out.println("Target order occupied, performing swap operation");
-                System.out.println("This will swap orders: " + fileName + " (order " + existingPic.getPictureOrder() + ") ↔ " + targetPicture.getNewPictureName() + " (order " + targetPicture.getPictureOrder() + ")");
-
-                // เก็บค่าเดิมก่อนเปลี่ยน
-                Integer sourceOldOrder = existingPic.getPictureOrder();
-                Integer targetOldOrder = targetPicture.getPictureOrder();
-                String sourceFileName = existingPic.getNewPictureName();
-                String targetFileName = targetPicture.getNewPictureName();
-
-                // สร้างชื่อไฟล์ใหม่สำหรับทั้งคู่
-                String extension1 = FilenameUtils.getExtension(sourceFileName);
-                String extension2 = FilenameUtils.getExtension(targetFileName);
-                String newSourceFileName = savedSaleItem.getId() + "." + targetOldOrder + "." + extension1;
-                String newTargetFileName = savedSaleItem.getId() + "." + sourceOldOrder + "." + extension2;
-
-                Path sourceFilePath = uploadDir.resolve(sourceFileName);
-                Path targetFilePath = uploadDir.resolve(targetFileName);
-                Path newSourceFilePath = uploadDir.resolve(newSourceFileName);
-                Path newTargetFilePath = uploadDir.resolve(newTargetFileName);
-
-                System.out.println("File operations:");
-                System.out.println("  " + sourceFileName + " -> " + newSourceFileName);
-                System.out.println("  " + targetFileName + " -> " + newTargetFileName);
-
-                // ใช้ temp files เพื่อป้องกัน collision
-                String tempFileName1 = "temp_swap1_" + System.nanoTime() + "_" + System.currentTimeMillis();
-                String tempFileName2 = "temp_swap2_" + System.nanoTime() + "_" + System.currentTimeMillis();
-                Path tempFilePath1 = uploadDir.resolve(tempFileName1);
-                Path tempFilePath2 = uploadDir.resolve(tempFileName2);
-
-                // Step 1: Move both files to temp locations
-                System.out.println("Step 1a: Move " + sourceFileName + " to temp: " + tempFileName1);
-                Files.move(sourceFilePath, tempFilePath1);
-
-                System.out.println("Step 1b: Move " + targetFileName + " to temp: " + tempFileName2);
-                Files.move(targetFilePath, tempFilePath2);
-
-                // Step 2: Move temp files to final destinations
-                System.out.println("Step 2a: Move temp to final: " + tempFileName1 + " -> " + newSourceFileName);
-                Files.move(tempFilePath1, newSourceFilePath);
-
-                System.out.println("Step 2b: Move temp to final: " + tempFileName2 + " -> " + newTargetFileName);
-                Files.move(tempFilePath2, newTargetFilePath);
-
-                // Verify files exist after move
-                if (!Files.exists(newSourceFilePath)) {
-                    throw new IOException("Source file move failed - " + newSourceFileName + " does not exist");
-                }
-                if (!Files.exists(newTargetFilePath)) {
-                    throw new IOException("Target file move failed - " + newTargetFileName + " does not exist");
-                }
-
-                // อัปเดต database records
-                System.out.println("Updating both database records for swap");
-
-                existingPic.setNewPictureName(newSourceFileName);
-                existingPic.setPictureOrder(targetOldOrder);
-                existingPic.setUpdatedOn(now);
-                saleItemPictureRepo.save(existingPic);
-
-                targetPicture.setNewPictureName(newTargetFileName);
-                targetPicture.setPictureOrder(sourceOldOrder);
-                targetPicture.setUpdatedOn(now);
-                saleItemPictureRepo.save(targetPicture);
-
-                // เพิ่มทั้งสองไฟล์เข้า keepFileNames
-                keepFileNames.add(newSourceFileName);
-                keepFileNames.add(newTargetFileName);
-
-                System.out.println("Swap completed successfully - both files and DB records updated");
-                System.out.println("Final files: " + newSourceFileName + ", " + newTargetFileName);
-
-            } else {
-                // ไม่มี record อื่นใน order ปลายทาง ทำ rename ธรรมดา
-                String extension = FilenameUtils.getExtension(fileName);
-                String newFileName = savedSaleItem.getId() + "." + newOrder + "." + extension;
-                Path newFilePath = uploadDir.resolve(newFileName);
-
-                System.out.println("Simple rename from " + currentFilePath + " to " + newFilePath);
-                Files.move(currentFilePath, newFilePath);
-
-                // Verify file exists after move
-                if (!Files.exists(newFilePath)) {
-                    throw new IOException("File move failed - " + newFileName + " does not exist");
-                }
-
-                // อัปเดตข้อมูลในฐานข้อมูล
-                System.out.println("Updating database record");
-                existingPic.setNewPictureName(newFileName);
-                existingPic.setPictureOrder(newOrder);
-                existingPic.setUpdatedOn(now);
-                saleItemPictureRepo.save(existingPic);
-
-                // เพิ่มชื่อไฟล์ใหม่เข้า keepFileNames
-                keepFileNames.add(newFileName);
-                System.out.println("Simple move completed - file: " + newFileName);
-            }
-
-            System.out.println("File operation completed successfully");
-            System.out.println("Current keepFileNames: " + keepFileNames);
-            System.out.println("=== MOVE COMPLETED SUCCESSFULLY ===");
-
-        } catch (IOException e) {
-            System.out.println("ERROR during file move: " + e.getMessage());
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Could not move file from '" + fileName + "': " + e.getMessage());
-        }
-    }
-
-    private void cleanupOldFiles(Integer saleItemId, Set<String> keepFileNames) {
-        System.out.println("=== CLEANUP DEBUG ===");
-        System.out.println("SaleItem ID: " + saleItemId);
-        System.out.println("Files to keep: " + keepFileNames);
-
-        try {
-            // หา records ทั้งหมดของ saleItem นี้
-            List<SaleItemPicture> allPictures = saleItemPictureRepo.findBySale_IdOrderByPictureOrderAsc(saleItemId);
-            System.out.println("Total pictures in DB: " + allPictures.size());
-
-            // หาไฟล์ที่ต้องลบ
-            List<SaleItemPicture> picturesToDelete = allPictures.stream()
-                    .filter(pic -> !keepFileNames.contains(pic.getNewPictureName()))
-                    .collect(Collectors.toList());
-
-            System.out.println("Pictures to delete: " + picturesToDelete.size());
-            picturesToDelete.forEach(pic -> System.out.println("  - " + pic.getNewPictureName()));
-
-            // ลบไฟล์จริงก่อน
-            Path uploadDir = Paths.get(fileStorageProperties.getUploadDir());
-            for (SaleItemPicture pic : picturesToDelete) {
-                Path filePath = uploadDir.resolve(pic.getNewPictureName());
-                System.out.println("Checking file for deletion: " + pic.getNewPictureName());
-                System.out.println("File exists: " + Files.exists(filePath));
-
-                if (Files.exists(filePath)) {
-                    try {
-                        Files.delete(filePath);
-                        System.out.println("Deleted file: " + pic.getNewPictureName());
-                    } catch (IOException e) {
-                        System.err.println("WARNING: Could not delete file: " + pic.getNewPictureName());
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            // ลบ records ในฐานข้อมูล
-            if (!picturesToDelete.isEmpty()) {
-                saleItemPictureRepo.deleteAll(picturesToDelete);
-                System.out.println("Deleted " + picturesToDelete.size() + " records from database");
-            }
-
-            // ตรวจสอบไฟล์ที่เหลืออยู่
-            System.out.println("=== FILES AFTER CLEANUP ===");
-            try {
-                String filePrefix = saleItemId + ".";
-                Files.list(uploadDir)
-                        .filter(path -> path.getFileName().toString().startsWith(filePrefix))
-                        .forEach(path -> System.out.println("Remaining file: " + path.getFileName()));
-            } catch (IOException e) {
-                System.out.println("Could not list remaining files");
-            }
-
-            System.out.println("=== CLEANUP COMPLETED ===");
-
-        } catch (Exception e) {
-            System.out.println("ERROR during cleanup: " + e.getMessage());
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Error during file cleanup: " + e.getMessage());
-        }
-    }
+    // --- inner plan records ---
+    private record MovePlan(String src, String dest) {}
+    private record CreatePlan(MultipartFile file, String finalName, String oldNameToReplace) {}
 
 //    public void deleteSaleItem(Integer id) {
 //        if (!saleItemBaseRepo.existsById(id)) {
@@ -809,11 +506,10 @@ public class SaleItemBaseService {
         // ลบไฟล์รูป
         for (SaleItemPicture pic : pictures) {
             if (pic.getNewPictureName() != null && !pic.getNewPictureName().isBlank()) {
-                Path filePath = Paths.get(uploadDir, pic.getNewPictureName());
                 try {
-                    Files.deleteIfExists(filePath);
-                } catch (IOException e) {
-                    System.err.println("Failed to delete file: " + filePath);
+                    fileService.deleteFile(pic.getNewPictureName());
+                } catch (Exception e) {
+                    System.err.println("Failed to delete file: " + pic.getNewPictureName());
                     e.printStackTrace();
                 }
             }
@@ -873,5 +569,4 @@ public Page<SaleItemBaseByIdDto> getPagedSaleItems(
                 .updatedOn(s.getUpdatedOn())
                 .build();
     }
-
 }

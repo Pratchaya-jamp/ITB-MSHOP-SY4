@@ -34,7 +34,7 @@ public class PaginationSaleItemController {
         // ตรวจสอบ pagination params
         validatePaginationParams(page, size, sortDirection, sortField);
 
-        // ✅ Default = null (ถ้า FE ไม่ส่ง storages)
+        // Default = null (ถ้า FE ไม่ส่ง storages)
         boolean storageIsNullFlag = false;
         List<Integer> storages = null;
 
@@ -60,7 +60,7 @@ public class PaginationSaleItemController {
             }
         }
 
-        // ✅ ดึงข้อมูลจาก service
+        // ดึงข้อมูลจาก service
         Page<SaleItemBaseByIdDto> pagedResult = saleItemBaseService.getPagedSaleItems(
                 filterBrands,
                 storages,            // null = ไม่ filter เลย
