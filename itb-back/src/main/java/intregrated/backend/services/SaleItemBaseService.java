@@ -522,12 +522,60 @@ public class SaleItemBaseService {
 
 
 
+//public Page<SaleItemBaseByIdDto> getPagedSaleItems(
+//        List<String> filterBrands,
+//        List<Integer> filterStorages,
+//        boolean filterStorageIsNull,
+//        Integer filterPriceLower,
+//        Integer filterPriceUpper,
+//        Integer page,
+//        Integer size,
+//        String sortField,
+//        String sortDirection) {
+//
+//    Sort sort = "brand.name".equals(sortField)
+//            ? Sort.by(Sort.Direction.fromString(sortDirection), "brand.name")
+//            : Sort.by(Sort.Direction.fromString(sortDirection), sortField);
+//
+//    Pageable pageable = PageRequest.of(page, size, sort);
+//
+//    List<String> lowerBrands = (filterBrands == null || filterBrands.isEmpty())
+//            ? null
+//            : filterBrands.stream().map(String::toLowerCase).toList();
+//
+//    Integer lower = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceLower : null;
+//    Integer upper = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceUpper : null;
+//
+//    Page<SaleItemBase> result = saleItemBaseRepo.findWithFilters(
+//            lowerBrands, filterStorages, filterStorageIsNull, lower, upper, pageable
+//    );
+//
+//    return result.map(this::mapToDto);
+//}
+//
+//    private SaleItemBaseByIdDto mapToDto(SaleItemBase s) {
+//        return SaleItemBaseByIdDto.builder()
+//                .id(s.getId())
+//                .model(s.getModel())
+//                .brandName(s.getBrand() != null ? s.getBrand().getName() : null)
+//                .description(s.getDescription())
+//                .price(s.getPrice())
+//                .ramGb(s.getRamGb())
+//                .screenSizeInch(s.getScreenSizeInch() != null ? s.getScreenSizeInch().doubleValue() : null)
+//                .quantity(s.getQuantity())
+//                .storageGb(s.getStorageGb())
+//                .color(s.getColor())
+//                .createdOn(s.getCreatedOn())
+//                .updatedOn(s.getUpdatedOn())
+//                .build();
+//    }
 public Page<SaleItemBaseByIdDto> getPagedSaleItems(
         List<String> filterBrands,
         List<Integer> filterStorages,
         boolean filterStorageIsNull,
         Integer filterPriceLower,
         Integer filterPriceUpper,
+        String searchKeyword,
         Integer page,
         Integer size,
         String sortField,
@@ -546,14 +594,28 @@ public Page<SaleItemBaseByIdDto> getPagedSaleItems(
     Integer lower = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceLower : null;
     Integer upper = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceUpper : null;
 
+    String keyword = (searchKeyword == null || searchKeyword.isBlank()) ? null : searchKeyword.toLowerCase();
+
     Page<SaleItemBase> result = saleItemBaseRepo.findWithFilters(
-            lowerBrands, filterStorages, filterStorageIsNull, lower, upper, pageable
+            lowerBrands,
+            filterStorages,
+            filterStorageIsNull,
+            lower,
+            upper,
+            keyword,
+            pageable
     );
 
     return result.map(this::mapToDto);
 }
 
     private SaleItemBaseByIdDto mapToDto(SaleItemBase s) {
+        // ✅ ดึงรูปแรก
+        String firstImageName = saleItemPictureRepo
+                .findFirstBySale_IdOrderByPictureOrderAsc(s.getId())
+                .map(SaleItemPicture::getNewPictureName)
+                .orElse(null);
+
         return SaleItemBaseByIdDto.builder()
                 .id(s.getId())
                 .model(s.getModel())
@@ -567,6 +629,8 @@ public Page<SaleItemBaseByIdDto> getPagedSaleItems(
                 .color(s.getColor())
                 .createdOn(s.getCreatedOn())
                 .updatedOn(s.getUpdatedOn())
+                .firstImageName(firstImageName)
                 .build();
     }
+
 }

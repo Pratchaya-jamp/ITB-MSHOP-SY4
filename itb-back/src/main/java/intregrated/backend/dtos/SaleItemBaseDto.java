@@ -17,4 +17,5 @@ public class SaleItemBaseDto {
     private Integer ramGb;
     private Integer storageGb;
     private String color;
+
 }

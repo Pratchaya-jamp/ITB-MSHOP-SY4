@@ -22,6 +22,7 @@ const savedPage = parseInt(sessionStorage.getItem('currentPage'))
 const currentPage = ref(!isNaN(savedPage) ? savedPage : 0)
 const pageSize = ref(savedPageSize ? parseInt(savedPageSize) : 10)
 
+
 // Price
 const displayedPrice = computed(() => {
   if (priceLower.value != null && priceUpper.value != null) {
@@ -61,6 +62,12 @@ const selectedStorages = ref(
 )
 
 const searchQuery = ref(route.query.search || '')
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  fetchItems()
+}
+
 const selectedBrands = ref(
   JSON.parse(sessionStorage.getItem('selectedBrands') || 'null') ??
   (route.query.filterBrands ? [].concat(route.query.filterBrands) : [])
@@ -126,6 +133,7 @@ async function fetchItems() {
         filterPriceUpper: upper,
         page: currentPage.value,
         size: pageSize.value,
+        searchKeyword: searchQuery.value,
         sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
         sortDirection:
           currentSortOrder.value === 'brandAsc'
@@ -163,7 +171,7 @@ async function fetchbrand() {
   }
 }
 
-watch([selectedBrands, selectedStorages, searchQuery], () => {
+watch([selectedBrands, selectedStorages], () => {
   lastAction.value = ''
   fetchItems()
 }
@@ -533,6 +541,9 @@ const removeActiveFilter = (filter) => {
         <div
           class="itbms-search-bar flex items-center rounded-full border focus-within:border-orange-500 w-full md:max-w-md"
           :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
+          <button class="p-2 rounded-r-full transition-colors duration-300" @click="clearSearch">
+          <span class="text-red-500">Clear</span>
+          </button>
           <input type="text" placeholder="Search..." v-model="searchQuery"
             class="itbms-search-input py-2 px-4 w-full focus:outline-none rounded-l-full"
             :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'" />
