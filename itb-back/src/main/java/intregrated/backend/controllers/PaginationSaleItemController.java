@@ -26,15 +26,14 @@ public class PaginationSaleItemController {
             @RequestParam(required = false) List<String> filterStorages,
             @RequestParam(required = false) Integer filterPriceLower,
             @RequestParam(required = false) Integer filterPriceUpper,
+            @RequestParam(required = false) String searchKeyword,
             @RequestParam Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortField,
             @RequestParam(defaultValue = "ASC") String sortDirection) {
 
-        // ตรวจสอบ pagination params
         validatePaginationParams(page, size, sortDirection, sortField);
 
-        // Default = null (ถ้า FE ไม่ส่ง storages)
         boolean storageIsNullFlag = false;
         List<Integer> storages = null;
 
@@ -42,7 +41,7 @@ public class PaginationSaleItemController {
             storages = new ArrayList<>();
             for (String storage : filterStorages) {
                 if ("null".equalsIgnoreCase(storage)) {
-                    storageIsNullFlag = true; // จะใช้ OR storageGb IS NULL
+                    storageIsNullFlag = true;
                 } else {
                     try {
                         storages.add(Integer.valueOf(storage));
@@ -54,19 +53,18 @@ public class PaginationSaleItemController {
                     }
                 }
             }
-            // ถ้าเจอแค่ "null" อย่างเดียว → storages จะกลายเป็น [] แต่ไม่เป็นปัญหา
             if (storages.isEmpty()) {
                 storages = null;
             }
         }
 
-        // ดึงข้อมูลจาก service
         Page<SaleItemBaseByIdDto> pagedResult = saleItemBaseService.getPagedSaleItems(
                 filterBrands,
-                storages,            // null = ไม่ filter เลย
-                storageIsNullFlag,   // true = รวม storageGb IS NULL
+                storages,
+                storageIsNullFlag,
                 filterPriceLower,
                 filterPriceUpper,
+                searchKeyword,
                 page,
                 size,
                 sortField,

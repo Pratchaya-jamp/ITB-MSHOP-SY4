@@ -520,38 +520,53 @@ public class SaleItemBaseService {
 
 
 
-public Page<SaleItemBaseByIdDto> getPagedSaleItems(
-        List<String> filterBrands,
-        List<Integer> filterStorages,
-        boolean filterStorageIsNull,
-        Integer filterPriceLower,
-        Integer filterPriceUpper,
-        Integer page,
-        Integer size,
-        String sortField,
-        String sortDirection) {
+    public Page<SaleItemBaseByIdDto> getPagedSaleItems(
+            List<String> filterBrands,
+            List<Integer> filterStorages,
+            boolean filterStorageIsNull,
+            Integer filterPriceLower,
+            Integer filterPriceUpper,
+            String searchKeyword,
+            Integer page,
+            Integer size,
+            String sortField,
+            String sortDirection) {
 
-    Sort sort = "brand.name".equals(sortField)
-            ? Sort.by(Sort.Direction.fromString(sortDirection), "brand.name")
-            : Sort.by(Sort.Direction.fromString(sortDirection), sortField);
+        Sort sort = "brand.name".equals(sortField)
+                ? Sort.by(Sort.Direction.fromString(sortDirection), "brand.name")
+                : Sort.by(Sort.Direction.fromString(sortDirection), sortField);
 
-    Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-    List<String> lowerBrands = (filterBrands == null || filterBrands.isEmpty())
-            ? null
-            : filterBrands.stream().map(String::toLowerCase).toList();
+        List<String> lowerBrands = (filterBrands == null || filterBrands.isEmpty())
+                ? null
+                : filterBrands.stream().map(String::toLowerCase).toList();
 
-    Integer lower = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceLower : null;
-    Integer upper = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceUpper : null;
+        Integer lower = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceLower : null;
+        Integer upper = (filterPriceLower != null && filterPriceUpper != null) ? filterPriceUpper : null;
 
-    Page<SaleItemBase> result = saleItemBaseRepo.findWithFilters(
-            lowerBrands, filterStorages, filterStorageIsNull, lower, upper, pageable
-    );
+        String keyword = (searchKeyword == null || searchKeyword.isBlank()) ? null : searchKeyword.toLowerCase();
 
-    return result.map(this::mapToDto);
-}
+        Page<SaleItemBase> result = saleItemBaseRepo.findWithFilters(
+                lowerBrands,
+                filterStorages,
+                filterStorageIsNull,
+                lower,
+                upper,
+                keyword,
+                pageable
+        );
+
+        return result.map(this::mapToDto);
+    }
 
     private SaleItemBaseByIdDto mapToDto(SaleItemBase s) {
+        // ✅ ดึงรูปแรก
+        String firstImageName = saleItemPictureRepo
+                .findFirstBySale_IdOrderByPictureOrderAsc(s.getId())
+                .map(SaleItemPicture::getNewPictureName)
+                .orElse(null);
+
         return SaleItemBaseByIdDto.builder()
                 .id(s.getId())
                 .model(s.getModel())
@@ -565,6 +580,7 @@ public Page<SaleItemBaseByIdDto> getPagedSaleItems(
                 .color(s.getColor())
                 .createdOn(s.getCreatedOn())
                 .updatedOn(s.getUpdatedOn())
+                .firstImageName(firstImageName)
                 .build();
     }
 }
