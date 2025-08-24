@@ -1,8 +1,9 @@
 package intregrated.backend.controllers;
 
-import intregrated.backend.FileStorageProperties;
+import intregrated.backend.fileproperties.ProductFileProperties;
 import intregrated.backend.services.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,14 +17,15 @@ import java.net.URLConnection;
 @RequestMapping("/v2/sale-items")
 public class FileController {
     @Autowired
-    FileStorageProperties fileStorageProperties;
+    ProductFileProperties fileStorageProperties;
 
     @Autowired
-    FileService fileService;
+    @Qualifier("productFileService")
+    private FileService productFileService;
 
     @GetMapping("/test")
     public ResponseEntity<Object> testPropertiesMapping() {
-        return ResponseEntity.ok(fileService.getFileStorageLocation() + " has been created !!!");
+        return ResponseEntity.ok(productFileService.getFileStorageLocation() + " has been created !!!");
     }
 
     @GetMapping("/allow-file-type")
@@ -34,7 +36,7 @@ public class FileController {
     @GetMapping("/images/{filename:.+}")
     public ResponseEntity<Resource> serveImage(@PathVariable String filename) {
         try {
-            Resource resource = fileService.loadFileAsResource(filename);
+            Resource resource = productFileService.loadFileAsResource(filename);
 
             String contentType = URLConnection.guessContentTypeFromName(resource.getFilename());
             if (contentType == null) {

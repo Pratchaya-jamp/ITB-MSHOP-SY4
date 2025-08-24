@@ -1,4 +1,4 @@
-package intregrated.backend;
+package intregrated.backend.fileproperties;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,9 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "file")
-public class FileStorageProperties {
+@ConfigurationProperties(prefix = "file.seller")
+public class SellerFileProperties {
     private String uploadDir;
     private String[] allowFileTypes;
 }
-
