@@ -119,7 +119,7 @@ watch(
                 showEditSuccessPopup.value = true
             }, 200)
             router.replace({ path: route.path, query: {} })
-            router.go(0)
+            //router.go(0)
         }
     },
     { immediate: true }

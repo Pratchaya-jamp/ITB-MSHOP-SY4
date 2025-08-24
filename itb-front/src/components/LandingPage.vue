@@ -113,6 +113,10 @@ const carouselTransform = computed(() => {
 const goToPhoneDetails = (id) => {
   router.push(`/sale-items/${id}`)
 }
+
+const goToSignUp = () => {
+  router.push(`/registers`)
+}
 </script>
 
 <template>
@@ -124,7 +128,9 @@ const goToPhoneDetails = (id) => {
         <a href="#" @click.prevent="scrollTo(services)" :class="theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'" class="transition-colors duration-300">Services</a>
         <a href="#" @click.prevent="scrollTo(contact)" :class="theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'" class="transition-colors duration-300">Contact</a>
       </nav>
-      <button class="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300">Login</button>
+      <button 
+      class="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300"
+      @click="goToSignUp">Sign Up</button>
     </header>
 
     <div class="relative flex flex-col-reverse md:flex-row items-center justify-between px-6 md:px-20 py-24 gap-10 min-h-screen">

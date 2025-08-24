@@ -653,7 +653,7 @@ for (let [key, value] of formData.entries()) {
 
     isLoading.value = false
     await router.push({ path: `/sale-items/${route.params.id}`, query: { editSuccess: 'true' } })
-    router.go(0)
+    //router.go(0)
   } catch (err) {
     console.error(err)
     responseMessage.value = 'เกิดข้อผิดพลาดในการแก้ไขสินค้า'

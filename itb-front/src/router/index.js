@@ -7,6 +7,8 @@ import PageNotFound from '@/components/Page404.vue'
 import ListingPage from '../components/ListBrandPage.vue'
 import SaleItemsAdd from '@/components/SaleItemsAdd.vue'
 import BrandAdd from '@/components/BrandAdd.vue'
+import Login from '@/components/Login.vue'
+import Register from '@/components/Register.vue'
 
 const routes = [
   {
@@ -58,7 +60,17 @@ const routes = [
   path: '/brands/:id/edit',
   name: 'BrandEdit',
   component: BrandAdd,
-}
+},
+{
+  path: '/login',
+  name: 'login',
+  component: Login,
+},
+{
+  path: '/registers',
+  name: 'register',
+  component: Register,
+},
 ]
 
 const router = createRouter({
