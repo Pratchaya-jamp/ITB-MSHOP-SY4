@@ -1,6 +1,6 @@
 package intregrated.backend.services;
 
-import intregrated.backend.FileStorageProperties;
+import intregrated.backend.fileproperties.ProductFileProperties;
 import intregrated.backend.dtos.*;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.entities.SaleItemBase;
@@ -11,6 +11,7 @@ import intregrated.backend.repositories.SaleItemPictureRepo;
 //import jakarta.transaction.Transactional;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,12 +27,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.transaction.annotation.Transactional;
-
-import static java.lang.module.Configuration.resolve;
 
 @Service
 public class SaleItemBaseService {
@@ -47,15 +44,16 @@ public class SaleItemBaseService {
     private SaleItemPictureRepo saleItemPictureRepo;
 
     @Autowired
-    private FileStorageProperties fileStorageProperties;
+    private ProductFileProperties fileStorageProperties;
 
     @Autowired
-    private FileService fileService;
+    @Qualifier("productFileService")
+    private FileService productFileService;
 
 
 
-    @Value("${file.upload-dir}")
-    private String uploadDir;
+//    @Value("${file.upload-dir}")
+//    private String uploadDir;
 
     public List<SaleItemBase> getAllSaleItemBase() {
         return saleItemBaseRepo.findAll();
@@ -230,7 +228,7 @@ public class SaleItemBaseService {
         if (request.getImageInfos() == null || request.getImageInfos().isEmpty()) {
             // delete files
             for (SaleItemPicture p : existing) {
-                fileService.deleteFile(p.getNewPictureName());
+                productFileService.deleteFile(p.getNewPictureName());
             }
             // delete DB
             saleItemPictureRepo.deleteBySaleItemId(id);
@@ -328,7 +326,7 @@ public class SaleItemBaseService {
         for (MovePlan mv : moves) {
             if (mv.src().equals(mv.dest())) continue;
             String temp = mv.src() + ".reOrder-" + UUID.randomUUID();
-            fileService.renameFile(mv.src(), temp);
+            productFileService.renameFile(mv.src(), temp);
             tempMapping.put(mv.src(), temp);
         }
 
@@ -336,12 +334,12 @@ public class SaleItemBaseService {
         for (MovePlan mv : moves) {
             if (mv.src().equals(mv.dest())) continue;
             String actualSrc = tempMapping.getOrDefault(mv.src(), mv.src());
-            fileService.renameFile(actualSrc, mv.dest());
+            productFileService.renameFile(actualSrc, mv.dest());
         }
 
         // 7) จัดการ NEW (บันทึกไฟล์ใหม่ลงชื่อปลายทาง REPLACE_EXISTING)
         for (CreatePlan cp : creates) {
-            fileService.saveFile(cp.file(), cp.finalName());
+            productFileService.saveFile(cp.file(), cp.finalName());
         }
 
         // 8) อัปเดต DB
@@ -374,7 +372,7 @@ public class SaleItemBaseService {
 
             // คำนวณขนาดไฟล์จริง
             try {
-                long sz = fileService.sizeOf(finalName);
+                long sz = productFileService.sizeOf(finalName);
                 pic.setFileSizeBytes((int) Math.min(sz, Integer.MAX_VALUE));
             } catch (IOException e) {
                 // ถ้าหาไม่ได้ ให้ใช้ของเดิมถ้ามี
@@ -392,7 +390,7 @@ public class SaleItemBaseService {
         // 9) ลบรูปที่ไม่อยู่ใน keepTargets (ทั้งไฟล์ + DB)
         List<SaleItemPicture> toDelete = saleItemPictureRepo.findBySale_IdAndNewPictureNameNotIn(id, keepTargets);
         for (SaleItemPicture p : toDelete) {
-            fileService.deleteFile(p.getNewPictureName());
+            productFileService.deleteFile(p.getNewPictureName());
         }
         if (!toDelete.isEmpty()) {
             saleItemPictureRepo.deleteBySale_IdAndNewPictureNameNotIn(id, keepTargets);
@@ -507,7 +505,7 @@ public class SaleItemBaseService {
         for (SaleItemPicture pic : pictures) {
             if (pic.getNewPictureName() != null && !pic.getNewPictureName().isBlank()) {
                 try {
-                    fileService.deleteFile(pic.getNewPictureName());
+                    productFileService.deleteFile(pic.getNewPictureName());
                 } catch (Exception e) {
                     System.err.println("Failed to delete file: " + pic.getNewPictureName());
                     e.printStackTrace();

@@ -1,12 +1,8 @@
-// FileService.java (Updated)
 package intregrated.backend.services;
 
-import intregrated.backend.FileStorageProperties;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -16,23 +12,30 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-@Service
 @Getter
 public class FileService {
     private final Path fileStorageLocation;
+    private final String[] allowFileTypes;
 
-    @Autowired
-    public FileService(FileStorageProperties fileStorageProperties) {
-        this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir())
-                .toAbsolutePath().normalize();
+    public FileService(String uploadDir, String[] allowFileTypes) {
+        this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
+        this.allowFileTypes = allowFileTypes;
         try {
             if (!Files.exists(this.fileStorageLocation)) {
                 Files.createDirectories(this.fileStorageLocation);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(
-                    "Can't create the directory where the uploaded files will be stored.", ex);
+            throw new RuntimeException("Can't create directory " + uploadDir, ex);
         }
+    }
+
+    public boolean isFileTypeAllowed(String ext) {
+        for (String type : allowFileTypes) {
+            if (type.equalsIgnoreCase(ext)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Resource loadFileAsResource(String fileName) throws IOException {
@@ -49,7 +52,6 @@ public class FileService {
         }
     }
 
-    /** save/upload ไฟล์ใหม่ */
     public String saveFile(MultipartFile file, String targetFileName) {
         try {
             Path targetLocation = this.fileStorageLocation.resolve(targetFileName).normalize();
@@ -60,7 +62,6 @@ public class FileService {
         }
     }
 
-    /** rename/move ไฟล์ (ใช้ตอน reorder/move รูป) */
     public void renameFile(String oldName, String newName) {
         try {
             Path oldPath = this.fileStorageLocation.resolve(oldName).normalize();
@@ -76,7 +77,6 @@ public class FileService {
         }
     }
 
-    /** delete ไฟล์ */
     public void deleteFile(String fileName) {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
@@ -88,7 +88,6 @@ public class FileService {
         }
     }
 
-    /** อ่านขนาดไฟล์ */
     public long sizeOf(String fileName) throws IOException {
         Path targetLocation = this.fileStorageLocation.resolve(fileName);
         if (Files.exists(targetLocation)) {
