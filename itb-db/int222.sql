@@ -4,6 +4,10 @@ use itb;
 drop table if exists sale_item_picture;
 drop table if exists sale_item_base;
 drop table if exists brand_base;
+drop table if exists users_account;
+drop table if exists buyer_account;
+drop table if exists seller_picture;
+drop table if exists seller_account;
 
 create table if not exists brand_base (
 id int auto_increment,
@@ -56,6 +60,66 @@ CREATE TABLE IF NOT EXISTS sale_item_picture (
     CONSTRAINT ck_file_size_bytes CHECK (file_size_bytes <= 2 * 1024 * 1024), -- ≤ 2MB
     CONSTRAINT ck_old_picture_name CHECK (TRIM(old_picture_name) <> ''),
     CONSTRAINT ck_new_picture_name CHECK (TRIM(new_picture_name) <> '')
+) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS buyer_account (
+    buyerid INT AUTO_INCREMENT PRIMARY KEY,
+    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn datetime not null default current_timestamp on update current_timestamp
+
+) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS seller_account (
+    sellerid INT AUTO_INCREMENT PRIMARY KEY,
+    mobile varchar(255) NOT NULL,
+    bankNumber varchar(255) NOT NULL,
+    bankName varchar(255) NOT NULL,
+    nationalId varchar(255) NOT NULL,
+    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn datetime not null default current_timestamp on update current_timestamp,
+
+    CONSTRAINT ck_seller_mobile CHECK (TRIM(mobile) <> ''),
+    CONSTRAINT ck_seller_bankNumber CHECK (TRIM(bankNumber) <> ''),
+    CONSTRAINT ck_seller_bankName CHECK (TRIM(bankName) <> ''),
+    CONSTRAINT ck_seller_nationalId CHECK (TRIM(nationalId) <> '')
+) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS seller_picture (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sellerid INT NOT NULL,
+    old_picture_name VARCHAR(255) NOT NULL, -- original uploaded filename
+    new_picture_name VARCHAR(255) NOT NULL, -- unique stored filename
+    file_size_bytes INT NOT NULL,           -- file size in bytes
+    picture_order int not null,
+    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn datetime not null default current_timestamp on update current_timestamp,
+
+    CONSTRAINT fk_seller_picture FOREIGN KEY seller_picture(sellerid) REFERENCES seller_account(sellerid)
+        ON DELETE CASCADE,
+    CONSTRAINT ck_seller_file_size_bytes CHECK (file_size_bytes <= 2 * 1024 * 1024), -- ≤ 2MB
+    CONSTRAINT ck_seller_old_picture_name CHECK (TRIM(old_picture_name) <> ''),
+    CONSTRAINT ck_seller_new_picture_name CHECK (TRIM(new_picture_name) <> '')
+) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS users_account (
+    uid INT AUTO_INCREMENT PRIMARY KEY,
+    nickname varchar(255) NOT NULL,
+    email varchar(255) NOT NULL,
+    password varchar(255) NOT NULL,
+    fullname varchar(255) NOT NULL,
+    buyerid INT NOT NULL,
+    sellerid INT NOT NULL,
+    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn datetime not null default current_timestamp on update current_timestamp,
+
+	CONSTRAINT fk_buyer_user FOREIGN KEY users_account(buyerid) REFERENCES buyer_account(buyerid)
+        ON DELETE CASCADE,
+	CONSTRAINT fk_seller_user FOREIGN KEY users_account(sellerid) REFERENCES seller_account(sellerid)
+        ON DELETE CASCADE,
+	CONSTRAINT ck_user_nickname CHECK (TRIM(nickname) <> ''),
+	CONSTRAINT ck_user_email CHECK (TRIM(email) <> ''),
+	CONSTRAINT ck_user_password CHECK (TRIM(password) <> ''),
+    CONSTRAINT ck_user_fullname CHECK (TRIM(fullname) <> '')
 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO brand_base (name, websiteUrl, isActive, countryOfOrigin) VALUES
