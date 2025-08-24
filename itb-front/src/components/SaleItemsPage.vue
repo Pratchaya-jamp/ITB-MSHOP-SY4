@@ -61,6 +61,13 @@ const selectedStorages = ref(
 )
 
 const searchQuery = ref(route.query.search || '')
+const clearSearch = () => {
+  searchQuery.value = ''
+  fetchItems()
+}
+const Search =()=>{
+  fetchItems()
+}
 const selectedBrands = ref(
   JSON.parse(sessionStorage.getItem('selectedBrands') || 'null') ??
   (route.query.filterBrands ? [].concat(route.query.filterBrands) : [])
@@ -126,6 +133,7 @@ async function fetchItems() {
         filterPriceUpper: upper,
         page: currentPage.value,
         size: pageSize.value,
+        searchKeyword: searchQuery.value,
         sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
         sortDirection:
           currentSortOrder.value === 'brandAsc'
@@ -163,7 +171,7 @@ async function fetchbrand() {
   }
 }
 
-watch([selectedBrands, selectedStorages, searchQuery], () => {
+watch([selectedBrands, selectedStorages], () => {
   lastAction.value = ''
   fetchItems()
 }
@@ -358,7 +366,6 @@ const goToPhoneDetails = (id) => {
 // Watch fetch trigger
 watch(
   [
-    searchQuery,
     selectedBrands,
     selectedStorages,
     currentSortOrder,
@@ -533,6 +540,9 @@ const removeActiveFilter = (filter) => {
         <div
           class="itbms-search-bar flex items-center rounded-full border focus-within:border-orange-500 w-full md:max-w-md"
           :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
+          <button class="p-2 rounded-r-full transition-colors duration-300" @click="clearSearch">
+          <span class="text-red-500">Clear</span>
+          </button>
           <input type="text" placeholder="Search..." v-model="searchQuery"
             class="itbms-search-input py-2 px-4 w-full focus:outline-none rounded-l-full"
             :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'" />
@@ -540,7 +550,7 @@ const removeActiveFilter = (filter) => {
             :class="theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
               :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
+              stroke="currentColor" @click="Search">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M21 21l-6-6m2-6a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>

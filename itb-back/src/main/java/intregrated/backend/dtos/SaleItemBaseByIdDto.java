@@ -24,5 +24,6 @@ public class SaleItemBaseByIdDto {
     private Instant createdOn;
     private Instant updatedOn;
 
+    private String firstImageName;
     private List<SaleItemImageDto> saleItemImages;
 }

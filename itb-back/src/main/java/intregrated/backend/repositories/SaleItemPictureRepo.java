@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface SaleItemPictureRepo extends JpaRepository<SaleItemPicture, Integer> {
@@ -27,6 +28,9 @@ public interface SaleItemPictureRepo extends JpaRepository<SaleItemPicture, Inte
     @Modifying
     @Query("DELETE FROM SaleItemPicture p WHERE p.sale.id = :saleId AND p.newPictureName NOT IN :keepFileNames")
     void deleteBySale_IdAndNewPictureNameNotIn(@Param("saleId") Integer saleId, @Param("keepFileNames") Set<String> keepFileNames);
+
+    Optional<SaleItemPicture> findFirstBySale_IdOrderByPictureOrderAsc(Integer saleId);
 }
+
 
 
