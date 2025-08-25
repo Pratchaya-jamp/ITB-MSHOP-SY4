@@ -1,11 +1,7 @@
 package intregrated.backend.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import intregrated.backend.dtos.BuyerRegisterRequest;
-import intregrated.backend.dtos.NewSaleItemDto;
-import intregrated.backend.dtos.SellerRegisterRequest;
-import intregrated.backend.dtos.SellerRegisterResponse;
+import intregrated.backend.dtos.UserRegisterRequestDto;
+import intregrated.backend.dtos.UserRegisterResponseDto;
 import intregrated.backend.entities.UsersAccount;
 import intregrated.backend.services.EmailRegisterService;
 import jakarta.validation.Valid;
@@ -19,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/v2/registers")
+@RequestMapping("/v2/users")
 @CrossOrigin(origins = "${app.cors.allowedOrigins}")
 public class EmailRegisterController {
     @Autowired
@@ -31,21 +27,21 @@ public class EmailRegisterController {
         return new ResponseEntity<>(accounts, HttpStatus.OK);
     }
 
-    @PostMapping("/buyer")
-    public ResponseEntity<?> registerBuyer(@Valid @RequestBody BuyerRegisterRequest request) {
-        UsersAccount account = emailRegisterService.registerBuyer(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(account);
-    }
-
-    @PostMapping(value = "/seller", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> registerSeller(
-            @RequestPart("seller") String sellerJson,
-            @RequestPart(value = "pictures", required = false) MultipartFile[] pictures
-    ) throws JsonProcessingException {
-        SellerRegisterRequest seller = new ObjectMapper().readValue(sellerJson, SellerRegisterRequest.class);
-
-        SellerRegisterResponse newSeller = emailRegisterService.registerSeller(seller, pictures);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newSeller);
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> registerUsers(
+            @Valid @ModelAttribute UserRegisterRequestDto request,
+            @RequestParam(value = "idCardImageFront", required = false) MultipartFile idCardImageFront,
+            @RequestParam(value = "idCardImageBack", required = false) MultipartFile idCardImageBack
+    ) {
+            if ("BUYER".equalsIgnoreCase(request.getUserType())) {
+                UserRegisterResponseDto account = emailRegisterService.registerBuyer(request);
+                return ResponseEntity.status(HttpStatus.CREATED).body(account);
+            } else if ("SELLER".equalsIgnoreCase(request.getUserType())) {
+                UserRegisterResponseDto account = emailRegisterService.registerSeller(request, idCardImageFront, idCardImageBack);
+                return ResponseEntity.status(HttpStatus.CREATED).body(account);
+            } else {
+                return ResponseEntity.badRequest().body("Invalid userType, must be BUYER or SELLER");
+            }
     }
 
     @DeleteMapping("/{uid}")

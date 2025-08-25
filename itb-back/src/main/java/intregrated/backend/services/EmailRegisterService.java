@@ -1,6 +1,5 @@
 package intregrated.backend.services;
 
-import intregrated.backend.fileproperties.ProductFileProperties;
 import intregrated.backend.dtos.*;
 import intregrated.backend.entities.*;
 import intregrated.backend.fileproperties.SellerFileProperties;
@@ -52,7 +51,16 @@ public class EmailRegisterService {
     }
 
     @Transactional
-    public UsersAccount registerBuyer(BuyerRegisterRequest req) {
+    public UserRegisterResponseDto registerBuyer(UserRegisterRequestDto req) {
+
+        // check email duplicate
+        if (userRepo.existsByEmail(req.getEmail())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, // 409
+                    "Email already exists"
+            );
+        }
+
         BuyerAccount buyer = new BuyerAccount();
         buyer.setCreatedOn(Instant.now());
         buyer.setUpdatedOn(Instant.now());
@@ -67,17 +75,30 @@ public class EmailRegisterService {
         user.setCreatedOn(Instant.now());
         user.setUpdatedOn(Instant.now());
 
-        return userRepo.save(user);
+        user = userRepo.save(user);
+
+        return UserRegisterResponseDto.builder()
+                .id(user.getId())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .fullname(user.getFullname())
+                .isActive(false)
+                .userType("BUYER")
+                .build();
     }
 
     @Transactional
-    public SellerRegisterResponse registerSeller(SellerRegisterRequest seller, MultipartFile[] pictures) {
-        BuyerRegisterRequest buyerReq = new BuyerRegisterRequest();
-        buyerReq.setNickname(seller.getNickname());
-        buyerReq.setEmail(seller.getEmail());
-        buyerReq.setPassword(seller.getPassword());
-        buyerReq.setFullname(seller.getFullname());
-        UsersAccount user = registerBuyer(buyerReq);
+    public UserRegisterResponseDto registerSeller(UserRegisterRequestDto seller, MultipartFile idCardFront, MultipartFile idCardBack) {
+
+        // check email duplicate
+        if (userRepo.existsByEmail(seller.getEmail())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, // 409
+                    "Email already exists"
+            );
+        }
+
+        UserRegisterResponseDto user = registerBuyer(seller);
 
         SellerAccount sellerAccount = new SellerAccount();
         sellerAccount.setMobile(seller.getMobile());
@@ -91,11 +112,15 @@ public class EmailRegisterService {
 
         // 3) save รูป
         List<SaleItemImageDto> pics = new ArrayList<>();
-        if (pictures != null) {
-            int order = 1;
-            for (MultipartFile file : pictures) {
+        MultipartFile[] idCardImages = {idCardFront, idCardBack};
+        int order = 1;
+            for (MultipartFile file : idCardImages) {
+                if (file == null || file.isEmpty()) continue;
+
                 String originalName = file.getOriginalFilename();
                 String extension = FilenameUtils.getExtension(originalName).toLowerCase();
+                System.out.println("Uploading file: " + originalName);
+                System.out.println("File extension: " + extension);
 
                 // ตรวจสอบนามสกุลไฟล์
                 if (!Arrays.asList(sellerFileProperties.getAllowFileTypes()).contains(extension.toUpperCase())) {
@@ -105,6 +130,7 @@ public class EmailRegisterService {
                 // สร้างชื่อไฟล์ใหม่ เช่น 86.1.jpg
                 String newFileName = sellerAccount.getId() + "." + order + "." + extension;
                 Path targetPath = Paths.get(sellerFileProperties.getUploadDir()).resolve(newFileName);
+                System.out.println("Target path: " + targetPath.toAbsolutePath());
 
                 try {
                     Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
@@ -122,30 +148,31 @@ public class EmailRegisterService {
                 pic.setSeller(sellerAccount);
 
                 sellerPictureRepo.saveAndFlush(pic);
+                System.out.println("Saved picture record into DB: " + newFileName);
 
                 pics.add(new SaleItemImageDto(newFileName, order));
 
                 order++;
             }
-        }
 
-        // 4) save seller account
+        UsersAccount userEntity = userRepo.findById(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        userEntity.setSeller(sellerAccount);
+        sellerRepo.saveAndFlush(sellerAccount);
+        userRepo.saveAndFlush(userEntity);
+
         sellerRepo.saveAndFlush(sellerAccount);
 
-        // 5) ผูก user กับ seller
-        user.setSeller(sellerAccount);
-        userRepo.saveAndFlush(user);
-
-        // 6) build response
-        SellerRegisterResponse resp = SellerRegisterResponse.builder()
+        // 5) build response
+        UserRegisterResponseDto resp = UserRegisterResponseDto.builder()
+                .id(user.getId())
                 .nickname(user.getNickname())
                 .email(user.getEmail())
                 .fullname(user.getFullname())
                 .mobile(sellerAccount.getMobile())
-                .bankNumber(sellerAccount.getBankNumber())
-                .bankName(sellerAccount.getBankName())
-                .nationalId(sellerAccount.getNationalId())
-                .sellerImages(pics)
+                .isActive(false)
+                .userType("SELLER")
                 .build();
 
         return resp;

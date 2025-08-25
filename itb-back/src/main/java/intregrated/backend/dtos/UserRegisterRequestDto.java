@@ -2,19 +2,15 @@ package intregrated.backend.dtos;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.w3c.dom.stylesheets.LinkStyle;
-
-import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SellerRegisterRequest {
+public class UserRegisterRequestDto {
     @NotBlank
     private String nickname;
 
@@ -30,15 +26,15 @@ public class SellerRegisterRequest {
     @Size(min = 4, max = 40)
     private String fullname;
 
-    @NotBlank
     private String mobile;
 
-    @NotBlank
+    // เฉพาะ Seller เท่านั้น
     private String bankNumber;
 
-    @NotBlank
     private String bankName;
 
-    @NotBlank
     private String nationalId;
+
+    @NotBlank
+    private String userType;
 }

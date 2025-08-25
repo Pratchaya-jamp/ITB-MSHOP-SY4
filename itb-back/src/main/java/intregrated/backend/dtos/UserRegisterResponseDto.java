@@ -10,15 +10,12 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BuyerRegisterResponse {
-    @NotBlank
+public class UserRegisterResponseDto {
+    private Integer id;
     private String nickname;
-
-    @Email
-    @NotBlank
     private String email;
-
-    @NotBlank
-    @Size(min = 4, max = 40)
     private String fullname;
+    private String mobile;
+    private Boolean isActive;
+    private String userType;
 }
