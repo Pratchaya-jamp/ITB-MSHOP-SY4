@@ -1,7 +1,7 @@
 package intregrated.backend.services;
 
-import intregrated.backend.dtos.BrandBaseByIdDto;
-import intregrated.backend.dtos.NewBrandBaseDto;
+import intregrated.backend.dtos.Brands.BrandBaseByIdDto;
+import intregrated.backend.dtos.Brands.NewBrandBaseDto;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.repositories.BrandBaseRepo;
 import jakarta.transaction.Transactional;

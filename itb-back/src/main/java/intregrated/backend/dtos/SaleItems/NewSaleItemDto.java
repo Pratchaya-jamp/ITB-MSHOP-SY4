@@ -1,5 +1,6 @@
-package intregrated.backend.dtos;
+package intregrated.backend.dtos.SaleItems;
 
+import intregrated.backend.dtos.Brands.BrandBaseDto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

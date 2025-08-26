@@ -1,7 +1,7 @@
 package intregrated.backend.services;
 
+import intregrated.backend.dtos.SaleItems.*;
 import intregrated.backend.fileproperties.ProductFileProperties;
-import intregrated.backend.dtos.*;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.entities.SaleItemPicture;
@@ -12,7 +12,6 @@ import intregrated.backend.repositories.SaleItemPictureRepo;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

@@ -1,8 +1,8 @@
 package intregrated.backend.controllers;
 
-import intregrated.backend.dtos.BrandBaseByIdDto;
-import intregrated.backend.dtos.BrandBaseDto;
-import intregrated.backend.dtos.NewBrandBaseDto;
+import intregrated.backend.dtos.Brands.BrandBaseByIdDto;
+import intregrated.backend.dtos.Brands.BrandBaseDto;
+import intregrated.backend.dtos.Brands.NewBrandBaseDto;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.services.BrandBaseService;
 import intregrated.backend.utils.ListMapper;

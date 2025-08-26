@@ -2,14 +2,13 @@ package intregrated.backend.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import intregrated.backend.dtos.NewSaleItemDto;
-import intregrated.backend.dtos.SaleItemBaseByIdDto;
-import intregrated.backend.dtos.SaleItemBaseDto;
-import intregrated.backend.dtos.SaleItemWithImageInfo;
+import intregrated.backend.dtos.SaleItems.NewSaleItemDto;
+import intregrated.backend.dtos.SaleItems.SaleItemBaseByIdDto;
+import intregrated.backend.dtos.SaleItems.SaleItemBaseDto;
+import intregrated.backend.dtos.SaleItems.SaleItemWithImageInfo;
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.services.SaleItemBaseService;
 import intregrated.backend.utils.ListMapper;
-import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -1,8 +1,5 @@
-package intregrated.backend.dtos;
+package intregrated.backend.dtos.Registers;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Getter
