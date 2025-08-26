@@ -1,4 +1,4 @@
-package intregrated.backend.dtos;
+package intregrated.backend.dtos.Paginations;
 
 import lombok.*;
 

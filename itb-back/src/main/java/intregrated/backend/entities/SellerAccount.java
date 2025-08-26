@@ -1,6 +1,7 @@
 package intregrated.backend.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -20,6 +21,16 @@ public class SellerAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sellerid", nullable = false)
     private Integer id;
+
+    @NotBlank
+    @NotNull
+    @Column(name = "nickname", nullable = false)
+    private String nickname;
+
+    @NotBlank
+    @NotNull
+    @Column(name = "fullname", nullable = false)
+    private String fullname;
 
     @Size(max = 255)
     @NotNull

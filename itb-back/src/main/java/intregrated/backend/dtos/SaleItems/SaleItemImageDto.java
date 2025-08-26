@@ -1,4 +1,4 @@
-package intregrated.backend.dtos;
+package intregrated.backend.dtos.SaleItems;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

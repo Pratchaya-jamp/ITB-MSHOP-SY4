@@ -1,6 +1,8 @@
 package intregrated.backend.services;
 
-import intregrated.backend.dtos.*;
+import intregrated.backend.dtos.Registers.UserRegisterRequestDto;
+import intregrated.backend.dtos.Registers.UserRegisterResponseDto;
+import intregrated.backend.dtos.SaleItems.SaleItemImageDto;
 import intregrated.backend.entities.*;
 import intregrated.backend.fileproperties.SellerFileProperties;
 import intregrated.backend.repositories.BuyerAccountRepository;
@@ -52,30 +54,41 @@ public class EmailRegisterService {
 
     @Transactional
     public UserRegisterResponseDto registerBuyer(UserRegisterRequestDto req) {
+        UsersAccount user = userRepo.findByEmail(req.getEmail()).orElse(null);
 
-        // check email duplicate
-        if (userRepo.existsByEmail(req.getEmail())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, // 409
-                    "Email already exists"
-            );
+        if (user == null) {
+            // user ยังไม่มี → สมัครใหม่
+            BuyerAccount buyer = new BuyerAccount();
+            buyer.setNickname(req.getNickname());
+            buyer.setFullname(req.getFullname());
+            buyer.setCreatedOn(Instant.now());
+            buyer.setUpdatedOn(Instant.now());
+            buyerRepo.save(buyer);
+
+            user = new UsersAccount();
+            user.setNickname(req.getNickname());
+            user.setEmail(req.getEmail());
+            user.setPassword(req.getPassword());
+            user.setFullname(req.getFullname());
+            user.setBuyer(buyer);
+            user.setCreatedOn(Instant.now());
+            user.setUpdatedOn(Instant.now());
+
+            user = userRepo.save(user);
+        } else if (user.getBuyer() == null) {
+            // user มีอยู่แล้ว แต่ยังไม่มี buyer → เพิ่ม buyer ให้
+            BuyerAccount buyer = new BuyerAccount();
+            buyer.setNickname(req.getNickname());
+            buyer.setFullname(req.getFullname());
+            buyer.setCreatedOn(Instant.now());
+            buyer.setUpdatedOn(Instant.now());
+            buyerRepo.save(buyer);
+
+            user.setBuyer(buyer);
+            userRepo.saveAndFlush(user);
+        } else {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already registered as BUYER");
         }
-
-        BuyerAccount buyer = new BuyerAccount();
-        buyer.setCreatedOn(Instant.now());
-        buyer.setUpdatedOn(Instant.now());
-        buyerRepo.save(buyer);
-
-        UsersAccount user = new UsersAccount();
-        user.setNickname(req.getNickname());
-        user.setEmail(req.getEmail());
-        user.setPassword(req.getPassword());
-        user.setFullname(req.getFullname());
-        user.setBuyer(buyer);
-        user.setCreatedOn(Instant.now());
-        user.setUpdatedOn(Instant.now());
-
-        user = userRepo.save(user);
 
         return UserRegisterResponseDto.builder()
                 .id(user.getId())
@@ -90,17 +103,29 @@ public class EmailRegisterService {
     @Transactional
     public UserRegisterResponseDto registerSeller(UserRegisterRequestDto seller, MultipartFile idCardFront, MultipartFile idCardBack) {
 
-        // check email duplicate
-        if (userRepo.existsByEmail(seller.getEmail())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, // 409
-                    "Email already exists"
-            );
+        // หา user เดิมจาก email
+        UsersAccount userEntity = userRepo.findByEmail(seller.getEmail()).orElse(null);
+
+        if (userEntity == null) {
+            // ถ้าไม่มี user → สมัคร user ใหม่ (สำหรับ seller โดยตรง)
+            userEntity = new UsersAccount();
+            userEntity.setNickname(seller.getNickname());
+            userEntity.setEmail(seller.getEmail());
+            userEntity.setPassword(seller.getPassword());
+            userEntity.setFullname(seller.getFullname());
+            userEntity.setCreatedOn(Instant.now());
+            userEntity.setUpdatedOn(Instant.now());
+            userEntity = userRepo.saveAndFlush(userEntity);
         }
 
-        UserRegisterResponseDto user = registerBuyer(seller);
+        // ถ้ามี seller อยู่แล้ว ไม่ต้องสร้างซ้ำ
+        if (userEntity.getSeller() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already registered as SELLER");
+        }
 
         SellerAccount sellerAccount = new SellerAccount();
+        sellerAccount.setNickname(seller.getNickname());
+        sellerAccount.setFullname(seller.getFullname());
         sellerAccount.setMobile(seller.getMobile());
         sellerAccount.setBankName(seller.getBankName());
         sellerAccount.setBankNumber(seller.getBankNumber());
@@ -155,9 +180,6 @@ public class EmailRegisterService {
                 order++;
             }
 
-        UsersAccount userEntity = userRepo.findById(user.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
         userEntity.setSeller(sellerAccount);
         sellerRepo.saveAndFlush(sellerAccount);
         userRepo.saveAndFlush(userEntity);
@@ -166,10 +188,10 @@ public class EmailRegisterService {
 
         // 5) build response
         UserRegisterResponseDto resp = UserRegisterResponseDto.builder()
-                .id(user.getId())
-                .nickname(user.getNickname())
-                .email(user.getEmail())
-                .fullname(user.getFullname())
+                .id(userEntity.getId())
+                .nickname(userEntity.getNickname())
+                .email(userEntity.getEmail())
+                .fullname(userEntity.getFullname())
                 .mobile(sellerAccount.getMobile())
                 .isActive(false)
                 .userType("SELLER")
