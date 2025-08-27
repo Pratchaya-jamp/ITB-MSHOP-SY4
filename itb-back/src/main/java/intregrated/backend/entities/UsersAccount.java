@@ -51,6 +51,12 @@ public class UsersAccount {
     @JoinColumn(name = "sellerid")
     private SellerAccount seller;
 
+    @Column(nullable = false)
+    private Boolean isActive = false;
+
+    private String verificationToken;
+    private Instant tokenExpiry;
+
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "createdOn", nullable = false)
@@ -61,4 +67,8 @@ public class UsersAccount {
     @Column(name = "updatedOn", nullable = false)
     private Instant updatedOn;
 
+    @PreUpdate
+    public void setUpdatedOn() {
+        this.updatedOn = Instant.now();
+    }
 }

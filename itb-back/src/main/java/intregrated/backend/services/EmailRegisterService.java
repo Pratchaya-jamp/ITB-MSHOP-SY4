@@ -47,6 +47,9 @@ public class EmailRegisterService {
     @Autowired
     private SellerFileProperties sellerFileProperties;
 
+    @Autowired
+    private MailService mailService;
+
     @Transactional
     public List<UsersAccount> getAllUsers() {
         return userRepo.findAll();
@@ -74,7 +77,14 @@ public class EmailRegisterService {
             user.setCreatedOn(Instant.now());
             user.setUpdatedOn(Instant.now());
 
+            user.setIsActive(false);
+            user.setVerificationToken(generateToken());
+            user.setTokenExpiry(Instant.now().plusSeconds(3600));
+
             user = userRepo.save(user);
+
+            sendVerificationEmail(user);
+
         } else if (user.getBuyer() == null) {
             // user มีอยู่แล้ว แต่ยังไม่มี buyer → เพิ่ม buyer ให้
             BuyerAccount buyer = new BuyerAccount();
@@ -98,6 +108,35 @@ public class EmailRegisterService {
                 .isActive(false)
                 .userType("BUYER")
                 .build();
+    }
+
+    private String generateToken() {
+        return UUID.randomUUID().toString();
+    }
+
+    private void sendVerificationEmail(UsersAccount user) {
+        mailService.sendVerificationEmail(user.getEmail(), user.getVerificationToken());
+    }
+
+    @Transactional
+    public Optional<UsersAccount> verifyEmailToken(String token) {
+        UsersAccount user = userRepo.findAll().stream()
+                .filter(u -> token.equals(u.getVerificationToken()))
+                .findFirst()
+                .orElse(null);
+
+        if (user == null) return Optional.empty();
+
+        if (user.getTokenExpiry().isBefore(Instant.now())) {
+            return Optional.empty();
+        }
+
+        user.setIsActive(true);
+        user.setVerificationToken(null);
+        user.setTokenExpiry(null);
+        userRepo.save(user);
+
+        return Optional.of(user);
     }
 
     @Transactional

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/v2/users")
@@ -26,6 +27,18 @@ public class EmailRegisterController {
         List<UsersAccount> accounts = emailRegisterService.getAllUsers();
         return new ResponseEntity<>(accounts, HttpStatus.OK);
     }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
+        Optional<UsersAccount> userOpt = emailRegisterService.verifyEmailToken(token);
+
+        if (userOpt.isPresent()) {
+            return ResponseEntity.ok("Your account has been successfully activated.");
+        } else {
+            return ResponseEntity.badRequest().body("Invalid or expired verification link. Please request a new verification email.");
+        }
+    }
+
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> registerUsers(
