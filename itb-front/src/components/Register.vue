@@ -86,28 +86,25 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/
 const showConfirmationSignUp = ref(false)
 const isLoading = ref(false)
 
-const nationalIdPhotoFrontUrl = computed(() => {
-  return nationalIdPhotoFront.value ? URL.createObjectURL(nationalIdPhotoFront.value) : null;
-});
+const nationalIdPhotoFrontUrl = computed(() => nationalIdPhotoFront.value ? URL.createObjectURL(nationalIdPhotoFront.value) : null);
+const nationalIdPhotoBackUrl = computed(() => nationalIdPhotoBack.value ? URL.createObjectURL(nationalIdPhotoBack.value) : null);
 
-const nationalIdPhotoBackUrl = computed(() => {
-  return nationalIdPhotoBack.value ? URL.createObjectURL(nationalIdPhotoBack.value) : null;
-});
 
-const handleFileChange = (event, type) => {
-  if (type === 'front') {
-    nationalIdPhotoFront.value = event.target.files[0];
-  } else if (type === 'back') {
-    nationalIdPhotoBack.value = event.target.files[0];
-  }
+const handleFileChange = (event, side) => {
+    const file = event.target.files[0];
+    if (side === 'front') {
+        nationalIdPhotoFront.value = file;
+    } else if (side === 'back') {
+        nationalIdPhotoBack.value = file;
+    }
 };
 
-const removeIdPhoto = (type) => {
-  if (type === 'front') {
+const removeNationalIdPhotoFront = () => {
     nationalIdPhotoFront.value = null;
-  } else if (type === 'back') {
+};
+
+const removeNationalIdPhotoBack = () => {
     nationalIdPhotoBack.value = null;
-  }
 };
 
 // --- Watch validate แบบ realtime ---
@@ -377,7 +374,7 @@ const cardClass = computed(() => {
             <span>Front side</span>
             <input type="file" @change="handleFileChange($event, 'front')" accept="image/*" class="hidden" />
           </label>
-          <button v-if="nationalIdPhotoFront" @click="removePhoto('front')" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
+          <button v-if="nationalIdPhotoFront" @click="removeNationalIdPhotoFront" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
@@ -394,7 +391,7 @@ const cardClass = computed(() => {
             <span>Back side</span>
             <input type="file" @change="handleFileChange($event, 'back')" accept="image/*" class="hidden" />
           </label>
-          <button v-if="nationalIdPhotoBack" @click="removePhoto('back')" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
+          <button v-if="nationalIdPhotoBack" @click="removeNationalIdPhotoBack" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
