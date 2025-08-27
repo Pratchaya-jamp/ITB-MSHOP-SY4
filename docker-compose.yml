@@ -29,7 +29,9 @@ services:
     networks:
       - itb-net
     volumes:
-      - ./product-images:/app/product-images
+      #- ./uploads/product-images:/app/product-images
+      #- ./uploads/seller-images:/app/seller-images
+      - ./uploads:/app/uploads
 
   db:
     image: mysql:latest
