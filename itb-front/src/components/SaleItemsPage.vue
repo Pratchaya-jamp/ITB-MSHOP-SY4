@@ -9,6 +9,7 @@ const route = useRoute()
 const showAddSuccessPopup = ref(false)
 const showDeleteSuccessPopup = ref(false)
 const showfailPopup = ref(false)
+const showRegisSuccess = ref(false)
 const isGridView = computed(() => route.path !== '/sale-items/list')
 
 const showBrandFilterModal = ref(false)
@@ -60,18 +61,41 @@ const selectedStorages = ref(
   (route.query.filterStorages ? [].concat(route.query.filterStorages) : [])
 )
 
-const searchQuery = ref(route.query.search || '')
+const savedSearchQuery = sessionStorage.getItem('searchQuery')
+const searchQuery = ref(savedSearchQuery || route.query.search || '')
 const clearSearch = () => {
   searchQuery.value = ''
+  sessionStorage.removeItem('searchQuery')
+  currentPage.value = 0
+  fixedStart.value = 0
   fetchItems()
 }
-const Search =()=>{
+const Search = () => {
+  currentPage.value = 0
+  fixedStart.value = 0
   fetchItems()
 }
 const selectedBrands = ref(
   JSON.parse(sessionStorage.getItem('selectedBrands') || 'null') ??
   (route.query.filterBrands ? [].concat(route.query.filterBrands) : [])
 )
+
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+};
+
+// สร้างฟังก์ชันที่ debounce แล้ว
+const debouncedFetchItems = debounce(() => {
+  currentPage.value = 0
+  fixedStart.value = 0
+  fetchItems();
+}, 500);
 
 const savedSort = sessionStorage.getItem('sortOrder')
 const currentSortOrder = ref(savedSort || 'createdOn')
@@ -197,6 +221,7 @@ watch(selectedBrands, val => sessionStorage.setItem('selectedBrands', JSON.strin
 watch(priceLower, val => sessionStorage.setItem('priceLower', JSON.stringify(val)))
 watch(priceUpper, val => sessionStorage.setItem('priceUpper', JSON.stringify(val)))
 watch(selectedStorages, val => sessionStorage.setItem('selectedStorages', JSON.stringify(val)))
+watch(searchQuery, val => sessionStorage.setItem('searchQuery', val))
 
 const fixedStart = ref(0)
 const lastAction = ref('')
@@ -363,6 +388,14 @@ const goToPhoneDetails = (id) => {
   router.push(`/sale-items/${id}`)
 }
 
+watch(searchQuery, (newVal, oldVal) => {
+    // ตรวจสอบว่าค่ามีการเปลี่ยนแปลงก่อนเรียก debounce
+    if (newVal !== oldVal) {
+        sessionStorage.setItem('searchQuery', newVal)
+        debouncedFetchItems();
+    }
+});
+
 // Watch fetch trigger
 watch(
   [
@@ -371,6 +404,7 @@ watch(
     currentSortOrder,
     currentPage,
     pageSize,
+    searchQuery
   ],
   () => {
     // ป้องกันการเรียกใช้ fetchItems ซ้ำซ้อน
@@ -442,6 +476,7 @@ const closeSuccessPopup = async () => {
   showAddSuccessPopup.value = false
   showDeleteSuccessPopup.value = false
   showfailPopup.value = false
+  showRegisSuccess.value = false
   router.replace({ path: route.path, query: {} });
   await fetchItems();
 }
@@ -475,7 +510,6 @@ watch(
   },
   { immediate: true }
 )
-
 watch(
   () => route.query.deleteSuccess,
   (deleteSuccess) => {
@@ -501,6 +535,20 @@ watch(
   },
   { immediate: true }
 )
+
+watch(
+  () => route.query.regisSuccess,
+  (regisSuccess) => {
+    if (regisSuccess === 'true') {
+      setTimeout(() => {
+        showRegisSuccess.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
+
 
 const activeFilters = computed(() => {
   const filters = []
@@ -540,15 +588,15 @@ const removeActiveFilter = (filter) => {
         <div
           class="itbms-search-bar flex items-center rounded-full border focus-within:border-orange-500 w-full md:max-w-md"
           :class="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'">
-          <button class="p-2 rounded-r-full transition-colors duration-300" @click="clearSearch">
-          <span class="text-red-500">Clear</span>
-          </button>
           <input type="text" placeholder="Search..." v-model="searchQuery"
             class="itbms-search-input py-2 px-4 w-full focus:outline-none rounded-l-full"
             :class="theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-950 placeholder-gray-500'" />
+<button class="p-2 rounded-r-full transition-colors duration-300" @click="clearSearch">
+          <span class="text-red-500">Clear</span>
+          </button>
           <button class="itbms-search-button p-2 rounded-r-full transition-colors duration-300"
             :class="theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
               :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'" fill="none" viewBox="0 0 24 24"
               stroke="currentColor" @click="Search">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1058,6 +1106,19 @@ const removeActiveFilter = (filter) => {
           :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
           <h2 class="text-xl font-semibold mb-4">Success!</h2>
           <p class="itbms-message mb-4">The sale item has been successfully added!</p>
+          <button @click="closeSuccessPopup"
+            class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="bounce-popup">
+      <div v-if="showRegisSuccess"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="p-6 rounded-3xl shadow-lg text-center"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+          <h2 class="text-xl font-semibold mb-4">Success!</h2>
+          <p class="itbms-message mb-4">The user account has been successfully registered!</p>
           <button @click="closeSuccessPopup"
             class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
         </div>

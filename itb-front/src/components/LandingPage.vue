@@ -129,7 +129,7 @@ const goToSignUp = () => {
         <a href="#" @click.prevent="scrollTo(contact)" :class="theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'" class="transition-colors duration-300">Contact</a>
       </nav>
       <button 
-      class="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300"
+      class="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-300 hover:cursor-pointer"
       @click="goToSignUp">Sign Up</button>
     </header>
 

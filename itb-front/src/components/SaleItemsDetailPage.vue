@@ -345,7 +345,7 @@ const iconComponent = computed(() => {
 
         <transition name="fade-background">
             <div v-if="isDeleting"
-                class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-30 flex items-center justify-center z-50 loading-overlay">
+                class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-30 flex items-center justify-center z-50 loading-overlay">
                 <div class="p-8 rounded-2xl shadow-xl text-center transition-colors duration-500 transform scale-110"
                     :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'">
                     <svg class="animate-spin h-8 w-8 text-orange-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg"

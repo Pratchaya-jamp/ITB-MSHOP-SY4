@@ -706,31 +706,25 @@ const cancelAddItem = () => {
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-12">
 
                 <div class="flex flex-col items-center lg:items-start space-y-4">
-                    <div class="relative w-full aspect-video overflow-hidden rounded-2xl shadow-lg">
-                        <img :src="currentMainImage" alt="Main Product Image"
-                            class="itbms-product-image w-full h-full object-contain transition-transform duration-500 hover:scale-105"
-                            @error="e => e.target.src = placeholder" />
-                    </div>
+    <div class="relative w-full aspect-video overflow-hidden rounded-2xl shadow-lg">
+        <img :src="mainImage || placeholder" alt="Main Product Image"
+            class="itbms-product-image w-full h-full object-contain transition-transform duration-500 hover:scale-105"
+            @error="e => e.target.src = placeholder" />
+    </div>
 
-                    <p v-if="warningMessage" class="text-red-500 text-sm w-full text-center lg:text-left">{{
-                        warningMessage }}</p>
+    <p v-if="warningMessage" class="text-red-500 text-sm w-full text-center lg:text-left">{{ warningMessage }}</p>
 
                     <div
-                        class="flex flex-wrap justify-center lg:justify-start gap-3 w-full max-w-full overflow-x-auto pb-2">
-                        <div v-for="(file, index) in pictures" :key="file.name || index"
-                            class="relative flex flex-col items-center">
-                            <img :src="getImageUrl(file)" alt="Thumbnail"
-                                class="w-20 h-20 object-cover rounded-lg cursor-pointer border-2 shadow-sm transition-all duration-300"
-                                :class="{
-                                    'border-orange-500 scale-105': getImageUrl(file) === mainImage,
-                                    'border-transparent hover:border-gray-400': getImageUrl(file) !== mainImage
-                                }" @click="mainImage = getImageUrl(file)" />
-
-                            <button @click="removePicture(index)"
-                                class="absolute top-1 right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs transition-colors hover:bg-red-600">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
+        class="flex flex-wrap justify-center lg:justify-start gap-3 w-full max-w-full overflow-x-auto pb-2">
+        <div v-for="(file, index) in pictures" :key="file.name || index"
+            class="relative flex flex-col items-center">
+            <img :src="getImageUrl(file)" alt="Thumbnail"
+                class="w-20 h-20 object-cover rounded-lg cursor-pointer border-2 shadow-sm transition-all duration-300"
+                :class="{
+                    'border-orange-500 scale-105': getImageUrl(file) === mainImage,
+                    'border-transparent hover:border-gray-400': getImageUrl(file) !== mainImage
+                }"
+                @click="mainImage = getImageUrl(file)" /> </div>
 
                         <label
                             class="flex flex-col items-center justify-center w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-orange-500 hover:bg-orange-50 transition">
