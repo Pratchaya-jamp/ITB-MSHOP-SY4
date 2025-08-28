@@ -45,7 +45,7 @@
 ## ✨ Diagram
 
 * **Infra Architecture:**
--
+![Architecture](Architecture.jpg)
 
 * **Frontend Diagram:**
--
+![FE_Diagram](FE_Diagram.jpg)
