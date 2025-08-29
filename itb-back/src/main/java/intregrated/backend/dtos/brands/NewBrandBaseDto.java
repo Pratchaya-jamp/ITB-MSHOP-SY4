@@ -1,4 +1,4 @@
-package intregrated.backend.dtos.Brands;
+package intregrated.backend.dtos.brands;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

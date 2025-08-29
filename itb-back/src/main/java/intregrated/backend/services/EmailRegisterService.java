@@ -1,8 +1,8 @@
 package intregrated.backend.services;
 
-import intregrated.backend.dtos.Registers.UserRegisterRequestDto;
-import intregrated.backend.dtos.Registers.UserRegisterResponseDto;
-import intregrated.backend.dtos.SaleItems.SaleItemImageDto;
+import intregrated.backend.dtos.registers.UserRegisterRequestDto;
+import intregrated.backend.dtos.registers.UserRegisterResponseDto;
+import intregrated.backend.dtos.saleItems.SaleItemImageDto;
 import intregrated.backend.entities.*;
 import intregrated.backend.fileproperties.SellerFileProperties;
 import intregrated.backend.repositories.BuyerAccountRepository;
@@ -14,6 +14,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -47,6 +48,12 @@ public class EmailRegisterService {
     @Autowired
     private SellerFileProperties sellerFileProperties;
 
+    @Autowired
+    private MailService mailService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Transactional
     public List<UsersAccount> getAllUsers() {
         return userRepo.findAll();
@@ -68,13 +75,20 @@ public class EmailRegisterService {
             user = new UsersAccount();
             user.setNickname(req.getNickname());
             user.setEmail(req.getEmail());
-            user.setPassword(req.getPassword());
+            user.setPassword(passwordEncoder.encode(req.getPassword()));
             user.setFullname(req.getFullname());
             user.setBuyer(buyer);
             user.setCreatedOn(Instant.now());
             user.setUpdatedOn(Instant.now());
 
+            user.setIsActive(false);
+            user.setVerificationToken(generateToken());
+            user.setTokenExpiry(Instant.now().plusSeconds(3600));
+
             user = userRepo.save(user);
+
+            sendVerificationEmail(user);
+
         } else if (user.getBuyer() == null) {
             // user มีอยู่แล้ว แต่ยังไม่มี buyer → เพิ่ม buyer ให้
             BuyerAccount buyer = new BuyerAccount();
@@ -100,6 +114,35 @@ public class EmailRegisterService {
                 .build();
     }
 
+    private String generateToken() {
+        return UUID.randomUUID().toString();
+    }
+
+    private void sendVerificationEmail(UsersAccount user) {
+        mailService.sendVerificationEmail(user.getEmail(), user.getVerificationToken());
+    }
+
+    @Transactional
+    public Optional<UsersAccount> verifyEmailToken(String token) {
+        UsersAccount user = userRepo.findAll().stream()
+                .filter(u -> token.equals(u.getVerificationToken()))
+                .findFirst()
+                .orElse(null);
+
+        if (user == null) return Optional.empty();
+
+        if (user.getTokenExpiry().isBefore(Instant.now())) {
+            return Optional.empty();
+        }
+
+        user.setIsActive(true);
+        user.setVerificationToken(null);
+        user.setTokenExpiry(null);
+        userRepo.save(user);
+
+        return Optional.of(user);
+    }
+
     @Transactional
     public UserRegisterResponseDto registerSeller(UserRegisterRequestDto seller, MultipartFile idCardFront, MultipartFile idCardBack) {
 
@@ -111,7 +154,7 @@ public class EmailRegisterService {
             userEntity = new UsersAccount();
             userEntity.setNickname(seller.getNickname());
             userEntity.setEmail(seller.getEmail());
-            userEntity.setPassword(seller.getPassword());
+            userEntity.setPassword(passwordEncoder.encode(seller.getPassword()));
             userEntity.setFullname(seller.getFullname());
             userEntity.setCreatedOn(Instant.now());
             userEntity.setUpdatedOn(Instant.now());

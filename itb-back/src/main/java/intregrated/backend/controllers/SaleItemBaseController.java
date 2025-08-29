@@ -2,10 +2,10 @@ package intregrated.backend.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import intregrated.backend.dtos.SaleItems.NewSaleItemDto;
-import intregrated.backend.dtos.SaleItems.SaleItemBaseByIdDto;
-import intregrated.backend.dtos.SaleItems.SaleItemBaseDto;
-import intregrated.backend.dtos.SaleItems.SaleItemWithImageInfo;
+import intregrated.backend.dtos.saleItems.NewSaleItemDto;
+import intregrated.backend.dtos.saleItems.SaleItemBaseByIdDto;
+import intregrated.backend.dtos.saleItems.SaleItemBaseDto;
+import intregrated.backend.dtos.saleItems.SaleItemWithImageInfo;
 import intregrated.backend.entities.SaleItemBase;
 import intregrated.backend.services.SaleItemBaseService;
 import intregrated.backend.utils.ListMapper;

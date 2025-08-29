@@ -1,4 +1,4 @@
-package intregrated.backend.dtos.Brands;
+package intregrated.backend.dtos.brands;
 
 import lombok.Getter;
 import lombok.Setter;

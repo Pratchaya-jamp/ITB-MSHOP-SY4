@@ -1,7 +1,7 @@
 package intregrated.backend.controllers;
 
-import intregrated.backend.dtos.Paginations.PageResponseDto;
-import intregrated.backend.dtos.SaleItems.SaleItemBaseByIdDto;
+import intregrated.backend.dtos.paginations.PageResponseDto;
+import intregrated.backend.dtos.saleItems.SaleItemBaseByIdDto;
 import intregrated.backend.services.SaleItemBaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
