@@ -111,20 +111,20 @@ CREATE TABLE IF NOT EXISTS seller_picture (
 
 CREATE TABLE IF NOT EXISTS users_account (
     uid INT AUTO_INCREMENT PRIMARY KEY,
-    nickname varchar(255) NOT NULL,
-    email varchar(255) NOT NULL,
-    password varchar(255) NOT NULL,
-    fullname varchar(255) NOT NULL,
+    nickname VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    fullname VARCHAR(255) NOT NULL,
     buyerid INT NULL,
     sellerid INT NULL,
+    isActive BOOLEAN NOT NULL DEFAULT FALSE,
+    verificationToken VARCHAR(255),
+    tokenExpiry DATETIME,
     createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updatedOn datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_buyer_user FOREIGN KEY (buyerid) REFERENCES buyer_account(buyerid)
-        ON DELETE CASCADE,
-    CONSTRAINT fk_seller_user FOREIGN KEY (sellerid) REFERENCES seller_account(sellerid)
-        ON DELETE CASCADE,
-
+    CONSTRAINT fk_buyer_user FOREIGN KEY (buyerid) REFERENCES buyer_account(buyerid) ON DELETE CASCADE,
+    CONSTRAINT fk_seller_user FOREIGN KEY (sellerid) REFERENCES seller_account(sellerid) ON DELETE CASCADE,
     CONSTRAINT ck_user_nickname CHECK (TRIM(nickname) <> ''),
     CONSTRAINT ck_user_email CHECK (TRIM(email) <> ''),
     CONSTRAINT ck_user_password CHECK (TRIM(password) <> ''),
