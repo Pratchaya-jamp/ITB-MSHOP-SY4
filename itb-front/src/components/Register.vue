@@ -230,11 +230,11 @@ const confirmSignUp = async () => {
     isLoading.value = true;
 
     const formData = new FormData();
-    formData.append('nickname', nickname.value);
-    formData.append('email', email.value);
-    formData.append('fullname', fullname.value);
-    formData.append('password', password.value);
-    formData.append('userType', accountType.value);
+    formData.append('nickname', nickname.value.trim());
+    formData.append('email', email.value.trim());
+    formData.append('fullname', fullname.value.trim());
+    formData.append('password', password.value.trim());
+    formData.append('userType', accountType.value.trim());
 
     if (accountType.value === 'Seller') {
         formData.append('mobile', mobileNumber.value.trim());
