@@ -31,37 +31,37 @@ const updateIconComponent = () => {
 };
 updateIconComponent();
 
-// const verifyEmail = async () => {
-//     const token = route.query.token;
+ const verifyEmail = async () => {
+     const token = route.query.token;
 
-//     if (!token) {
-//         verificationStatus.value = 'error';
-//         message.value = 'Verification token is missing. Please check the link or request a new one.';
-//         return;
-//     }
+     if (!token) {
+         verificationStatus.value = 'error';
+         message.value = 'Verification token is missing. Please check the link or request a new one.';
+         return;
+     }
 
-//     try {
-//         const response = await fetch(`http://intproj24.sit.kmutt.ac.th/sy4/verify-email/?token=${token}`, {
-//             method: 'GET',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//             },
-//         });
+     try {
+        //  const response = await fetch(`http://intproj24.sit.kmutt.ac.th/sy4/verify-email/?token=${token}`, {
+        //      method: 'GET',
+        //      headers: {
+        //          'Content-Type': 'application/json',
+        //      },
+        //  });
 
-//         if (response.ok) {
-//             verificationStatus.value = 'success';
-//             message.value = 'Your account has been successfully activated.';
-//         } else {
-//             const errorData = await response.json();
-//             verificationStatus.value = 'error';
-//             message.value = errorData.message || 'An error occurred, or the verification link has expired. Please request a new verification email.';
-//         }
-//     } catch (error) {
-//         console.error('Error during email verification:', error);
-//         verificationStatus.value = 'error';
-//         message.value = 'An error occurred. Please check your network connection and try again.';
-//     }
-// };
+         if (response.ok) {
+             verificationStatus.value = 'success';
+             message.value = 'Your account has been successfully activated.';
+         } else {
+             const errorData = await response.json();
+             verificationStatus.value = 'error';
+             message.value = errorData.message || 'An error occurred, or the verification link has expired. Please request a new verification email.';
+         }
+     } catch (error) {
+         console.error('Error during email verification:', error);
+         verificationStatus.value = 'error';
+         message.value = 'An error occurred. Please check your network connection and try again.';
+     }
+ };
 
 onMounted(() => {
     applyTheme(theme.value);
@@ -77,7 +77,7 @@ onMounted(() => {
         </div>
 
         <div class="relative z-10 p-8 md:p-12 rounded-[2rem] max-w-2xl w-full" :class="theme === 'dark' ? 'bg-gray-900 shadow-xl border border-gray-800' : 'bg-gray-100 shadow-xl border border-gray-200'">
-            <div v-if="verificationStatus === 'verifying'" class="space-y-4">
+            <!-- <div v-if="verificationStatus === 'verifying'" class="space-y-4">
                 <DotLottieVue src="https://lottie.host/1781c7e9-a352-46ce-9174-84c49f8ecf77/n8WlYc30nB.json" autoplay loop class="w-32 h-32 mx-auto mb-4"/>
                 <h1 class="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">
                     Verifying your email...
@@ -85,7 +85,7 @@ onMounted(() => {
                 <p :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
                     Please wait a moment while we activate your account.
                 </p>
-            </div>
+            </div> -->
             
             <div v-if="verificationStatus === 'success'" class="space-y-4 animate-fade-in-up">
                 <DotLottieVue src="/sy4/animation/Loading_success.lottie" autoplay class="w-64 h-64 mx-auto mb-4"/>
