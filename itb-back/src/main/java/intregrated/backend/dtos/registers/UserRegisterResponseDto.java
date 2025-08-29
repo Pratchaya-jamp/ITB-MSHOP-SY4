@@ -1,4 +1,4 @@
-package intregrated.backend.dtos.Registers;
+package intregrated.backend.dtos.registers;
 
 import lombok.*;
 

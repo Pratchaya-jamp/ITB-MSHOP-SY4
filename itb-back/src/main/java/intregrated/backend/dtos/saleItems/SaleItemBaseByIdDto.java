@@ -1,4 +1,4 @@
-package intregrated.backend.dtos.SaleItems;
+package intregrated.backend.dtos.saleItems;
 
 import lombok.*;
 

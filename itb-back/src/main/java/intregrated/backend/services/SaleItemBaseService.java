@@ -1,6 +1,6 @@
 package intregrated.backend.services;
 
-import intregrated.backend.dtos.SaleItems.*;
+import intregrated.backend.dtos.saleItems.*;
 import intregrated.backend.fileproperties.ProductFileProperties;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.entities.SaleItemBase;

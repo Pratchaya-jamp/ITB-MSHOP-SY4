@@ -1,7 +1,7 @@
 package intregrated.backend.controllers;
 
-import intregrated.backend.dtos.Registers.UserRegisterRequestDto;
-import intregrated.backend.dtos.Registers.UserRegisterResponseDto;
+import intregrated.backend.dtos.registers.UserRegisterRequestDto;
+import intregrated.backend.dtos.registers.UserRegisterResponseDto;
 import intregrated.backend.entities.UsersAccount;
 import intregrated.backend.services.EmailRegisterService;
 import jakarta.validation.Valid;
