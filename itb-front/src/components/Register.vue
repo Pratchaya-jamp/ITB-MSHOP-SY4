@@ -415,7 +415,7 @@ const cardClass = computed(() => {
       <div class="text-center mt-6">
         <p :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
           Already have an account?
-          <router-link to="/login" class="font-semibold text-orange-500 hover:underline ml-1">
+          <router-link to="/signin" class="font-semibold text-orange-500 hover:underline ml-1">
             Login
           </router-link>
         </p>

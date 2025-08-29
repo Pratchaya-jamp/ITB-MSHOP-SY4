@@ -9,6 +9,7 @@ import SaleItemsAdd from '@/components/SaleItemsAdd.vue'
 import BrandAdd from '@/components/BrandAdd.vue'
 import Login from '@/components/Login.vue'
 import Register from '@/components/Register.vue'
+import VerifyEmail from '@/components/VerifyEmail.vue'
 
 const routes = [
   {
@@ -62,14 +63,19 @@ const routes = [
   component: BrandAdd,
 },
 {
-  path: '/login',
-  name: 'login',
+  path: '/signin',
+  name: 'signin',
   component: Login,
 },
 {
   path: '/registers',
   name: 'register',
   component: Register,
+},
+{
+  path: '/verify-email',
+  name: 'verify-email',
+  component: VerifyEmail,
 },
 ]
 

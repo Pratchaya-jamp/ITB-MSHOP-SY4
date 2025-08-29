@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const goToLogin = () => {
-  router.push('/login')
+  router.push('/signin')
 }
 const goToRegister = () => {
   router.push('/registers')
