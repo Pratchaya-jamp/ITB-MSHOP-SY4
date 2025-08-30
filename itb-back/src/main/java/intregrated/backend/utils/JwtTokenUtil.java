@@ -12,7 +12,21 @@ import java.util.Date;
 public class JwtTokenUtil {
     private static final String ISSUER = "http://intproj24.sit.kmutt.ac.th/sy4/";
     private static final long EXPIRATION_MS = 30*60*1000;
+    private static final long verify_EXPIRATION_MS = 30*60*1000;
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+    public String generateVerificationToken(UsersAccount user) {
+        long now = System.currentTimeMillis();
+
+        return Jwts.builder()
+                .setIssuer(ISSUER)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + verify_EXPIRATION_MS))
+                .claim("id", user.getId())
+                .claim("email", user.getEmail())
+                .signWith(key)
+                .compact();
+    }
 
     public String generateToken(UsersAccount user, String role) {
         long now = System.currentTimeMillis();

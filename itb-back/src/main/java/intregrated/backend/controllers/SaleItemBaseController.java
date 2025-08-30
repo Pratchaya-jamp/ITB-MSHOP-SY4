@@ -63,9 +63,6 @@ public class SaleItemBaseController {
             @PathVariable Integer id,
             @ModelAttribute SaleItemWithImageInfo request) {
 
-        // SaleItemBaseByIdDto updated = saleItemBaseService
-        //         .editSaleItem(id, request.getSaleItem(), request.getImageInfos());
-
         SaleItemBaseByIdDto updated = saleItemBaseService.editSaleItem(id, request);
 
         return ResponseEntity.ok(updated);
