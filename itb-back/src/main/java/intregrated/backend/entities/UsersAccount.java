@@ -54,9 +54,6 @@ public class UsersAccount {
     @Column(nullable = false)
     private Boolean isActive = false;
 
-    private String verificationToken;
-    private Instant tokenExpiry;
-
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "createdOn", nullable = false)

@@ -9,6 +9,8 @@ import intregrated.backend.repositories.BuyerAccountRepository;
 import intregrated.backend.repositories.SellerAccountRepository;
 import intregrated.backend.repositories.SellerPictureRepository;
 import intregrated.backend.repositories.UsersAccountRepository;
+import intregrated.backend.utils.JwtTokenUtil;
+import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +56,9 @@ public class EmailRegisterService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
     @Transactional
     public List<UsersAccount> getAllUsers() {
         return userRepo.findAll();
@@ -82,12 +87,11 @@ public class EmailRegisterService {
             user.setUpdatedOn(Instant.now());
 
             user.setIsActive(false);
-            user.setVerificationToken(generateToken());
-            user.setTokenExpiry(Instant.now().plusSeconds(3600));
 
             user = userRepo.save(user);
 
-            sendVerificationEmail(user);
+            String token = jwtTokenUtil.generateVerificationToken(user);
+            sendVerificationEmail(user, token);
 
         } else if (user.getBuyer() == null) {
             // user มีอยู่แล้ว แต่ยังไม่มี buyer → เพิ่ม buyer ให้
@@ -114,33 +118,48 @@ public class EmailRegisterService {
                 .build();
     }
 
-    private String generateToken() {
-        return UUID.randomUUID().toString();
-    }
-
-    private void sendVerificationEmail(UsersAccount user) {
-        mailService.sendVerificationEmail(user.getEmail(), user.getVerificationToken());
+    private void sendVerificationEmail(UsersAccount user, String jwtToken) {
+        mailService.sendVerificationEmail(user.getEmail(), jwtToken);
     }
 
     @Transactional
-    public Optional<UsersAccount> verifyEmailToken(String token) {
-        UsersAccount user = userRepo.findAll().stream()
-                .filter(u -> token.equals(u.getVerificationToken()))
-                .findFirst()
-                .orElse(null);
+    public UserRegisterResponseDto verifyEmailToken(String jwtToken) {
+        if (!jwtTokenUtil.validateToken(jwtToken)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token");
+        }
 
-        if (user == null) return Optional.empty();
+        Claims claims = jwtTokenUtil.getClaims(jwtToken);
+        Integer userId = claims.get("id", Integer.class);
+        String email = claims.get("email", String.class);
 
-        if (user.getTokenExpiry().isBefore(Instant.now())) {
-            return Optional.empty();
+        UsersAccount user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token"));
+
+        if (!user.getEmail().equals(email)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token");
+        }
+
+        if (Boolean.TRUE.equals(user.getIsActive())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already verified");
         }
 
         user.setIsActive(true);
-        user.setVerificationToken(null);
-        user.setTokenExpiry(null);
         userRepo.save(user);
 
-        return Optional.of(user);
+        String mobile = null;
+        if (user.getSeller() != null) {
+            mobile = user.getSeller().getMobile();
+        }
+
+        return UserRegisterResponseDto.builder()
+                .id(user.getId())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .fullname(user.getFullname())
+                .mobile(mobile)
+                .isActive(user.getIsActive())
+                .userType(user.getBuyer() != null ? "BUYER" : "SELLER")
+                .build();
     }
 
     @Transactional
@@ -178,6 +197,9 @@ public class EmailRegisterService {
 
         sellerRepo.saveAndFlush(sellerAccount);
 
+        String token = jwtTokenUtil.generateVerificationToken(userEntity);
+        sendVerificationEmail(userEntity, token);
+
         // 3) save รูป
         List<SaleItemImageDto> pics = new ArrayList<>();
         MultipartFile[] idCardImages = {idCardFront, idCardBack};
@@ -198,7 +220,6 @@ public class EmailRegisterService {
                 // สร้างชื่อไฟล์ใหม่ เช่น 86.1.jpg
                 String newFileName = sellerAccount.getId() + "." + order + "." + extension;
                 Path targetPath = Paths.get(sellerFileProperties.getUploadDir()).resolve(newFileName);
-                System.out.println("Target path: " + targetPath.toAbsolutePath());
 
                 try {
                     Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
@@ -216,7 +237,6 @@ public class EmailRegisterService {
                 pic.setSeller(sellerAccount);
 
                 sellerPictureRepo.saveAndFlush(pic);
-                System.out.println("Saved picture record into DB: " + newFileName);
 
                 pics.add(new SaleItemImageDto(newFileName, order));
 

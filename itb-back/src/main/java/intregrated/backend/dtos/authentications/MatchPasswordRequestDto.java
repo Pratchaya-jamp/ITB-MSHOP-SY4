@@ -14,6 +14,6 @@ public class MatchPasswordRequestDto {
     private String email;
 
     @NotBlank(message = "Password must not be empty")
-    @Size(max = 14, message = "Password cannot exceed 14 characters")
+    @Size(min = 8, max = 14)
     private String password;
 }

@@ -11,8 +11,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -28,20 +31,15 @@ public class EmailRegisterController {
         return new ResponseEntity<>(accounts, HttpStatus.OK);
     }
 
-    @GetMapping("/verify-email")
-    public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
-        Optional<UsersAccount> userOpt = emailRegisterService.verifyEmailToken(token);
-
-        if (userOpt.isPresent()) {
-            return ResponseEntity.ok("Your account has been successfully activated.");
-        } else {
-            return ResponseEntity.badRequest().body("Invalid or expired verification link. Please request a new verification email.");
-        }
+    @PostMapping("/verify-email")
+    public ResponseEntity<UserRegisterResponseDto> verifyEmail(@RequestParam("token") String jwtToken) {
+            UserRegisterResponseDto response = emailRegisterService.verifyEmailToken(jwtToken);
+            return ResponseEntity.ok(response);
     }
 
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> registerUsers(
+    public ResponseEntity<UserRegisterResponseDto> registerUsers(
             @Valid @ModelAttribute UserRegisterRequestDto request,
             @RequestParam(value = "idCardImageFront", required = false) MultipartFile idCardImageFront,
             @RequestParam(value = "idCardImageBack", required = false) MultipartFile idCardImageBack
@@ -53,7 +51,7 @@ public class EmailRegisterController {
                 UserRegisterResponseDto account = emailRegisterService.registerSeller(request, idCardImageFront, idCardImageBack);
                 return ResponseEntity.status(HttpStatus.CREATED).body(account);
             } else {
-                return ResponseEntity.badRequest().body("Invalid userType, must be BUYER or SELLER");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid userType, must be BUYER or SELLER");
             }
     }
 

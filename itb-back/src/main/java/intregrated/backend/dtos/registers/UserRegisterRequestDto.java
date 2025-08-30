@@ -11,15 +11,16 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class UserRegisterRequestDto {
-    @NotBlank
+    @NotBlank(message = "Nickname is required")
     private String nickname;
 
-    @Email
-    @NotBlank
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
+    @Size(max = 50, message = "email cannot exceed 50 characters")
     private String email;
 
-    @NotBlank
-    @Size(min = 8, message = "Password must be at least 8 characters with lower, upper, number, and special character")
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, max = 14, message = "Password must be at least 8 characters with lower, upper, number, and special character")
     private String password;
 
     @NotBlank
@@ -35,6 +36,6 @@ public class UserRegisterRequestDto {
 
     private String nationalId;
 
-    @NotBlank
+    @NotBlank(message = "User type is required")
     private String userType;
 }

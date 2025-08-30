@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MatchpasswordResponseDto {
+public class MatchPasswordResponseDto {
     private String access_token;
     private String refresh_token;
 }

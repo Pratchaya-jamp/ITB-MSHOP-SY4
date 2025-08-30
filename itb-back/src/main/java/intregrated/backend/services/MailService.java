@@ -10,9 +10,9 @@ public class MailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    public void sendVerificationEmail(String to, String token) {
+    public void sendVerificationEmail(String to, String jwtToken) {
         String subject = "Verify your email address";
-        String verificationUrl = "http://intproj24.sit.kmutt.ac.th/sy4/verify-email/?token=" + token;
+        String verificationUrl = "http://intproj24.sit.kmutt.ac.th/sy4/verify-email/?token=" + jwtToken;
 
         String message = "Hello,\n\n"
                 + "Please verify your email by clicking the link below:\n"
