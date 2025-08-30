@@ -16,10 +16,11 @@ public class UserRegisterRequestDto {
 
     @Email(message = "Invalid email format")
     @NotBlank(message = "Email is required")
+    @Size(max = 50, message = "email cannot exceed 50 characters")
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters with lower, upper, number, and special character")
+    @Size(min = 8, max = 14, message = "Password must be at least 8 characters with lower, upper, number, and special character")
     private String password;
 
     @NotBlank
