@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItems, deleteItemById } from '@/libs/fetchUtilsOur';
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
 
 const router = useRouter()
 const route = useRoute()
@@ -22,6 +23,7 @@ const savedPageSize = sessionStorage.getItem('pageSize')
 const savedPage = parseInt(sessionStorage.getItem('currentPage'))
 const currentPage = ref(!isNaN(savedPage) ? savedPage : 0)
 const pageSize = ref(savedPageSize ? parseInt(savedPageSize) : 10)
+const showLoginSuccess = ref(false)
 
 // Price
 const displayedPrice = computed(() => {
@@ -477,6 +479,7 @@ const closeSuccessPopup = async () => {
   showDeleteSuccessPopup.value = false
   showfailPopup.value = false
   showRegisSuccess.value = false
+  showLoginSuccess.value = false
   router.replace({ path: route.path, query: {} });
   await fetchItems();
 }
@@ -542,6 +545,19 @@ watch(
     if (regisSuccess === 'true') {
       setTimeout(() => {
         showRegisSuccess.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => route.query.loginSuccess,
+  (loginSuccess) => {
+    if (loginSuccess === 'true') {
+      setTimeout(() => {
+        showLoginSuccess.value = true
       }, 200)
       router.replace({ path: route.path, query: {} })
     }
@@ -1117,8 +1133,23 @@ const removeActiveFilter = (filter) => {
         class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div class="p-6 rounded-3xl shadow-lg text-center"
           :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
-          <h2 class="text-xl font-semibold mb-4">Success!</h2>
-          <p class="itbms-message mb-4">The user account has been successfully registered!</p>
+          <DotLottieVue src="/sy4/animation/Success.lottie" autoplay class="w-24 h-24 mx-auto mb-4" />
+          <h2 class="text-xl font-semibold mb-4">Account Created!</h2>
+          <p class="itbms-message mb-4">We've sent a verification link to your email.</p>
+          <button @click="closeSuccessPopup"
+            class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="bounce-popup">
+      <div v-if="showLoginSuccess"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="p-6 rounded-3xl shadow-lg text-center"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+          <DotLottieVue src="/sy4/animation/Success.lottie" autoplay class="w-24 h-24 mx-auto mb-4" />
+          <h2 class="text-xl font-semibold mb-4">Login Successful</h2>
+          <p class="itbms-message mb-4">You have been successfully logged into your account.</p>
           <button @click="closeSuccessPopup"
             class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
         </div>

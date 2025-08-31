@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import { ref, computed, watch, onMounted } from 'vue';
+import { addItem } from '@/libs/fetchUtilsOur';
 
 const router = useRouter();
 const theme = ref(localStorage.getItem('theme') || 'dark');
@@ -34,37 +35,50 @@ const iconComponent = computed(() => {
 })
 const showPassword = ref(false);
 
-const email = ref('');
-const password = ref('');
+const email = ref('')
+const password = ref('')
+
+const loginError =ref('')
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value;
 };
 
+
+const message = ref('');
+const isLoading = ref(false);
+
 const handleSubmit = async () => {
-  console.log('Logging in with:', { email: email.value, password: password.value });
-  // TODO: Implement actual login logic (e.g., call a login API)
-  // Example API call:
-  // try {
-  //   const response = await fetch('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/login', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({ email: email.value, password: password.value }),
-  //   });
-  //   if (response.ok) {
-  //     const data = await response.json();
-  //     alert('Login successful!');
-  //     // Redirect to another page, e.g., router.push('/sale-items');
-  //   } else {
-  //     const errorData = await response.json();
-  //     alert(`Login failed: ${errorData.message}`);
-  //   }
-  // } catch (error) {
-  //   console.error('Error during login:', error);
-  //   alert('An error occurred. Please try again later.');
-  // }
+  isLoading.value = true;
+  loginError.value = ''; // เพิ่มบรรทัดนี้เพื่อล้าง error เก่า
+  
+  try {
+    const data = await addItem(
+      'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/authentications',
+      {
+        email: email.value,
+        password: password.value,
+      }
+    );
+    
+    if (data.status === 200) {
+      localStorage.setItem('access_token', data.data?.access_token);
+      localStorage.setItem('refresh_token', data.data?.refresh_token);
+      message.value = 'Login successful!';
+      setTimeout(() => {
+        isLoading.value = false;
+        router.push({ path: '/sale-items', query: { loginSuccess: 'true' } });
+      }, 1000);
+    } else {
+      loginError.value = 'Invalid email or password'; // แก้ไข: ย้ายมาไว้ใน else
+    }
+  } catch (error) {
+    loginError.value = 'Login failed: ' + (error.message || 'Unknown error');
+  } finally {
+    if (!router.currentRoute.value.path.includes('sale-items')) {
+        isLoading.value = false;
+    }
+  }
 };
 
 const cardClass = computed(() => {
@@ -106,7 +120,7 @@ const cardClass = computed(() => {
             </svg>
           </button>
         </div>
-        
+        <p v-if="loginError" class="itbms-message text-red-500 text-sm mt-1">{{ loginError }}</p>
         <button type="submit" class="w-full px-10 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 hover:cursor-pointer">
           Login
         </button>
