@@ -60,8 +60,59 @@ public class EmailRegisterService {
     private JwtTokenUtil jwtTokenUtil;
 
     @Transactional
-    public List<UsersAccount> getAllUsers() {
-        return userRepo.findAll();
+    public List<UserRegisterResponseDto> getAllUsers() {
+        List<UsersAccount> accounts = userRepo.findAll();
+
+        return accounts.stream()
+                .map(user -> UserRegisterResponseDto.builder()
+                        .id(user.getId())
+                        .nickname(user.getNickname())
+                        .email(user.getEmail())
+                        .fullname(user.getFullname())
+                        .mobile(user.getSeller() != null ? user.getSeller().getMobile() : null)
+                        .isActive(user.getIsActive())
+                        .userType(resolveUserType(user))
+                        .build()
+                ).toList();
+    }
+
+    public String resolveUserType(UsersAccount user) {
+        boolean isBuyer = user.getBuyer() != null;
+        boolean isSeller = user.getSeller() != null;
+
+        if (isBuyer && isSeller) {
+            return "USER, SELLER";
+        } else if (isSeller) {
+            return "SELLER";
+        } else if (isBuyer) {
+            return "BUYER";
+        } else {
+            return "USER";
+        }
+    }
+
+    @Transactional
+    public UserRegisterResponseDto getUserById(Integer id) {
+        UsersAccount user = userRepo.findById(id).orElseThrow(
+                () -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,"User with id " + id + " not found"
+                )
+        );
+
+        String mobile = null;
+        if (user.getSeller() != null) {
+            mobile = user.getSeller().getMobile();
+        }
+
+        return UserRegisterResponseDto.builder()
+                .id(user.getId())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .fullname(user.getFullname())
+                .mobile(mobile)
+                .isActive(user.getIsActive())
+                .userType(resolveUserType(user))
+                .build();
     }
 
     @Transactional
@@ -158,7 +209,7 @@ public class EmailRegisterService {
                 .fullname(user.getFullname())
                 .mobile(mobile)
                 .isActive(user.getIsActive())
-                .userType(user.getBuyer() != null ? "BUYER" : "SELLER")
+                .userType(resolveUserType(user))
                 .build();
     }
 
@@ -209,8 +260,6 @@ public class EmailRegisterService {
 
                 String originalName = file.getOriginalFilename();
                 String extension = FilenameUtils.getExtension(originalName).toLowerCase();
-                System.out.println("Uploading file: " + originalName);
-                System.out.println("File extension: " + extension);
 
                 // ตรวจสอบนามสกุลไฟล์
                 if (!Arrays.asList(sellerFileProperties.getAllowFileTypes()).contains(extension.toUpperCase())) {

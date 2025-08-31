@@ -1,10 +1,13 @@
 package intregrated.backend.controllers;
 
+import intregrated.backend.dtos.brands.BrandBaseDto;
 import intregrated.backend.dtos.registers.UserRegisterRequestDto;
 import intregrated.backend.dtos.registers.UserRegisterResponseDto;
 import intregrated.backend.entities.UsersAccount;
 import intregrated.backend.services.EmailRegisterService;
+import intregrated.backend.utils.ListMapper;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,10 +28,17 @@ public class EmailRegisterController {
     @Autowired
     private EmailRegisterService emailRegisterService;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     @GetMapping("")
-    private ResponseEntity<List<UsersAccount>> getAllUsersAccounts() {
-        List<UsersAccount> accounts = emailRegisterService.getAllUsers();
-        return new ResponseEntity<>(accounts, HttpStatus.OK);
+    private ResponseEntity<List<UserRegisterResponseDto>> getAllUsersAccounts() {
+        return ResponseEntity.ok(emailRegisterService.getAllUsers());
+    }
+
+    @GetMapping("/{id}")
+    private ResponseEntity<UserRegisterResponseDto> getUserById(@PathVariable Integer id) {
+        return ResponseEntity.ok(emailRegisterService.getUserById(id));
     }
 
     @PostMapping("/verify-email")
@@ -36,7 +46,6 @@ public class EmailRegisterController {
             UserRegisterResponseDto response = emailRegisterService.verifyEmailToken(jwtToken);
             return ResponseEntity.ok(response);
     }
-
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserRegisterResponseDto> registerUsers(
