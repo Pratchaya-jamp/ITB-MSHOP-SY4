@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
+import { getItems,addItem } from '@/libs/fetchUtilsOur'
+
 
 const route = useRoute();
 const router = useRouter();
@@ -39,18 +41,16 @@ const verifyEmail = async () => {
         message.value = 'Verification token is missing. Please check the link or request a new one.';
         return;
     }
-    
+    router.replace({ query: {} });
     // หน่วงเวลา 3 วินาที
     setTimeout(async () => {
         try {
-            const response = await fetch(`/verify-email/?token=${token}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await addItem(
+  `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/verify-email?token=${token}`
+);
 
-            if (response.ok) {
+
+            if (response.status === 200) {
                 verificationStatus.value = 'success';
                 message.value = 'Your account has been successfully activated.';
                 // Redirect ไปหน้า Login หลังจากแสดงผล 3 วินาที
@@ -58,9 +58,14 @@ const verifyEmail = async () => {
                     router.push({ name: 'Login' });
                 }, 3000);
             } else {
-                const errorData = await response.json();
-                verificationStatus.value = 'error';
-                message.value = errorData.message || 'An error occurred, or the verification link has expired. Please request a new verification email.';
+                if (response.status === 409) {
+                    verificationStatus.value = 'warning';
+                    message.value = 'This token has already been verified. Your account is already active.';
+                } else {
+                    const errorData = await response.json();
+                    verificationStatus.value = 'error';
+                    message.value = errorData.message || 'An error occurred, or the verification link has expired. Please request a new verification email.';
+                }
             }
         } catch (error) {
             console.error('Error during email verification:', error);
@@ -118,6 +123,21 @@ onMounted(() => {
                 >
                     Request a New Link
                 </button> -->
+            </div>
+            <div v-if="verificationStatus === 'warning'" class="space-y-4 animate-fade-in-up">
+                <DotLottieVue src="/sy4/animation/warning.lottie" autoplay class="w-64 h-64 mx-auto mb-4"/>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-yellow-500">
+                    Already Verified!
+                </h1>
+                <p class="text-lg md:text-xl font-medium" :class="theme === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+                    {{ message }}
+                </p>
+                <button
+                    @click="router.push('/signin')"
+                    class="mt-6 px-8 py-3 bg-gradient-to-r from-teal-400 to-blue-500 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-105"
+                >
+                    Go to Login
+                </button>
             </div>
         </div>
 
