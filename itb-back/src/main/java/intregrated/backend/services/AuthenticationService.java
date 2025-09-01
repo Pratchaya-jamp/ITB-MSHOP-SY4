@@ -36,6 +36,10 @@ public class AuthenticationService {
 
         UsersAccount userAccount = optionalUser.get();
 
+        if (!Boolean.TRUE.equals(userAccount.getIsActive())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You need to activate your account before signing in.");
+        }
+
         if (!passwordEncoder.matches(requestDto.getPassword(), userAccount.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Username or Password is incorrect.");
         }
