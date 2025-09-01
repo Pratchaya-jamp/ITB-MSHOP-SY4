@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted } from 'vue'
+import { jwtDecode } from 'jwt-decode'
 
 const router = useRouter()
 const isLoggedIn = ref(false)
@@ -8,7 +9,18 @@ const userProfile = ref({ name: 'User', image: 'https://cdn-icons-png.flaticon.c
 
 const checkLoginStatus = () => {
     const token = localStorage.getItem('access_token')
-    isLoggedIn.value = !!token
+    if (token) {
+        isLoggedIn.value = true
+        try {
+            const decodedToken = jwtDecode(token)
+            userProfile.value.name = decodedToken.nickname || 'User'
+        } catch (error) {
+            console.error("Failed to decode JWT token:", error)
+            isLoggedIn.value = false
+        }
+    } else {
+        isLoggedIn.value = false
+    }
 }
 
 const goToLogin = () => {
@@ -24,10 +36,16 @@ const goToProfile = () => {
 }
 
 const logout = () => {
+    // 4. ลบ token ทั้งสองตัวออกจาก localStorage
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
+    
     isLoggedIn.value = false
-    router.push('/signin')
+    
+    // เด้งไปหน้า Login และรีเฟรช
+    router.push('/signin').then(() => {
+        window.location.reload();
+    });
 }
 
 onMounted(() => {
@@ -62,7 +80,7 @@ onMounted(() => {
                             invisible opacity-0 translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0
                             transition-all duration-300">
                     <button @click="goToProfile" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 w-full text-left">View Profile</button>
-                    <button @click="logout" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 w-full text-left">Logout</button>
+                    <button @click="logout" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-700 w-full text-left">Logout</button>
                 </div>
             </div>
         </div>

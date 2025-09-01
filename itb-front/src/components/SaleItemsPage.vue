@@ -481,6 +481,7 @@ const closeSuccessPopup = async () => {
   showRegisSuccess.value = false
   showLoginSuccess.value = false
   router.replace({ path: route.path, query: {} });
+  window.location.reload();
   await fetchItems();
 }
 

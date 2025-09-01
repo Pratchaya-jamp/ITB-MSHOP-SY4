@@ -14,6 +14,12 @@ const toggleTheme = () => {
 
 // 3. ตั้งค่า Event Listener เมื่อ component ถูก mount
 onMounted(async () => {
+const token = localStorage.getItem('access_token');
+  if (token) {
+    // ถ้ามี token แสดงว่าผู้ใช้ล็อกอินอยู่แล้ว
+    router.push({ path: '/sale-items' });
+  }
+
   // ตั้งค่า theme ตาม localStorage
   const storedTheme = localStorage.getItem('theme');
   if (storedTheme) {
@@ -111,12 +117,19 @@ const cardClass = computed(() => {
                  class="w-full p-4 rounded-xl pr-12 placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all"
                  :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700 text-white' : 'bg-white border border-gray-300 text-gray-950'" />
           <button type="button" @click="togglePasswordVisibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
-            <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+            <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <!-- eye open -->
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
             </svg>
-            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.958 10.958 0 0020 10c-1.274-4.057-5.064-7-9.542-7-1.254 0-2.457.246-3.564.733l-2.022-2.022zM8.68 5.61A6.98 6.98 0 0010 4a9 9 0 018.354 5.646l-2.493-2.493zM3.646 10c.937 2.062 2.825 3.513 4.965 4.067l-2.5-2.5a4 4 0 01-2.465-1.567zm12.923-3.61l-3.076 3.076a4 4 0 01-5.584 5.584L3.707 17.293a1 1 0 101.414 1.414l12-12a1 1 0 00-1.414-1.414z" clip-rule="evenodd" />
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <!-- eye closed -->
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.956 9.956 0 012.223-3.592M6.223 6.223A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.956 9.956 0 01-2.223 3.592M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 3l18 18"/>
             </svg>
           </button>
         </div>
