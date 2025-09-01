@@ -137,8 +137,6 @@ public class EmailRegisterService {
             user.setCreatedOn(Instant.now());
             user.setUpdatedOn(Instant.now());
 
-            user.setIsActive(false);
-
             user = userRepo.save(user);
 
             String token = jwtTokenUtil.generateVerificationToken(user);
