@@ -126,7 +126,7 @@ public class EmailRegisterService {
             buyer.setFullname(req.getFullname());
             buyer.setCreatedOn(Instant.now());
             buyer.setUpdatedOn(Instant.now());
-            buyerRepo.save(buyer);
+            buyerRepo.saveAndFlush(buyer);
 
             user = new UsersAccount();
             user.setNickname(req.getNickname());
@@ -137,10 +137,28 @@ public class EmailRegisterService {
             user.setCreatedOn(Instant.now());
             user.setUpdatedOn(Instant.now());
 
-            user = userRepo.save(user);
+            user = userRepo.saveAndFlush(user);
 
-            String token = jwtTokenUtil.generateVerificationToken(user);
-            sendVerificationEmail(user, token);
+            // Debug: ตรวจสอบ user ที่สร้างขึ้น
+            System.out.println("Created user with ID: " + user.getId() + ", Email: " + user.getEmail());
+
+            try {
+                String token = jwtTokenUtil.generateVerificationToken(user);
+                System.out.println("Generated token: " + token);
+
+                // Debug token
+                jwtTokenUtil.debugToken(token);
+
+                // ทดสอบ validate ทันที
+                boolean isValid = jwtTokenUtil.validateToken(token);
+                System.out.println("Token validation result: " + isValid);
+
+                sendVerificationEmail(user, token);
+            } catch (Exception e) {
+                System.err.println("Error generating token: " + e.getMessage());
+                e.printStackTrace();
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate verification token");
+            }
 
         } else if (user.getBuyer() == null) {
             // user มีอยู่แล้ว แต่ยังไม่มี buyer → เพิ่ม buyer ให้
@@ -173,19 +191,38 @@ public class EmailRegisterService {
 
     @Transactional
     public UserRegisterResponseDto verifyEmailToken(String jwtToken) {
+        System.out.println("Verifying token: " + jwtToken);
+
+        // Debug token ก่อนการ validate
+        jwtTokenUtil.debugToken(jwtToken);
+
         if (!jwtTokenUtil.validateToken(jwtToken)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired verification token");
+        }
+
+        Claims claims;
+        try {
+            claims = jwtTokenUtil.getClaims(jwtToken);
+            System.out.println("Successfully extracted claims from token");
+        } catch (Exception e) {
+            System.err.println("Failed to extract claims: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token");
         }
 
-        Claims claims = jwtTokenUtil.getClaims(jwtToken);
         Integer userId = claims.get("id", Integer.class);
         String email = claims.get("email", String.class);
 
+        System.out.println("Token claims - User ID: " + userId + ", Email: " + email);
+
+        if (userId == null || email == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token payload");
+        }
+
         UsersAccount user = userRepo.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
 
         if (!user.getEmail().equals(email)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token email mismatch");
         }
 
         if (Boolean.TRUE.equals(user.getIsActive())) {
@@ -193,7 +230,10 @@ public class EmailRegisterService {
         }
 
         user.setIsActive(true);
-        userRepo.save(user);
+        user.setUpdatedOn(Instant.now());
+        userRepo.saveAndFlush(user);
+
+        System.out.println("User verified successfully: " + user.getEmail());
 
         String mobile = null;
         if (user.getSeller() != null) {

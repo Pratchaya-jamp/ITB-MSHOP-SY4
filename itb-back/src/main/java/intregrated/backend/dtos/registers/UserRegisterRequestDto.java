@@ -2,6 +2,7 @@ package intregrated.backend.dtos.registers;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -21,6 +22,8 @@ public class UserRegisterRequestDto {
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 14, message = "Password must be at least 8 characters with lower, upper, number, and special character")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&]).+$",
+            message = "Password must contain uppercase, lowercase, number, and special character")
     private String password;
 
     @NotBlank

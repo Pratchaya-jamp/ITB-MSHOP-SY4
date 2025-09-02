@@ -3,9 +3,9 @@ package intregrated.backend.controllers;
 import intregrated.backend.dtos.authentications.MatchPasswordRequestDto;
 import intregrated.backend.dtos.authentications.MatchPasswordResponseDto;
 import intregrated.backend.services.AuthenticationService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +18,7 @@ public class AuthenticationController {
     private AuthenticationService authenticationService;
 
     @PostMapping("/authentications")
-    public ResponseEntity<MatchPasswordResponseDto> login(@Validated @RequestBody MatchPasswordRequestDto request) {
+    public ResponseEntity<MatchPasswordResponseDto> login(@Valid @RequestBody MatchPasswordRequestDto request) {
             MatchPasswordResponseDto response = authenticationService.authenticateUser(request);
             return ResponseEntity.ok().body(response);
     }
