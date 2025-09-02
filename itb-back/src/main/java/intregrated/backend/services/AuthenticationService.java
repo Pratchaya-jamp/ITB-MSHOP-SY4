@@ -30,7 +30,15 @@ public class AuthenticationService {
     public MatchPasswordResponseDto authenticateUser(MatchPasswordRequestDto requestDto) {
         // Null values → 400
         if (requestDto.getEmail() == null || requestDto.getPassword() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and Password are required.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+
+        if (requestDto.getEmail().length() > 50) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+
+        if (requestDto.getPassword().length() < 8 || requestDto.getPassword().length() > 14) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
         }
 
         // Empty string or only spaces → 401
