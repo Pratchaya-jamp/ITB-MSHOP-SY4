@@ -28,10 +28,26 @@ public class AuthenticationService {
 
 
     public MatchPasswordResponseDto authenticateUser(MatchPasswordRequestDto requestDto) {
+        // Null values → 400
+        if (requestDto.getEmail() == null || requestDto.getPassword() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and Password are required.");
+        }
+
+        // Empty string or only spaces → 401
+        if (requestDto.getEmail().trim().isEmpty() || requestDto.getPassword().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+
+        // Leading/trailing spaces → 401
+        if (!requestDto.getEmail().equals(requestDto.getEmail().trim()) ||
+                !requestDto.getPassword().equals(requestDto.getPassword().trim())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+
         Optional<UsersAccount> optionalUser = usersRepo.findByEmail(requestDto.getEmail());
 
         if (optionalUser.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Username or Password is incorrect.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
         }
 
         UsersAccount userAccount = optionalUser.get();
@@ -41,7 +57,7 @@ public class AuthenticationService {
         }
 
         if (!passwordEncoder.matches(requestDto.getPassword(), userAccount.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Username or Password is incorrect.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Email or Password is incorrect.");
         }
 
         String role = "USER";

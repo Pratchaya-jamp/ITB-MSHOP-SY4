@@ -42,10 +42,12 @@ public class MailService {
 
             helper.setTo(to);
             helper.setSubject(subject);
+            helper.setFrom("ss.runningx@gmail.com");
             helper.setText(htmlContent, true); // true = send as HTML
 
             mailSender.send(message);
         } catch (MessagingException e) {
+            e.printStackTrace();
             throw new RuntimeException("Failed to send verification email", e);
         }
     }

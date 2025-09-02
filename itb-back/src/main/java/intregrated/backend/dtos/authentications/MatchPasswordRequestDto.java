@@ -8,12 +8,9 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MatchPasswordRequestDto {
-    @NotBlank(message = "Email must not be empty")
-    @Email(message = "Invalid email format")
     @Size(max = 50, message = "Email cannot exceed 50 characters")
     private String email;
 
-    @NotBlank(message = "Password must not be empty")
-    @Size(min = 8, max = 14)
+    @Size(min = 8, max = 14, message = "Password must be between 8 and 14 characters")
     private String password;
 }

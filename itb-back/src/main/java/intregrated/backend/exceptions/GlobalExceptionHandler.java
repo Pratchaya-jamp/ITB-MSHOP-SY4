@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
         GeneralErrorResponse ger = new GeneralErrorResponse(
                 statusCode.value(),
                 statusCode.toString(),
-                ex.getMessage(),
+                ex.getReason(),
                 request.getRequestURI());
         return ResponseEntity.status(statusCode).body(ger);
     }
@@ -38,26 +38,28 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<Object> handleMissingParams(MissingServletRequestParameterException ex,
             HttpServletRequest request) {
-        String message = "Missing required parameter: " + ex.getParameterName();
 
         GeneralErrorResponse ger = new GeneralErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                message,
+                "Missing required parameter: " + ex.getParameterName(),
                 request.getRequestURI());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ger);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Object> handleValidationException(MissingServletRequestParameterException ex,
+    public ResponseEntity<Object> handleValidationException(MethodArgumentNotValidException ex,
                                                       HttpServletRequest request) {
-        String message = "Missing required parameter: " + ex.getParameterName();
 
         GeneralErrorResponse ger = new GeneralErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                message,
+                "Validation failed",
                 request.getRequestURI());
+
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                ger.addValidationError(error.getField(), error.getDefaultMessage()));
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ger);
     }
 }
