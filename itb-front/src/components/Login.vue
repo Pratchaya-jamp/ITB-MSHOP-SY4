@@ -54,10 +54,61 @@ const togglePasswordVisibility = () => {
 const message = ref('');
 const isLoading = ref(false);
 
+const EmailError =ref('')
+const PasswordError =ref('')
+const isEmailValid = ref(false)
+const isPasswordValid = ref(false)
+
+// regex สำหรับตรวจ email format
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
+// watch email
+watch(email, (val) => {
+  if (!val.trim()) {
+    EmailError.value = 'Email is required.'
+    isEmailValid.value = false
+  } else if (val.length > 50) {
+    EmailError.value = 'Email must not exceed 50 characters.'
+    isEmailValid.value = false
+  } else if (!emailRegex.test(val)) {
+    EmailError.value = 'Invalid email format.'
+    isEmailValid.value = false
+  } else {
+    EmailError.value = ''
+    isEmailValid.value = true
+  }
+})
+
+// watch password
+watch(password, (val) => {
+  if (!val.trim()) {
+    PasswordError.value = 'Password is required.'
+    isPasswordValid.value = false
+  } else if (val.length > 14) {
+    PasswordError.value = 'Password must not exceed 14 characters.'
+    isPasswordValid.value = false
+  } else {
+    PasswordError.value = ''
+    isPasswordValid.value = true
+  }
+})
+
+const validateForm = () => {
+    return (
+      isPasswordValid.value&
+      isEmailValid.value
+    )
+}
+
 const handleSubmit = async () => {
   isLoading.value = true;
   loginError.value = ''; // เพิ่มบรรทัดนี้เพื่อล้าง error เก่า
   
+  if (!validateForm()) {
+    loginError.value = 'Please fill out the information completely.'
+    return
+    }
+
   try {
     const data = await addItem(
       'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/authentications',
@@ -108,15 +159,18 @@ const cardClass = computed(() => {
       <p :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'" class="text-center mb-8">Access your ITB MSHOP account.</p>
 
       <form @submit.prevent="handleSubmit" class="space-y-6">
-        <input type="email" v-model="email" placeholder="Email" required
+        <p v-if="EmailError" class="itbms-message text-red-500 text-sm mb-1">{{ EmailError }}</p>
+        <input type="email" v-model="email" placeholder="Email" 
                class="itbms-email w-full p-4 rounded-xl placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all"
                :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700 text-white' : 'bg-white border border-gray-300 text-gray-950'" />
         
         <div class="relative">
-          <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" required
-                 class="itbms-password w-full p-4 rounded-xl pr-12 placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all"
+
+        <p v-if="PasswordError" class="itbms-message text-red-500 text-sm mb-1">{{ PasswordError }}</p>
+          <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" 
+                class="itbms-password w-full p-4 rounded-xl pr-12 placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all"
                  :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700 text-white' : 'bg-white border border-gray-300 text-gray-950'" />
-          <button type="button" @click="togglePasswordVisibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
+                 <button type="button" @click="togglePasswordVisibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
             <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <!-- eye open -->
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
