@@ -136,10 +136,13 @@ watch(password, (val) => {
   if (!val) {
     PasswordError.value = 'Password is required.'
     isPasswordValid.value = false
-  } else if (val.length < 8) {
+  } else if (val.length <= 8) {
     PasswordError.value = 'Password must be at least 8 characters.'
     isPasswordValid.value = false
-  } else if (!passwordRegex.test(val)) {
+  } else if (val.length >=14) {
+    PasswordError.value = 'Password must be no more than 14 characters long.'
+    isPasswordValid.value = false
+  }else if (!passwordRegex.test(val)) {
     PasswordError.value = 'Password must include upper, lower, number, and special character.'
     isPasswordValid.value = false
   } else {
