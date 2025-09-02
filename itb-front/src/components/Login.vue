@@ -130,7 +130,7 @@ const handleSubmit = async () => {
       loginError.value = 'Invalid email or password'; // แก้ไข: ย้ายมาไว้ใน else
     }
   } catch (error) {
-    loginError.value = 'Login failed: ' + (error.message || 'Unknown error');
+    loginError.value = 'Email or Pasword is incorrect.';
   } finally {
     if (!router.currentRoute.value.path.includes('sale-items')) {
         isLoading.value = false;
