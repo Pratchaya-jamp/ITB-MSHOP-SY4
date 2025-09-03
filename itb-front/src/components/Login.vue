@@ -45,6 +45,11 @@ const email = ref('')
 const password = ref('')
 
 const loginError =ref('')
+const emailactivate =ref(false)
+
+const Pleaseactivate = () => {
+ emailactivate.value=false
+}
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value;
@@ -57,7 +62,7 @@ const isLoading = ref(false);
 const EmailError =ref('')
 const PasswordError =ref('')
 const isEmailValid = ref(false)
-const isPasswordValid = ref(false)
+const isPasswordValid = ref(true)
 
 // regex สำหรับตรวจ email format
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -81,33 +86,24 @@ watch(email, (val) => {
 
 // watch password
 watch(password, (val) => {
-  if (!val.trim()) {
-    PasswordError.value = 'Password is required.'
-    isPasswordValid.value = false
-  } else if (val.length > 14) {
+ if (val.length > 14) {
     PasswordError.value = 'Password must not exceed 14 characters.'
-    isPasswordValid.value = false
   } else {
     PasswordError.value = ''
     isPasswordValid.value = true
   }
 })
 
-const validateForm = () => {
+const isFormValid =  computed(() => {
     return (
-      isPasswordValid.value&
+      isPasswordValid.value &
       isEmailValid.value
     )
-}
+})
 
 const handleSubmit = async () => {
   isLoading.value = true;
   loginError.value = ''; // เพิ่มบรรทัดนี้เพื่อล้าง error เก่า
-  
-  if (!validateForm()) {
-    loginError.value = 'Please fill out the information completely.'
-    return
-    }
 
   try {
     const data = await addItem(
@@ -126,7 +122,9 @@ const handleSubmit = async () => {
         isLoading.value = false;
         router.push({ path: '/sale-items', query: { loginSuccess: 'true' } });
       }, 1000);
-    } else {
+    } else if(data.status === 403){
+      emailactivate.value=true
+    }else {
       loginError.value = 'Invalid email or password'; // แก้ไข: ย้ายมาไว้ใน else
     }
   } catch (error) {
@@ -188,8 +186,11 @@ const cardClass = computed(() => {
           </button>
         </div>
         <p v-if="loginError" class="itbms-message text-red-500 text-sm mt-1">{{ loginError }}</p>
-        <button type="submit" class="itbms-signin-button w-full px-10 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 hover:cursor-pointer">
-          Login
+        <button type="button" @click="handleSubmit"
+          class="itbms-signin-button w-full px-10 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-105"
+          :class="{'opacity-50 cursor-not-allowed': !isFormValid}"
+          :disabled="!isFormValid">
+            Login
         </button>
       </form>
 
@@ -205,6 +206,19 @@ const cardClass = computed(() => {
   </div>
   <button @click="toggleTheme" class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-sm shadow-lg transition-all duration-300 z-50" :class="theme === 'dark' ? 'bg-gray-700/80 hover:bg-gray-600/80 text-white' : 'bg-gray-200/80 hover:bg-gray-300/80 text-black'" v-html="iconComponent">
     </button>
+    <transition name="bounce-popup">
+    <div v-if="emailactivate"
+        class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="rounded-2xl p-8 shadow-xl text-center transition-colors duration-500"
+            :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'">
+            <h2 class="text-2xl font-bold mb-4">Please activate your email.</h2>
+            <div class="flex justify-center gap-4">
+                <button @click="Pleaseactivate"
+                    class="itbms-confirm-button bg-green-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-green-600 active:scale-95 hover:cursor-pointer">OK</button>
+           </div>
+        </div>
+    </div>
+</transition>
 </template>
 
 <style scoped>
