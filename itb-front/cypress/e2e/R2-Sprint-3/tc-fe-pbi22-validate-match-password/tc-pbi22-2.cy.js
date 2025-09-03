@@ -23,7 +23,7 @@ describe(`TC-FE-PBI22-VALIDATE-MATCH-PASSWORD-1\n
     it('should be enable the Sign In button after type leading email and password with white space.',()=>{
 
         cy.get('.itbms-email').as('email') ;
-        cy.get('@email').type('  itbkk.somkiat@ad.sit.kmutt.ac.th  ')
+        cy.get('@email').type('   itbkk.somkiat@ad.sit.kmutt.ac.th   ')
 
         cy.get('.itbms-password').as('password')
         cy.get('@password').type('  itProj24/SOM  ')

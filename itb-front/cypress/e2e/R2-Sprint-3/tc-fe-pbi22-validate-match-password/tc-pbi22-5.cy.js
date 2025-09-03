@@ -30,7 +30,7 @@ describe(`TC-FE-PBI22-VALIDATE-MATCH-PASSWORD-1\n
 
         cy.get('.itbms-signin-button').as('signin') ;
         cy.get('@signin').should(($btn)=>{
-            expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.false
+            expect($btn.is(':disabled') || $btn.hasClass('disabled')).to.be.true
         })        
 
     })
