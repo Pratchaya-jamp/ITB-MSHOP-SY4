@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router';
 import { ref, computed, watch, onMounted } from 'vue';
 import { addItem } from '@/libs/fetchUtilsOur';
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
 
 const router = useRouter();
 const theme = ref(localStorage.getItem('theme') || 'dark');
@@ -74,10 +75,10 @@ watch(email, (val) => {
     isEmailValid.value = false
   } else if (val.length > 50) {
     EmailError.value = 'Email must not exceed 50 characters.'
-    isEmailValid.value = false
+    // isEmailValid.value = false
   } else if (!emailRegex.test(val)) {
     EmailError.value = 'Invalid email format.'
-    isEmailValid.value = false
+    // isEmailValid.value = false
   } else {
     EmailError.value = ''
     isEmailValid.value = true
@@ -88,6 +89,7 @@ watch(email, (val) => {
 watch(password, (val) => {
  if (val.length > 14) {
     PasswordError.value = 'Password must not exceed 14 characters.'
+    // isPasswordValid.value = false
   } else {
     PasswordError.value = ''
     isPasswordValid.value = true
@@ -158,14 +160,14 @@ const cardClass = computed(() => {
 
       <form @submit.prevent="handleSubmit" class="space-y-6">
         <p v-if="EmailError" class="itbms-message text-red-500 text-sm mb-1">{{ EmailError }}</p>
-        <input type="email" v-model="email" placeholder="Email" 
+        <input type="email" v-model="email" placeholder="Email" maxlength="50"
                class="itbms-email w-full p-4 rounded-xl placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all"
                :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700 text-white' : 'bg-white border border-gray-300 text-gray-950'" />
         
         <div class="relative">
 
         <p v-if="PasswordError" class="itbms-message text-red-500 text-sm mb-1">{{ PasswordError }}</p>
-          <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" 
+          <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" maxlength="14"
                 class="itbms-password w-full p-4 rounded-xl pr-12 placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all"
                  :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700 text-white' : 'bg-white border border-gray-300 text-gray-950'" />
                  <button type="button" @click="togglePasswordVisibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
@@ -207,18 +209,18 @@ const cardClass = computed(() => {
   <button @click="toggleTheme" class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-sm shadow-lg transition-all duration-300 z-50" :class="theme === 'dark' ? 'bg-gray-700/80 hover:bg-gray-600/80 text-white' : 'bg-gray-200/80 hover:bg-gray-300/80 text-black'" v-html="iconComponent">
     </button>
     <transition name="bounce-popup">
-    <div v-if="emailactivate"
-        class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div class="rounded-2xl p-8 shadow-xl text-center transition-colors duration-500"
-            :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'">
-            <h2 class="text-2xl font-bold mb-4">Please activate your email.</h2>
-            <div class="flex justify-center gap-4">
-                <button @click="Pleaseactivate"
-                    class="itbms-confirm-button bg-green-500 text-white font-semibold rounded-lg px-6 py-2 transition-all duration-300 hover:bg-green-600 active:scale-95 hover:cursor-pointer">OK</button>
-           </div>
+      <div v-if="emailactivate"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="p-6 rounded-3xl shadow-lg text-center"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+          <DotLottieVue src="/sy4/animation/warning.lottie" autoplay class="w-24 h-24 mx-auto mb-4" />
+          <h2 class="text-xl font-semibold mb-4">Login Failed</h2>
+          <p class="itbms-message mb-4">Please check your email to complete the activation process.</p>
+          <button @click="Pleaseactivate"
+            class="bg-yellow-500 text-white border-2 border-yellow-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-yellow-500 font-semibold hover:cursor-pointer">Done</button>
         </div>
-    </div>
-</transition>
+      </div>
+    </transition>
 </template>
 
 <style scoped>
@@ -236,4 +238,56 @@ const cardClass = computed(() => {
 }
 .animate-blob { animation: blob 7s infinite ease-in-out; }
 .animation-delay-2000 { animation-delay: 2s; }
+
+/* สไตล์พื้นหลัง popup overlay */
+.itbms-bg {
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+}
+
+/* Modal Fade Transition */
+.modal-fade-enter-active {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+
+/* Other Popups - Kept as is */
+.bounce-popup-enter-active,
+.bounce-popup-leave-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bounce-popup-enter-from {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.bounce-popup-leave-to {
+  transform: scale(1.2);
+  opacity: 0;
+}
+
+/* Animation สำหรับ Fade In/Out ของพื้นหลัง */
+.fade-background-enter-active,
+.fade-background-leave-active {
+  transition: background-color 0.3s ease;
+}
+
+.fade-background-enter-from {
+  background-color: rgba(0, 0, 0, 0);
+}
+
+.fade-background-leave-to {
+  background-color: rgba(0, 0, 0, 0);
+}
 </style>

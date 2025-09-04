@@ -28,10 +28,10 @@ services:
       - db
     networks:
       - itb-net
-    volumes:
-      #- ./uploads/product-images:/app/product-images
-      #- ./uploads/seller-images:/app/seller-images
-      - ./uploads:/app/uploads
+    # volumes:
+      # - ./uploads/product-images:/app/product-images
+      # - ./uploads/seller-images:/app/seller-images
+      # - ./uploads:/app/uploads
 
   db:
     image: mysql:latest
