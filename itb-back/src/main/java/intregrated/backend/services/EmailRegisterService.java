@@ -60,62 +60,6 @@ public class EmailRegisterService {
     private JwtTokenUtil jwtTokenUtil;
 
     @Transactional
-    public List<UserRegisterResponseDto> getAllUsers() {
-        List<UsersAccount> accounts = userRepo.findAll();
-
-        return accounts.stream()
-                .map(user -> UserRegisterResponseDto.builder()
-                        .id(user.getId())
-                        .nickname(user.getNickname())
-                        .email(user.getEmail())
-                        .fullname(user.getFullname())
-                        .mobile(user.getSeller() != null ? user.getSeller().getMobile() : null)
-                        .isActive(user.getIsActive())
-                        .userType(resolveUserType(user))
-                        .build()
-                ).toList();
-    }
-
-    public String resolveUserType(UsersAccount user) {
-        boolean isBuyer = user.getBuyer() != null;
-        boolean isSeller = user.getSeller() != null;
-
-        if (isBuyer && isSeller) {
-            return "USER, SELLER";
-        } else if (isSeller) {
-            return "SELLER";
-        } else if (isBuyer) {
-            return "BUYER";
-        } else {
-            return "USER";
-        }
-    }
-
-    @Transactional
-    public UserRegisterResponseDto getUserById(Integer id) {
-        UsersAccount user = userRepo.findById(id).orElseThrow(
-                () -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,"User with id " + id + " not found"
-                )
-        );
-
-        String mobile = null;
-        if (user.getSeller() != null) {
-            mobile = user.getSeller().getMobile();
-        }
-
-        return UserRegisterResponseDto.builder()
-                .id(user.getId())
-                .nickname(user.getNickname())
-                .email(user.getEmail())
-                .fullname(user.getFullname())
-                .mobile(mobile)
-                .isActive(user.getIsActive())
-                .userType(resolveUserType(user))
-                .build();
-    }
-
-    @Transactional
     public UserRegisterResponseDto registerBuyer(UserRegisterRequestDto req) {
         UsersAccount user = userRepo.findByEmail(req.getEmail()).orElse(null);
 
@@ -350,45 +294,18 @@ public class EmailRegisterService {
         return resp;
     }
 
-    @Transactional
-    public void deleteUser(Integer uid) {
-        // หา user ก่อน (เพราะ UsersAccount เป็นเจ้าของ FK)
-        UsersAccount usersAccount = userRepo.findById(uid)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "user with id " + uid + " not found"
-                ));
+    public String resolveUserType(UsersAccount user) {
+        boolean isBuyer = user.getBuyer() != null;
+        boolean isSeller = user.getSeller() != null;
 
-        SellerAccount sellerAccount = usersAccount.getSeller(); // ดึง seller ผ่าน user
-        if (sellerAccount == null) {
-            // user ไม่มี seller → แค่ลบ user
-            userRepo.delete(usersAccount);
-            return;
+        if (isBuyer && isSeller) {
+            return "USER, SELLER";
+        } else if (isSeller) {
+            return "SELLER";
+        } else if (isBuyer) {
+            return "BUYER";
+        } else {
+            return "USER";
         }
-
-        // โหลดรูป (บังคับ fetch)
-        List<SellerPicture> pictures = sellerAccount.getPictures();
-        pictures.size();
-
-        // ลบไฟล์จริงใน disk
-        for (SellerPicture pic : pictures) {
-            if (pic.getNewPictureName() != null && !pic.getNewPictureName().isBlank()) {
-                try {
-                    sellerFileService.deleteFile(pic.getNewPictureName());
-                } catch (Exception e) {
-                    System.err.println("Failed to delete file: " + pic.getNewPictureName());
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        // ตัดความสัมพันธ์ออก เพื่อให้ Hibernate จัดการ orphan ได้
-        usersAccount.setSeller(null);
-
-        // ลบ user ก่อน (เพราะมันถือ FK ไปยัง seller)
-        userRepo.delete(usersAccount);
-
-        // ลบ seller (Hibernate จะ cascade ลบ SellerPicture ให้เอง)
-        sellerRepo.delete(sellerAccount);
     }
 }

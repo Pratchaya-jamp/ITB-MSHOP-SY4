@@ -55,7 +55,7 @@ public class JwtTokenUtil {
 
     public String generateRefreshToken(UsersAccount user) {
         long now = System.currentTimeMillis();
-        long refreshExpirationMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+        long refreshExpirationMs = 24 * 60 * 60 * 1000;
 
         return Jwts.builder()
                 .setIssuer(ISSUER)

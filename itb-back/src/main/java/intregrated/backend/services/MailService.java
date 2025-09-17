@@ -70,7 +70,7 @@ public class MailService {
 
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setFrom("ss.runningx@gmail.com");
+            helper.setFrom("intsy4.verify@gmail.com");
             helper.setText(htmlContent, true); // true = send as HTML
 
             mailSender.send(message);
