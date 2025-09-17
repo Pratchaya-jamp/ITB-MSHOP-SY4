@@ -1,5 +1,6 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
+import { jwtDecode } from 'jwt-decode'
 import LandingPage from '../components/LandingPage.vue'
 import SaleItemsPage from '../components/SaleItemsPage.vue'
 import SaleItemsDetailPage from '@/components/SaleItemsDetailPage.vue'
@@ -26,11 +27,13 @@ const routes = [
     path: '/sale-items',
     name: 'SaleItems',
     component: SaleItemsPage,
+    meta: { isGallery: true }
   },
   {
     path: '/sale-items/list',
     name: 'ListSaleItems',
     component: SaleItemsPage,
+    meta: { requiresSeller: true }
   },
   {
     path: '/sale-items/:id',
@@ -46,11 +49,13 @@ const routes = [
     path: '/sale-items/add',
     name: 'SaleItemsAdd',
     component: SaleItemsAdd,
+    meta: { requiresSeller: true }
   },
   {
   path: '/sale-items/:id/edit',
   name: 'SaleItemsEdit',
   component: SaleItemsAdd,
+  meta: { requiresSeller: true }
 },
 {
   path: '/brands/add',
@@ -83,5 +88,35 @@ const router = createRouter({
   history: createWebHistory('/sy4'),
   routes,
 })
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('access_token');
+
+  if (to.meta.requiresSeller) {
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        const userRole = decodedToken.role;
+        
+        if (userRole === 'SELLER') {
+          next();
+        } else if (userRole === 'BUYER') {
+          console.log('Buyer trying to access a seller-only page. Redirecting...');
+          next('/sale-items');
+        } else {
+          // บทบาทไม่ถูกต้อง
+          next('/signin');
+        }
+      } catch (error) {
+        console.error("JWT decoding failed:", error);
+        next('/signin');
+      }
+    } else {
+      next('/signin');
+    }
+  } else {
+    next();
+  }
+});
 
 export default router

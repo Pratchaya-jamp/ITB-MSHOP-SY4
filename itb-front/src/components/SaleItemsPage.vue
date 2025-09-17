@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItems, deleteItemById } from '@/libs/fetchUtilsOur';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
+import { jwtDecode } from 'jwt-decode';
 
 const router = useRouter()
 const route = useRoute()
@@ -24,6 +25,7 @@ const savedPage = parseInt(sessionStorage.getItem('currentPage'))
 const currentPage = ref(!isNaN(savedPage) ? savedPage : 0)
 const pageSize = ref(savedPageSize ? parseInt(savedPageSize) : 10)
 const showLoginSuccess = ref(false)
+const userRole = ref('');
 
 // Price
 const displayedPrice = computed(() => {
@@ -417,9 +419,25 @@ watch(
   }
 )
 
+const checkUserRole = () => {
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    try {
+      const decodedToken = jwtDecode(token);
+      userRole.value = decodedToken.role; // Assuming the role is in the token payload
+    } catch (error) {
+      console.error("Failed to decode JWT token:", error);
+      userRole.value = '';
+    }
+  } else {
+    userRole.value = '';
+  }
+}
+
 onMounted(() => {
   fetchItems()
   fetchbrand()
+  checkUserRole()
 
   // Load theme from localStorage on component mount
   const savedTheme = localStorage.getItem('theme')
@@ -645,7 +663,7 @@ const removeActiveFilter = (filter) => {
     <div class="px-6 md:px-20 mt-8">
       <div class="flex flex-col md:flex-row items-start justify-between mb-6 gap-4">
         <div class="flex flex-wrap gap-4">
-          <button
+          <button v-if="userRole === 'SELLER'"
             class="itbms-sale-item-add border-2 rounded-full px-6 py-2 cursor-pointer transition-colors duration-300 font-semibold"
             :class="theme === 'dark' ? 'bg-green-500 text-white border-green-500 hover:bg-transparent hover:text-green-500' : 'bg-green-500 text-white border-green-500 hover:bg-transparent hover:text-green-500'"
             @click="addSaleItemButton">
