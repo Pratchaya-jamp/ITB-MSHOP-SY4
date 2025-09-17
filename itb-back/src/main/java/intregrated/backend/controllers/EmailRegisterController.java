@@ -22,24 +22,11 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/v2/users")
+@RequestMapping("/v2/auth")
 @CrossOrigin(origins = "${app.cors.allowedOrigins}")
 public class EmailRegisterController {
     @Autowired
     private EmailRegisterService emailRegisterService;
-
-    @Autowired
-    private ModelMapper modelMapper;
-
-    @GetMapping("")
-    private ResponseEntity<List<UserRegisterResponseDto>> getAllUsersAccounts() {
-        return ResponseEntity.ok(emailRegisterService.getAllUsers());
-    }
-
-    @GetMapping("/{id}")
-    private ResponseEntity<UserRegisterResponseDto> getUserById(@PathVariable Integer id) {
-        return ResponseEntity.ok(emailRegisterService.getUserById(id));
-    }
 
     @PostMapping("/verify-email")
     public ResponseEntity<UserRegisterResponseDto> verifyEmail(@RequestParam("token") String jwtToken) {
@@ -62,11 +49,5 @@ public class EmailRegisterController {
             } else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid userType, must be BUYER or SELLER");
             }
-    }
-
-    @DeleteMapping("/{uid}")
-    @ResponseStatus(value = HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Integer uid) {
-        emailRegisterService.deleteUser(uid);
     }
 }

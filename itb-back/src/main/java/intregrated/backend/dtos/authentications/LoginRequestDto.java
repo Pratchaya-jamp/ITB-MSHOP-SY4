@@ -1,15 +1,12 @@
 package intregrated.backend.dtos.authentications;
 
-import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MatchPasswordRequestDto {
-
+public class LoginRequestDto {
     private String email;
-
     private String password;
 }
