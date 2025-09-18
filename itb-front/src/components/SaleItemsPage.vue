@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getItems, deleteItemById } from '@/libs/fetchUtilsOur';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
 import { jwtDecode } from 'jwt-decode';
+import Cookies from 'js-cookie'
 
 const router = useRouter()
 const route = useRoute()
@@ -420,7 +421,7 @@ watch(
 )
 
 const checkUserRole = () => {
-  const token = localStorage.getItem('access_token');
+  const token = Cookies.get('access_token');
   if (token) {
     try {
       const decodedToken = jwtDecode(token);

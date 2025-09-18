@@ -46,7 +46,7 @@ const verifyEmail = async () => {
     setTimeout(async () => {
         try {
             const response = await addItem(
-  `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/verify-email?token=${token}`
+  `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/verify-email?token=${token}`
 );
 
 

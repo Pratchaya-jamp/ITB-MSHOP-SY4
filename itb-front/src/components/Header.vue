@@ -2,13 +2,14 @@
 import { useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { jwtDecode } from 'jwt-decode'
+import Cookies from 'js-cookie'
 
 const router = useRouter()
 const isLoggedIn = ref(false)
 const userProfile = ref({ name: 'User', image: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
 
 const checkLoginStatus = () => {
-    const token = localStorage.getItem('access_token')
+    const token = Cookies.get('access_token')
     if (token) {
         isLoggedIn.value = true
         try {
@@ -37,8 +38,8 @@ const goToProfile = () => {
 
 const logout = () => {
     // 4. ลบ token ทั้งสองตัวออกจาก localStorage
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
+    Cookies.remove('access_token')
+    Cookies.remove('refresh_token')
     
     isLoggedIn.value = false
     
