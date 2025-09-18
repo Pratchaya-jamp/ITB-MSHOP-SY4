@@ -12,6 +12,8 @@ import BrandAdd from '@/components/BrandAdd.vue'
 import Login from '@/components/Login.vue'
 import Register from '@/components/Register.vue'
 import VerifyEmail from '@/components/VerifyEmail.vue'
+import UserProfile from '@/components/UserProfile.vue'
+import UserEdit from '@/components/UserEdit.vue'
 
 const routes = [
   {
@@ -82,6 +84,16 @@ const routes = [
   path: '/verify-email',
   name: 'verify-email',
   component: VerifyEmail,
+},
+{
+  path: '/profile',
+  name: 'userProfile',
+  component: UserProfile,
+},
+{
+  path: '/profile/edit',
+  name: 'userEdit',
+  component: UserEdit,
 },
 ]
 

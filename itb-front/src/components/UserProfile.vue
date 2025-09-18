@@ -1,0 +1,220 @@
+<script setup>
+import { useRouter } from 'vue-router'
+import { computed, ref, onMounted } from 'vue'
+import Cookies from 'js-cookie'
+
+const router = useRouter()
+const theme = ref(localStorage.getItem('theme') || 'dark')
+const userPicture = ref({ image: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
+const userProfile = ref(null) 
+const loading = ref(true) 
+
+const themeClass = computed(() => {
+    return theme.value === 'dark'
+        ? 'bg-gray-950 text-white'
+        : 'bg-white text-gray-950'
+})
+
+const cardClass = computed(() => {
+    return theme.value === 'dark'
+        ? 'bg-gray-900 shadow-xl border border-gray-800'
+        : 'bg-gray-100 shadow-xl border border-gray-200'
+})
+
+const isSeller = computed(() => userProfile.value?.userType === 'Seller')
+
+const maskedMobile = computed(() => {
+    const mobile = userProfile.value?.mobile;
+    if (!mobile || mobile.length < 4) return mobile;
+    return mobile.slice(0, -4).replace(/./g, 'x') + mobile.slice(-4);
+})
+
+const maskedNationalId = computed(() => {
+    const nationalId = userProfile.value?.nationalId;
+    if (!nationalId || nationalId.length < 4) return nationalId;
+    const len = nationalId.length;
+    const start = nationalId.slice(0, len - 4).replace(/./g, 'x');
+    const middle = nationalId.slice(len - 4, len - 1);
+    const end = nationalId.slice(len - 1);
+    return `${start}${middle}${end}`;
+})
+
+const navigateToEdit = () => {
+    router.push('/profile/edit')
+}
+
+const decodeJwtToken = (token) => {
+    try {
+        const payload = token.split('.')[1];
+        const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+        return JSON.parse(decodedPayload);
+    } catch (error) {
+        console.error('Failed to decode JWT token:', error);
+        return null;
+    }
+};
+
+const fetchUserProfile = async () => {
+    loading.value = true;
+    const token = Cookies.get('access_token');
+
+    if (!token) {
+        console.error('Authentication error: No access token found in cookies.');
+        router.push('/login'); 
+        loading.value = false;
+        return;
+    }
+
+    const decodedToken = decodeJwtToken(token);
+
+    if (!decodedToken || !decodedToken.id) {
+        console.error('Invalid token payload: Could not find user ID.');
+        router.push('/login');
+        loading.value = false;
+        return;
+    }
+
+    const userId = decodedToken.id;
+    const API_URL = `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/${userId}`;
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+            console.error('Authentication error: Unauthorized or Forbidden');
+            router.push('/login');
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch user profile: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        data.userType = decodedToken.role === 'SELLER' ? 'Seller' : 'Buyer';
+        userProfile.value = data;
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchUserProfile();
+});
+
+</script>
+
+<template>
+    <div :class="themeClass" class="relative min-h-screen font-sans overflow-x-hidden p-6 md:p-20 flex items-center justify-center">
+        <div class="absolute inset-0 w-full h-full opacity-10 pointer-events-none">
+            <div class="absolute w-96 h-96 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full blur-3xl opacity-50 top-1/4 left-1/4 animate-blob"></div>
+            <div class="absolute w-80 h-80 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full blur-3xl opacity-50 bottom-1/4 right-1/4 animate-blob animation-delay-2000"></div>
+        </div>
+        
+        <div class="relative z-10 w-full max-w-2xl animate-fade-in-up">
+            <div v-if="loading" :class="cardClass" class="p-8 md:p-12 rounded-[2rem] text-center">
+                <p>Loading user profile...</p>
+            </div>
+            
+            <div v-else-if="userProfile" :class="cardClass" class="p-8 md:p-12 rounded-[2rem] space-y-6">
+                <div class="flex justify-center mb-6">
+                    <img :src="userPicture.image" alt="User Profile Picture" 
+                         class="w-32 h-32 rounded-full border-4 border-orange-500 object-cover shadow-lg transform hover:scale-110 transition-transform duration-300" />
+                </div>
+                
+                <h2 class="text-4xl font-bold text-center mb-6">User Profile</h2>
+                
+                <div class="space-y-4">
+                    <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
+                        <i class="fas fa-user-circle text-orange-500 text-2xl"></i>
+                        <div>
+                            <p class="text-sm opacity-75">Nickname</p>
+                            <p class="font-semibold text-lg">{{ userProfile.nickname }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
+                        <i class="fas fa-id-card-alt text-red-500 text-2xl"></i>
+                        <div>
+                            <p class="text-sm opacity-75">Fullname</p>
+                            <p class="font-semibold text-lg">{{ userProfile.fullname }}</p>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
+                        <i class="fas fa-envelope text-teal-500 text-2xl"></i>
+                        <div>
+                            <p class="text-sm opacity-75">Email</p>
+                            <p class="font-semibold text-lg">{{ userProfile.email }}</p>
+                        </div>
+                    </div>
+
+                    <template v-if="isSeller">
+                        <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
+                            <i class="fas fa-mobile-alt text-purple-500 text-2xl"></i>
+                            <div>
+                                <p class="text-sm opacity-75">Mobile</p>
+                                <p class="font-semibold text-lg">{{ userProfile.mobile }}</p>
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
+                            <i class="fas fa-university text-blue-500 text-2xl"></i>
+                            <div>
+                                <p class="text-sm opacity-75">Bank Name</p>
+                                <p class="font-semibold text-lg text-orange-500">{{ userProfile.bankName }}</p>
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
+                            <i class="fas fa-credit-card text-green-500 text-2xl"></i>
+                            <div>
+                                <p class="text-sm opacity-75">Bank Account</p>
+                                <p class="font-semibold text-lg">{{ userProfile.bankNumber }}</p>
+                            </div>
+                        </div>
+                        <!-- <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
+                            <i class="fas fa-address-card text-yellow-500 text-2xl"></i>
+                            <div>
+                                <p class="text-sm opacity-75">National ID</p>
+                                <p class="font-semibold text-lg">{{ maskedNationalId }}</p>
+                            </div>
+                        </div> -->
+                    </template>
+                </div>
+
+                <div class="pt-4">
+                    <button @click="navigateToEdit"
+                        class="w-full px-10 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+                        Edit Profile
+                    </button>
+                </div>
+            </div>
+            
+            <div v-else :class="cardClass" class="p-8 md:p-12 rounded-[2rem] text-center">
+                <p>Failed to load user profile. Please try again.</p>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes blob {
+    0% { transform: scale(1) translate(0px, 0px); }
+    33% { transform: scale(1.1) translate(30px, -50px); }
+    66% { transform: scale(0.9) translate(-20px, 20px); }
+    100% { transform: scale(1) translate(0px, 0px); }
+}
+.animate-fade-in-up { animation: fade-in-up 1s ease-out forwards; }
+.animate-blob { animation: blob 7s infinite ease-in-out; }
+.animation-delay-2000 { animation-delay: 2s; }
+</style>
