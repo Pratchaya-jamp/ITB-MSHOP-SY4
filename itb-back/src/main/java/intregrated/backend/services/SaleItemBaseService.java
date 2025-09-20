@@ -1,6 +1,7 @@
 package intregrated.backend.services;
 
 import intregrated.backend.dtos.saleItems.*;
+import intregrated.backend.entities.SellerAccount;
 import intregrated.backend.fileproperties.ProductFileProperties;
 import intregrated.backend.entities.BrandBase;
 import intregrated.backend.entities.SaleItemBase;
@@ -9,6 +10,7 @@ import intregrated.backend.repositories.BrandBaseRepo;
 import intregrated.backend.repositories.SaleItemBaseRepo;
 import intregrated.backend.repositories.SaleItemPictureRepo;
 //import jakarta.transaction.Transactional;
+import intregrated.backend.repositories.SellerAccountRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -42,6 +44,8 @@ public class SaleItemBaseService {
     @Autowired
     private SaleItemPictureRepo saleItemPictureRepo;
 
+    @Autowired
+    private SellerAccountRepository sellerAccountRepo;
     @Autowired
     private ProductFileProperties fileStorageProperties;
 
@@ -95,29 +99,32 @@ public class SaleItemBaseService {
 
 
     @Transactional
-    public SaleItemBaseByIdDto createSaleItem(NewSaleItemDto newSaleItem, MultipartFile[] pictures) {
+    public SaleItemBaseByIdDto createSaleItem(NewSaleItemDto newSaleItem, MultipartFile[] pictures, Integer sellerId) {
         // --- ตรวจสอบ brand ---
         BrandBase brand;
         if (newSaleItem.getBrand() != null) {
             if (newSaleItem.getBrand().getId() != null) {
                 brand = brandBaseRepo.findById(newSaleItem.getBrand().getId())
                         .orElseThrow(() -> new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
+                                HttpStatus.NOT_FOUND,
                                 "Brand with id " + newSaleItem.getBrand().getId() + " not found"));
             } else if (newSaleItem.getBrand().getBrandName() != null
                     && !newSaleItem.getBrand().getBrandName().trim().isEmpty()) {
                 String trimmedBrandName = newSaleItem.getBrand().getBrandName().trim();
                 brand = brandBaseRepo.findByNameIgnoreCase(trimmedBrandName)
                         .orElseThrow(() -> new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
+                                HttpStatus.NOT_FOUND,
                                 "Brand with name \"" + trimmedBrandName + "\" not found"));
             } else {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Brand must contain either valid ID or name.");
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Brand is required.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Brand is required.");
         }
+
+        SellerAccount seller = sellerAccountRepo.findById(sellerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Seller not found"));
 
         // --- บันทึก SaleItemBase ---
         SaleItemBase saleItem = new SaleItemBase();
@@ -138,6 +145,7 @@ public class SaleItemBaseService {
         saleItem.setCreatedOn(Instant.now());
         saleItem.setUpdatedOn(Instant.now());
         saleItem.setBrand(brand);
+        saleItem.setSeller(seller);
 
         SaleItemBase savedSaleItem = saleItemBaseRepo.saveAndFlush(saleItem);
 
@@ -151,7 +159,10 @@ public class SaleItemBaseService {
                     String extension = FilenameUtils.getExtension(originalName).toLowerCase();
 
                     // ตรวจสอบนามสกุลไฟล์
-                    if (!Arrays.asList(fileStorageProperties.getAllowFileTypes()).contains(extension.toUpperCase())) {
+                    List<String> allowedTypes = Arrays.stream(fileStorageProperties.getAllowFileTypes())
+                            .map(String::toLowerCase)
+                            .toList();
+                    if (!allowedTypes.contains(extension)) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File type not allowed: " + extension);
                     }
 
@@ -516,9 +527,6 @@ public class SaleItemBaseService {
         saleItemBaseRepo.delete(saleItem);
     }
 
-
-
-
     public Page<SaleItemBaseByIdDto> getPagedSaleItems(
             List<String> filterBrands,
             List<Integer> filterStorages,
@@ -580,6 +588,40 @@ public class SaleItemBaseService {
                 .createdOn(s.getCreatedOn())
                 .updatedOn(s.getUpdatedOn())
                 .firstImageName(firstImageName)
+                .build();
+    }
+
+    public Page<SellerWithSaleItemsDto> getPagedSaleItemsBySeller(
+            Integer sellerId,
+            Integer page,
+            Integer size,
+            String sortField,
+            String sortDirection
+    ) {
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortField);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<SaleItemBase> result = saleItemBaseRepo.findBySellerId(sellerId, pageable);
+
+        return result.map(this::mapToSellerDto);
+    }
+
+    private SellerWithSaleItemsDto mapToSellerDto(SaleItemBase s) {
+        return SellerWithSaleItemsDto.builder()
+                .id(s.getId())
+                .model(s.getModel())
+                .brandName(s.getBrand() != null ? s.getBrand().getName() : null)
+                .description(s.getDescription())
+                .price(s.getPrice())
+                .ramGb(s.getRamGb())
+                .screenSizeInch(s.getScreenSizeInch() != null ? s.getScreenSizeInch().doubleValue() : null)
+                .quantity(s.getQuantity())
+                .storageGb(s.getStorageGb())
+                .color(s.getColor())
+                .seller(SellerDto.builder()
+                        .id(s.getSeller().getId())
+                        .username(s.getSeller().getNickname())
+                        .build())
                 .build();
     }
 }

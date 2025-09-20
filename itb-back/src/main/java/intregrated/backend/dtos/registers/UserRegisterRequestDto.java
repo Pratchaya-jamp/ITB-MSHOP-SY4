@@ -22,8 +22,10 @@ public class UserRegisterRequestDto {
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 14, message = "Password must be at least 8 characters with lower, upper, number, and special character")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&]).+$",
-            message = "Password must contain uppercase, lowercase, number, and special character")
+    @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).+$",
+            message = "Password must contain uppercase, lowercase, number, and special character"
+    )
     private String password;
 
     @NotBlank

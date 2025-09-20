@@ -2,7 +2,9 @@ package intregrated.backend.services;
 
 import intregrated.backend.dtos.authentications.LoginRequestDto;
 import intregrated.backend.dtos.authentications.LoginResponseDto;
+import intregrated.backend.entities.RefreshToken;
 import intregrated.backend.entities.UsersAccount;
+import intregrated.backend.repositories.RefreshTokenRepository;
 import intregrated.backend.repositories.UsersAccountRepository;
 import intregrated.backend.utils.JwtTokenUtil;
 import io.jsonwebtoken.Claims;
@@ -12,9 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashSet;
+import java.time.Instant;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class AuthenticationService {
@@ -23,13 +24,16 @@ public class AuthenticationService {
     private UsersAccountRepository usersRepo;
 
     @Autowired
+    private RefreshTokenRepository refreshTokenRepo;
+
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
-
-    // เก็บ revoked tokens (จริง ๆ ควรใช้ DB/Redis)
-    private final Set<String> revokedRefreshTokens = new HashSet<>();
 
     public LoginResponseDto authenticateUser(LoginRequestDto requestDto) {
         // Null values → 400
@@ -72,10 +76,16 @@ public class AuthenticationService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Email or Password is incorrect.");
         }
 
+        // revoke refresh token เก่าของ user ก่อน
+        refreshTokenRepo.revokeAllTokensForUser(userAccount);
+
         String role = getRole(userAccount);
 
         String accessToken = jwtTokenUtil.generateToken(userAccount, role);
         String refreshToken = jwtTokenUtil.generateRefreshToken(userAccount);
+
+        // save refresh token ใหม่
+        refreshTokenService.createRefreshToken(userAccount, refreshToken, 24 * 60 * 60);
 
         return LoginResponseDto.builder()
                 .access_token(accessToken)
@@ -84,15 +94,23 @@ public class AuthenticationService {
     }
 
     public LoginResponseDto refreshAccessToken(String refreshToken) {
-        if (revokedRefreshTokens.contains(refreshToken)) {
+        // ตรวจสอบว่า refreshToken อยู่ใน DB
+        RefreshToken tokenEntity = refreshTokenRepo.findByToken(refreshToken)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No refresh token"));
+
+        // ตรวจสอบสถานะ revoked หรือ expired
+        if (tokenEntity.getRevoked() || tokenEntity.getExpiryDate().isBefore(Instant.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Token");
         }
 
-        if (!jwtTokenUtil.validateToken(refreshToken)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Token");
+        // ตรวจสอบ JWT claims ว่า parse ได้ไหม
+        Claims claims;
+        try {
+            claims = jwtTokenUtil.getClaims(refreshToken);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
         }
 
-        Claims claims = jwtTokenUtil.getClaims(refreshToken);
         Integer userId = claims.get("id", Integer.class);
 
         UsersAccount user = usersRepo.findById(userId)
@@ -103,16 +121,22 @@ public class AuthenticationService {
         }
 
         String role = getRole(user);
-
         String newAccessToken = jwtTokenUtil.generateToken(user, role);
+        String newRefreshToken = jwtTokenUtil.generateRefreshToken(user);
+
+        // revoke token เก่าทันที (แม้ยังไม่หมดอายุ)
+        refreshTokenService.revokeToken(refreshToken);
+        // save refresh token ใหม่
+        refreshTokenService.createRefreshToken(user, newRefreshToken, 24 * 60 * 60);
 
         return LoginResponseDto.builder()
                 .access_token(newAccessToken)
+                .refresh_token(newRefreshToken)
                 .build(); // return access token only
     }
 
     public void revokeRefreshToken(String refreshToken) {
-        revokedRefreshTokens.add(refreshToken);
+        refreshTokenService.revokeToken(refreshToken);
     }
 
     public String getRole(UsersAccount userAccount) {
