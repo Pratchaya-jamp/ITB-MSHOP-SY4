@@ -15,6 +15,7 @@ import java.net.URLConnection;
 
 @RestController
 @RequestMapping("/v2/sale-items")
+@CrossOrigin(origins = "${app.cors.allowedOrigins}")
 public class FileController {
     @Autowired
     ProductFileProperties fileStorageProperties;

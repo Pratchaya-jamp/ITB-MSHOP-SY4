@@ -70,4 +70,8 @@ public class SaleItemBase {
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<SaleItemPicture> pictures;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "sellerid", nullable = false)
+    private SellerAccount seller;
 }

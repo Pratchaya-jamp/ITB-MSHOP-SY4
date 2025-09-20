@@ -1,7 +1,6 @@
 package intregrated.backend.controllers;
 
 import intregrated.backend.dtos.registers.UserRegisterResponseDto;
-import intregrated.backend.dtos.users.SellerResponseDto;
 import intregrated.backend.dtos.users.UserResponseDto;
 import intregrated.backend.services.UserBaseService;
 import intregrated.backend.utils.JwtTokenUtil;
@@ -69,10 +68,4 @@ public class UserController {
 
         return ResponseEntity.ok(user);
     }
-
-//    @DeleteMapping("/{uid}")
-//    @ResponseStatus(value = HttpStatus.NO_CONTENT)
-//    public void deleteUser(@PathVariable Integer uid) {
-//        emailRegisterService.deleteUser(uid);
-//    }
 }
