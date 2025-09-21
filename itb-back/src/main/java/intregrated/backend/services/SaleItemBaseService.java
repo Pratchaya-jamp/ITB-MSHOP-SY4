@@ -62,8 +62,6 @@ public class SaleItemBaseService {
         return saleItemBaseRepo.findAll();
     }
 
-
-
     @Transactional
     public SaleItemBaseByIdDto getSaleItemBaseRepoById(Integer id) {
         SaleItemBase saleItem = saleItemBaseRepo.findById(id)

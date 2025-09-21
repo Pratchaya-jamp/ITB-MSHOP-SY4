@@ -1,10 +1,13 @@
 package intregrated.backend.controllers;
 
+import intregrated.backend.dtos.registers.UserRegisterRequestDto;
 import intregrated.backend.dtos.registers.UserRegisterResponseDto;
+import intregrated.backend.dtos.users.EditUserRequestDto;
 import intregrated.backend.dtos.users.UserResponseDto;
 import intregrated.backend.services.UserBaseService;
 import intregrated.backend.utils.JwtTokenUtil;
 import io.jsonwebtoken.Claims;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,5 +70,49 @@ public class UserController {
         }
 
         return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/users/{id}")
+    private ResponseEntity<UserResponseDto> updateUser(
+            @PathVariable Integer id,
+            @RequestHeader(value = "Authorization", required = false ) String authHeader,
+            @Valid @RequestBody EditUserRequestDto userUpdateRequest
+            )
+    {
+        // ไม่มี token → 401 Unauthorized
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header");
+        }
+
+        String token = authHeader.substring(7); // ตัด "Bearer " ออก
+
+        // ตรวจสอบ token
+        if (!jwtTokenUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+        }
+
+        // ดึง claims จาก token
+        Claims claims = jwtTokenUtil.getClaims(token);
+        Integer tokenUserId = claims.get("id", Integer.class);
+
+        // ถ้า id ใน path ไม่ตรงกับ id ใน token → 403 Forbidden
+        if (!id.equals(tokenUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Request userId not matched with token userId");
+        }
+
+        // ดึง user จาก database
+        UserResponseDto user = userBaseService.getUserById(id);
+
+        if (user == null) {
+            throw new  ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found");
+        }
+
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not active");
+        }
+
+        UserResponseDto userUpdated = userBaseService.editUser(id, userUpdateRequest);
+
+        return ResponseEntity.ok(userUpdated);
     }
 }
