@@ -1,3 +1,20 @@
+async function getItemByIdWithAuth(baseUrl, id, token) {
+  try {
+    const response = await fetch(`${baseUrl}/${id}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    return response; // ส่ง response object กลับไปตรง ๆ
+  } catch (error) {
+    console.error('Fetch error:', error);
+    return undefined;
+  }
+}
+
+
 async function getItems(url, options = {}) {
   try {
     const { params } = options;
@@ -127,4 +144,4 @@ async function patchItem(url, id, partialItem) {
   }
 }
 
-export { getItems, getItemById, deleteItemById, addItem, editItem, patchItem }
+export { getItems, getItemById, deleteItemById, addItem, editItem, patchItem,getItemByIdWithAuth }

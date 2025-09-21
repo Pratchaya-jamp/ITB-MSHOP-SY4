@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { computed, ref, onMounted } from 'vue'
+import { getItemByIdWithAuth } from '@/libs/fetchUtilsOur';
 import Cookies from 'js-cookie'
 
 const router = useRouter()
@@ -92,15 +93,13 @@ const fetchUserProfile = async () => {
     }
 
     const userId = decodedToken.id;
-    const API_URL = `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/${userId}`;
 
     try {
-        const response = await fetch(API_URL, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+const response = await getItemByIdWithAuth(
+        'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users',
+        userId,
+        token
+        );
         
         if (response.status === 401 || response.status === 403) {
             console.error('Authentication error: Unauthorized or Forbidden');
