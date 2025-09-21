@@ -42,12 +42,12 @@ public class UsersAccount {
     private String fullname;
 
     // buyer เป็น optional
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "buyerid")
     private BuyerAccount buyer;
 
     // seller เป็น optional
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "sellerid")
     private SellerAccount seller;
 
