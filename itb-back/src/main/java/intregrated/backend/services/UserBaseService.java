@@ -6,6 +6,8 @@ import intregrated.backend.dtos.users.BuyerResponseDto;
 import intregrated.backend.dtos.users.EditUserRequestDto;
 import intregrated.backend.dtos.users.SellerResponseDto;
 import intregrated.backend.dtos.users.UserResponseDto;
+import intregrated.backend.entities.BuyerAccount;
+import intregrated.backend.entities.SellerAccount;
 import intregrated.backend.entities.UsersAccount;
 import intregrated.backend.repositories.UsersAccountRepository;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -92,6 +94,20 @@ public class UserBaseService {
 
         existing.setNickname(request.getNickname().trim());
         existing.setFullname(request.getFullname().trim());
+
+        // update buyer info if exists
+        if (existing.getBuyer() != null) {
+            BuyerAccount buyer = existing.getBuyer();
+            buyer.setNickname(request.getNickname().trim());
+            buyer.setFullname(request.getFullname().trim());
+        }
+
+        // update seller info if exists
+        if (existing.getSeller() != null) {
+            SellerAccount seller = existing.getSeller();
+            seller.setNickname(request.getNickname().trim());
+            seller.setFullname(request.getFullname().trim());
+        }
 
         UsersAccount saved = userRepo.save(existing);
 
