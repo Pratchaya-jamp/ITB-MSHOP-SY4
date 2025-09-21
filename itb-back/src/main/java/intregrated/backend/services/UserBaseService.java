@@ -1,11 +1,14 @@
 package intregrated.backend.services;
 
+import intregrated.backend.dtos.registers.UserRegisterRequestDto;
 import intregrated.backend.dtos.registers.UserRegisterResponseDto;
 import intregrated.backend.dtos.users.BuyerResponseDto;
+import intregrated.backend.dtos.users.EditUserRequestDto;
 import intregrated.backend.dtos.users.SellerResponseDto;
 import intregrated.backend.dtos.users.UserResponseDto;
 import intregrated.backend.entities.UsersAccount;
 import intregrated.backend.repositories.UsersAccountRepository;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -80,6 +83,26 @@ public class UserBaseService {
                     .userType(resolveUserType(user))
                     .build();
         }
+    }
+
+    @Transactional
+    public UserResponseDto editUser(Integer id, EditUserRequestDto request) {
+        UsersAccount existing = userRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + id));
+
+        existing.setNickname(request.getNickname().trim());
+        existing.setFullname(request.getFullname().trim());
+
+        UsersAccount saved = userRepo.save(existing);
+
+        return UserResponseDto.builder()
+                .id(saved.getId())
+                .fullname(saved.getFullname())
+                .nickname(saved.getNickname())
+                .email(saved.getEmail())
+                .userType(resolveUserType(saved))
+                .isActive(saved.getIsActive())
+                .build();
     }
 
 //    @Transactional
