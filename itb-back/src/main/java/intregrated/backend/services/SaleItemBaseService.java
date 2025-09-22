@@ -566,7 +566,7 @@ public class SaleItemBaseService {
     }
 
     private SaleItemBaseByIdDto mapToDto(SaleItemBase s) {
-        // ✅ ดึงรูปแรก
+        // ดึงรูปแรก
         String firstImageName = saleItemPictureRepo
                 .findFirstBySale_IdOrderByPictureOrderAsc(s.getId())
                 .map(SaleItemPicture::getNewPictureName)

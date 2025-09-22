@@ -47,6 +47,7 @@ public class JwtTokenUtil {
                 .setExpiration(new Date(now + EXPIRATION_MS))
                 .claim("nickname", user.getNickname())
                 .claim("id", user.getId())
+                .claim("seller_id", user.getSeller().getId())
                 .claim("email", user.getEmail())
                 .claim("role", role)
                 .signWith(key)

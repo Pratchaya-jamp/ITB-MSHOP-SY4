@@ -36,7 +36,7 @@ public class AuthenticationController {
         Cookie refreshCookie = new Cookie("refresh_token", tokens.getRefresh_token());
         refreshCookie.setHttpOnly(true);
 //        refreshCookie.setSecure(true); // ควรเปิดบน production (https)
-        refreshCookie.setPath("/sy4/itb-mshop/v2/auth");
+        refreshCookie.setPath("/sy4");
         refreshCookie.setMaxAge(24 * 60 * 60); // 1 วัน
         response.addCookie(refreshCookie);
 
