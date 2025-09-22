@@ -140,7 +140,7 @@ async function fetchItems() {
   if (token) {
     try {
       const decodedToken = jwtDecode(token);
-      userId = decodedToken.id;
+      userId = decodedToken.seller_id;
       userRole = decodedToken.role;
     } catch (err) {
       console.error("Failed to decode token:", err);
