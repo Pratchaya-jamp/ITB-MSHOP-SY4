@@ -1,3 +1,33 @@
+async function addItemWithAuth(url, newItem, isMultipart = false, token) {
+  try {
+    const options = { 
+      method: 'POST',
+      headers: {}
+    };
+
+    if (token) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (isMultipart) {
+      // newItem ต้องเป็น FormData
+      options.body = newItem;
+      // ไม่ต้องใส่ Content-Type เพราะ browser จะใส่ให้เอง
+    } else {
+      options.headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(newItem);
+    }
+
+    const res = await fetch(url, options);
+    const data = res.status !== 204 ? await res.json() : null;
+
+    return { status: res.status, data };
+  } catch (error) {
+    throw new Error('Cannot add your item: ' + error.message);
+  }
+}
+
+
 async function getItemByIdWithAuth(baseUrl, id, token) {
   try {
     const response = await fetch(`${baseUrl}/${id}`, {
@@ -14,6 +44,43 @@ async function getItemByIdWithAuth(baseUrl, id, token) {
   }
 }
 
+// ฟังก์ชัน fetch แบบรองรับ Authorization token
+async function getItemsWithAuth(url, options = {}) {
+  try {
+    const { params, token } = options;
+
+    // ประกอบ query string
+    const query = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach(v => v !== null && query.append(key, v));
+        } else if (value !== undefined && value !== null) {
+          query.append(key, value);
+        }
+      });
+    }
+
+    const fullUrl = `${url}?${query.toString()}`;
+
+    const data = await fetch(fullUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+    });
+
+    if (!data.ok) {
+      const errText = await data.text();
+      throw new Error(`HTTP error ${data.status}: ${errText}`);
+    }
+
+    return await data.json();
+  } catch (error) {
+    console.error('Fetch error:', error);
+    throw error;
+  }
+}
 
 async function getItems(url, options = {}) {
   try {
@@ -144,4 +211,4 @@ async function patchItem(url, id, partialItem) {
   }
 }
 
-export { getItems, getItemById, deleteItemById, addItem, editItem, patchItem,getItemByIdWithAuth }
+export { getItems, getItemById, deleteItemById, addItem, editItem, patchItem,getItemByIdWithAuth,getItemsWithAuth, addItemWithAuth }

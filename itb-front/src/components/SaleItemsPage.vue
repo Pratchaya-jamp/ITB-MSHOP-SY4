@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getItems, deleteItemById } from '@/libs/fetchUtilsOur';
+import { getItems, deleteItemById,getItemsWithAuth } from '@/libs/fetchUtilsOur';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
 import { jwtDecode } from 'jwt-decode';
-import Cookies from 'js-cookie'
+// import Cookies from 'js-cookie'
 
 const router = useRouter()
 const route = useRoute()
@@ -132,53 +132,101 @@ const iconComponent = computed(() => {
 
 // Fetch
 async function fetchItems() {
+  const token = localStorage.getItem('access_token');
+
+  let userId = null;
+  let userRole = null;
+
+  if (token) {
+    try {
+      const decodedToken = jwtDecode(token);
+      userId = decodedToken.id;
+      userRole = decodedToken.role;
+    } catch (err) {
+      console.error("Failed to decode token:", err);
+    }
+  }
+
   try {
-    let lower = priceLower.value != null ? priceLower.value : undefined
-    let upper = priceUpper.value != null ? priceUpper.value : undefined
+    let lower = priceLower.value != null ? priceLower.value : undefined;
+    let upper = priceUpper.value != null ? priceUpper.value : undefined;
 
     if (lower != null && upper != null) {
       const selectedRange = priceRanges.find(
         range => range.min === lower && range.max === upper
-      )
+      );
       if (selectedRange) {
-        lower = selectedRange.min
-        upper = selectedRange.max
+        lower = selectedRange.min;
+        upper = selectedRange.max;
       }
     } else if (lower != null && upper == null) {
-      upper = lower
+      upper = lower;
     }
 
     let storagesToSend = selectedStorages.value.map(s => {
-      if (s === 'Not specified') return null
-      if (s === '1 TB') return 1024
-      return parseInt(s)
-    })
+      if (s === 'Not specified') return null;
+      if (s === '1 TB') return 1024;
+      return parseInt(s);
+    });
 
-    const response = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', {
-      params: {
-        filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
-        filterStorages: storagesToSend.length ? storagesToSend : undefined,
-        filterPriceLower: lower,
-        filterPriceUpper: upper,
-        page: currentPage.value,
-        size: pageSize.value,
-        searchKeyword: searchQuery.value,
-        sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
-        sortDirection:
-          currentSortOrder.value === 'brandAsc'
-            ? 'asc'
-            : currentSortOrder.value === 'brandDesc'
-              ? 'desc'
-              : 'asc',
-      }
-    })
+    let response;
 
-    items.value = response.content
-    totalPages.value = response.totalPages
+    if (token && userRole === 'SELLER') {
+      // เรียกสินค้าของ seller
+      response = await getItemsWithAuth(
+        `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sellers/${userId}/sale-items`,
+        {
+          params: {
+            filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
+            filterStorages: storagesToSend.length ? storagesToSend : undefined,
+            filterPriceLower: lower,
+            filterPriceUpper: upper,
+            page: currentPage.value,
+            size: pageSize.value,
+            searchKeyword: searchQuery.value,
+            sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
+            sortDirection:
+              currentSortOrder.value === 'brandAsc'
+                ? 'asc'
+                : currentSortOrder.value === 'brandDesc'
+                  ? 'desc'
+                  : 'asc',
+          },
+          token,
+        }
+      );
+    } else {
+      // ถ้าไม่ login หรือไม่ใช่ seller → ใช้ public endpoint
+      response = await getItems(
+        'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/page-sale-items',
+        {
+          params: {
+            filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
+            filterStorages: storagesToSend.length ? storagesToSend : undefined,
+            filterPriceLower: lower,
+            filterPriceUpper: upper,
+            page: currentPage.value,
+            size: pageSize.value,
+            searchKeyword: searchQuery.value,
+            sortField: currentSortOrder.value === 'createdOn' ? 'id' : 'brand.name',
+            sortDirection:
+              currentSortOrder.value === 'brandAsc'
+                ? 'asc'
+                : currentSortOrder.value === 'brandDesc'
+                  ? 'desc'
+                  : 'asc',
+          },
+        }
+      );
+    }
+
+    items.value = response.content;
+    totalPages.value = response.totalPages;
   } catch (err) {
-    console.error('Fetch error:', err)
+    console.error('Fetch error:', err);
   }
 }
+
 
 async function fetchbrand() {
   try {
@@ -421,7 +469,7 @@ watch(
 )
 
 const checkUserRole = () => {
-  const token = Cookies.get('access_token');
+  const token = localStorage.getItem('access_token');
   if (token) {
     try {
       const decodedToken = jwtDecode(token);

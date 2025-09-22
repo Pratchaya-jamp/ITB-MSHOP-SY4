@@ -1,7 +1,7 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import { jwtDecode } from 'jwt-decode'
-import Cookies from 'js-cookie'
+// import Cookies from 'js-cookie'
 import LandingPage from '../components/LandingPage.vue'
 import SaleItemsPage from '../components/SaleItemsPage.vue'
 import SaleItemsDetailPage from '@/components/SaleItemsDetailPage.vue'
@@ -103,7 +103,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = Cookies.get('access_token');
+  const token = localStorage.getItem('access_token');
 
   if (to.meta.requiresSeller) {
     if (token) {

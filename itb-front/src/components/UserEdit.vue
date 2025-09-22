@@ -1,7 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { computed, ref, onMounted } from 'vue'
-import Cookies from 'js-cookie'
+// import Cookies from 'js-cookie'
 
 const router = useRouter()
 const theme = ref(localStorage.getItem('theme') || 'dark')
@@ -118,13 +118,11 @@ const decodeJwtToken = (token) => {
 
 // **Function to fetch user data for pre-filling the form**
 const fetchUserProfileForEdit = async () => {
-    loading.value = true;
-    const token = Cookies.get('access_token');
+    const token = localStorage.getItem('access_token');
 
     if (!token) {
-        console.error('Authentication error: No access token found in cookies.');
+        console.error('Authentication error: No access token found in storage.');
         router.push('/login'); 
-        loading.value = false;
         return;
     }
 
@@ -133,7 +131,6 @@ const fetchUserProfileForEdit = async () => {
     if (!decodedToken || !decodedToken.id) {
         console.error('Invalid token payload: Could not find user ID.');
         router.push('/login');
-        loading.value = false;
         return;
     }
 
@@ -164,8 +161,6 @@ const fetchUserProfileForEdit = async () => {
         originalProfile.value = { ...data }; // Store original data for comparison
     } catch (error) {
         console.error('Error fetching user profile:', error);
-    } finally {
-        loading.value = false;
     }
 };
 
@@ -198,10 +193,7 @@ const maskedNationalId = computed(() => {
         </div>
         
         <div class="relative z-10 w-full max-w-2xl animate-fade-in-up">
-            <div v-if="loading" :class="cardClass" class="p-8 md:p-12 rounded-[2rem] text-center">
-                <p>Loading user profile...</p>
-            </div>
-            <div v-else-if="userProfile" :class="cardClass" class="p-8 md:p-12 rounded-[2rem] space-y-6">
+            <div v-if="userProfile" :class="cardClass" class="p-8 md:p-12 rounded-[2rem] space-y-6">
                  <div class="flex justify-center mb-6">
                     <img :src="userPicture.image" alt="User Profile Picture" 
                          class="w-32 h-32 rounded-full border-4 border-orange-500 object-cover shadow-lg transform hover:scale-110 transition-transform duration-300" />

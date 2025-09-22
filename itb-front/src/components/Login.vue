@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router';
 import { ref, computed, watch, onMounted } from 'vue';
 import { addItem } from '@/libs/fetchUtilsOur';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
-import Cookies from 'js-cookie'
+// import Cookies from 'js-cookie'
 
 const router = useRouter();
 const theme = ref(localStorage.getItem('theme') || 'dark');
@@ -16,7 +16,7 @@ const toggleTheme = () => {
 
 // 3. ตั้งค่า Event Listener เมื่อ component ถูก mount
 onMounted(async () => {
-const token = Cookies.get('access_token');
+const token = localStorage.getItem('access_token');
   if (token) {
     // ถ้ามี token แสดงว่าผู้ใช้ล็อกอินอยู่แล้ว
     router.push({ path: '/sale-items' });
@@ -118,8 +118,8 @@ const handleSubmit = async () => {
     );
     
     if (data.status === 200) {
-      Cookies.set('access_token', data.data?.access_token);
-      Cookies.set('refresh_token', data.data?.refresh_token);
+      localStorage.setItem('access_token', data.data?.access_token);
+      localStorage.setItem('refresh_token', data.data?.refresh_token);
       message.value = 'Login successful!';
       setTimeout(() => {
         isLoading.value = false;

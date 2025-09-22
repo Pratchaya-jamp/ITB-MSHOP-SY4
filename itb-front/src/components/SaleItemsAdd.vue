@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { addItem, editItem, getItems, getItemById } from '@/libs/fetchUtilsOur'
+import { addItem, editItem, getItems, getItemById, addItemWithAuth } from '@/libs/fetchUtilsOur'
+// import Cookies from 'js-cookie'
 
 const router = useRouter()
 const route = useRoute()
@@ -218,7 +219,7 @@ onMounted(async () => {
     }
     if (id) {
         isEditMode.value = true
-        const data = await getItemById('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items', id)
+        const data = await getItemById('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', id)
         if (data) {
             const formattedProduct = {
                 id: data.id,
@@ -584,12 +585,14 @@ const confirmAddItem = async () => {
     pictures.value.forEach((picture) => {
         formData.append('pictures', picture.file, picture.name)
     })
+const token = localStorage.getItem('access_token');
 
     try {
-        const result = await addItem(
-            'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items',
+        const result = await addItemWithAuth(
+            'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items',
             formData,
-            true
+            true,
+	token ,
         )
 
         if (result.status !== 201 || !result.data?.id) {
@@ -643,7 +646,7 @@ for (let [key, value] of formData.entries()) {
 
   try {
     const result = await editItem(
-      'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items',
+      'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items',
       route.params.id,
       formData,
       true
