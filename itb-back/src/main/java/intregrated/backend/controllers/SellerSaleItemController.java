@@ -40,14 +40,14 @@ public class SellerSaleItemController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
         }
 
-        Integer userIdFromToken = jwtTokenUtil.getClaims(token).get("id", Integer.class);
+        Integer sellerIdFromToken = jwtTokenUtil.getClaims(token).get("seller_id", Integer.class);
         String role = jwtTokenUtil.getClaims(token).get("role", String.class);
 
         if (!"SELLER".equals(role)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only seller can access this resource");
         }
 
-        if (!userIdFromToken.equals(sellerId)) {
+        if (!sellerIdFromToken.equals(sellerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Request seller id not matched with id in access token");
         }
 

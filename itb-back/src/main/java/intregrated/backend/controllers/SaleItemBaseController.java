@@ -142,7 +142,7 @@ public class SaleItemBaseController {
             @RequestPart(value = "pictures", required = false) MultipartFile[] pictures
     ) {
         String token = authHeader.replace("Bearer ", "");
-        Integer sellerId = jwtTokenUtil.getClaims(token).get("id", Integer.class);
+        Integer sellerId = jwtTokenUtil.getClaims(token).get("seller_id", Integer.class);
         String role = jwtTokenUtil.getClaims(token).get("role", String.class);
 
         if (!"SELLER".equalsIgnoreCase(role)) {
