@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { addItem, editItem, getItems, getItemById, addItemWithAuth } from '@/libs/fetchUtilsOur'
-// import Cookies from 'js-cookie'
+import Cookies from 'js-cookie'
 
 const router = useRouter()
 const route = useRoute()
@@ -585,7 +585,7 @@ const confirmAddItem = async () => {
     pictures.value.forEach((picture) => {
         formData.append('pictures', picture.file, picture.name)
     })
-const token = localStorage.getItem('access_token');
+const token = Cookies.get('access_token');
 
     try {
         const result = await addItemWithAuth(

@@ -39,8 +39,9 @@ public class JwtTokenUtil {
     }
 
     public String generateToken(UsersAccount user, String role) {
-        long now = System.currentTimeMillis();
-
+    long now = System.currentTimeMillis();
+    
+    if ("SELLER".equals(role)) { // Corrected line
         return Jwts.builder()
                 .setIssuer(ISSUER)
                 .setIssuedAt(new Date(now))
@@ -52,6 +53,30 @@ public class JwtTokenUtil {
                 .claim("role", role)
                 .signWith(key)
                 .compact();
+    } else if ("BUYER".equals(role)) { // Corrected line
+        return Jwts.builder()
+                .setIssuer(ISSUER)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + EXPIRATION_MS))
+                .claim("nickname", user.getNickname())
+                .claim("id", user.getId())
+                .claim("email", user.getEmail())
+                .claim("role", role)
+                .signWith(key)
+                .compact();
+    } else {
+            return Jwts.builder()
+                .setIssuer(ISSUER)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + EXPIRATION_MS))
+                .claim("nickname", user.getNickname())
+                .claim("id", user.getId())
+                .claim("seller_id", user.getSeller().getId())
+                .claim("email", user.getEmail())
+                .claim("role", role)
+                .signWith(key)
+                .compact();
+        }
     }
 
     public String generateRefreshToken(UsersAccount user) {

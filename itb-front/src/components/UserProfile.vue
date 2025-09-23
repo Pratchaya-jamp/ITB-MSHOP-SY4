@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router'
 import { computed, ref, onMounted } from 'vue'
 import { getItemByIdWithAuth } from '@/libs/fetchUtilsOur';
-// import Cookies from 'js-cookie'
+import Cookies from 'js-cookie'
 
 const router = useRouter()
 const theme = ref(localStorage.getItem('theme') || 'dark')
@@ -73,7 +73,7 @@ const decodeJwtToken = (token) => {
 };
 
 const fetchUserProfile = async () => {
-    const token = localStorage.getItem('access_token');
+    const token = Cookies.get('access_token');
 
     if (!token) {
         console.error('Authentication error: No access token found in storage.');

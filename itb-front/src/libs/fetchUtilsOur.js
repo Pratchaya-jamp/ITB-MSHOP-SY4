@@ -1,3 +1,31 @@
+async function editItemWithAuth(url, id, updatedItem, token, isMultipart = false) {
+  try {
+    const options = {
+      method: 'PUT',
+      headers: {}
+    }
+
+    // ถ้ามี token ให้ใส่ลงใน header
+    if (token) {
+      options.headers['Authorization'] = `Bearer ${token}`
+    }
+
+    if (isMultipart) {
+      // updatedItem เป็น FormData
+      options.body = updatedItem
+    } else {
+      options.headers['Content-Type'] = 'application/json'
+      options.body = JSON.stringify(updatedItem)
+    }
+
+    const res = await fetch(`${url}/${id}`, options)
+    const data = res.status !== 204 ? await res.json() : null
+    return { status: res.status, data }
+  } catch (error) {
+    throw new Error('Cannot edit your item: ' + error.message)
+  }
+}
+
 async function addItemWithAuth(url, newItem, isMultipart = false, token) {
   try {
     const options = { 
@@ -211,4 +239,4 @@ async function patchItem(url, id, partialItem) {
   }
 }
 
-export { getItems, getItemById, deleteItemById, addItem, editItem, patchItem,getItemByIdWithAuth,getItemsWithAuth, addItemWithAuth }
+export { getItems, getItemById, deleteItemById, addItem, editItem, patchItem,getItemByIdWithAuth,getItemsWithAuth, addItemWithAuth, editItemWithAuth}

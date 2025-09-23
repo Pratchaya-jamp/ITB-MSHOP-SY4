@@ -2,6 +2,8 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItemById, deleteItemById } from '@/libs/fetchUtilsOur'
+import { jwtDecode } from 'jwt-decode'
+import Cookies from 'js-cookie'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,12 +32,28 @@ const startCountdown = () => {
 const showEditSuccessPopup = ref(false)
 const showEditFallPopup = ref(false)
 
+const userRole = ref(null)
+
+const isSeller = computed(() => userRole.value === 'SELLER')
+
 const closeSuccessPopup = () => {
     showEditSuccessPopup.value = false
     showEditFallPopup.value = false
 }
 
-// **ปรับปรุง Theme Logic**
+const decodeTokenAndSetRole = () => {
+    try {
+        const token = Cookies.get('access_token')
+        if (token) {
+            const decodedToken = jwtDecode(token)
+            userRole.value = decodedToken.role
+        }
+    } catch (error) {
+        console.error('Failed to decode JWT token:', error)
+        userRole.value = null
+    }
+}
+
 const theme = ref(localStorage.getItem('theme') || 'dark')
 
 const applyTheme = (newTheme) => {
@@ -49,18 +67,10 @@ const toggleTheme = () => {
     applyTheme(newTheme)
 }
 
-// function handleProductImages(images) {
-//     if (!images) return
-//     productImages.value = images
-//         .sort((a, b) => a.imageViewOrder - b.imageViewOrder) // จัดเรียงตามลำดับ
-//         .map(img => `/sy4/product-images/${img.fileName}`) // ชี้ไปที่โฟลเดอร์ public
-// }
-
 const handleMainImageError = () => {
     imageError.value = true;
     imageLoading.value = false;
 
-    // ลองใช้รูปภาพสำรอง
     if (mainImage.value !== '/sy4/phone/iPhone.png') {
         mainImage.value = '/sy4/phone/iPhone.png';
         imageLoading.value = true;
@@ -68,6 +78,8 @@ const handleMainImageError = () => {
 };
 
 onMounted(async () => {
+    decodeTokenAndSetRole()
+
     try {
         const data = await getItemById('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', id)
         if (!data || data?.status === 404) {
@@ -84,7 +96,7 @@ onMounted(async () => {
             const sortedImages = data.saleItemImages
                 .sort((a, b) => a.imageViewOrder - b.imageViewOrder)
                 .map(img => `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/images/${img.fileName}`)
-      
+        
             productImages.value = sortedImages
             mainImage.value = sortedImages[0]
         }
@@ -97,7 +109,6 @@ onMounted(async () => {
             router.push('/sale-items')
         }, 3000)
     }
-    // ใช้ onMounted เพื่อตั้งค่า theme เมื่อ component โหลดเสร็จ
     const savedTheme = localStorage.getItem('theme')
     if (savedTheme) {
         applyTheme(savedTheme)
@@ -119,7 +130,6 @@ watch(
                 showEditSuccessPopup.value = true
             }, 200)
             router.replace({ path: route.path, query: {} })
-            //router.go(0)
         }
     },
     { immediate: true }
@@ -201,7 +211,6 @@ const iconComponent = computed(() => {
         <div class="ltbms-product-detail grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto transition-colors duration-500"
             :class="theme === 'dark' ? 'bg-gray-900' : 'bg-white'">
             <div class="flex flex-col">
-                <!-- Main Product Image -->
                 <div class="relative w-full aspect-[4/3] overflow-hidden rounded-xl shadow-lg mb-4 bg-gray-100">
                     <img :src="mainImage"
                         :alt="product?.model ? `${product?.brandName} ${product?.model}` : 'Product image'"
@@ -209,7 +218,6 @@ const iconComponent = computed(() => {
                         @load="imageLoading = false" @error="handleMainImageError" />
                 </div>
 
-                <!-- Thumbnail Gallery -->
                 <div v-if="productImages.length > 0"
                     class="flex gap-3 px-4 justify-start overflow-x-auto pb-4 scrollbar-thin">
 
@@ -293,20 +301,37 @@ const iconComponent = computed(() => {
                 </div>
 
                 <div class="flex flex-col sm:flex-row gap-4 pt-4">
-                    <button @click="router.push(`/sale-items/${product.id}/edit`)"
-                        class="itbms-edit-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
-                        :class="theme === 'dark'
-                            ? 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600'
-                            : 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600'">
-                        Edit Product
-                    </button>
-                    <button @click="deleteproduct"
-                        class="itbms-delete-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
-                        :class="theme === 'dark'
-                            ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
-                            : 'bg-red-500 text-white border-red-500 hover:bg-red-600'">
-                        Delete Product
-                    </button>
+                    <div v-if="isSeller" class="flex flex-col sm:flex-row gap-4 pt-4 w-full">
+                        <button @click="router.push(`/sale-items/${product.id}/edit`)"
+                            class="itbms-edit-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
+                            :class="theme === 'dark'
+                                ? 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600'
+                                : 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600'">
+                            Edit Product
+                        </button>
+                        <button @click="deleteproduct"
+                            class="itbms-delete-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
+                            :class="theme === 'dark'
+                                ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
+                                : 'bg-red-500 text-white border-red-500 hover:bg-red-600'">
+                            Delete Product
+                        </button>
+                    </div>
+
+                    <div v-else class="w-full">
+                        <button v-if="product?.quantity < 1"
+                            class="itbms-sold-out-button w-full font-semibold border-2 rounded-xl px-6 py-3 shadow-md cursor-not-allowed"
+                            :class="theme === 'dark' ? 'bg-gray-700 text-gray-400 border-gray-700' : 'bg-gray-300 text-gray-600 border-gray-300'">
+                            Sold Out
+                        </button>
+                        <button v-else
+                            class="itbms-add-to-cart-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
+                            :class="theme === 'dark'
+                                ? 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600'
+                                : 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600'">
+                            Add to Cart
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -387,8 +412,7 @@ const iconComponent = computed(() => {
 
         <button @click="toggleTheme"
             class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-md shadow-lg transition-all duration-300 z-50 hover:shadow-2xl hover:cursor-pointer"
-            :class="theme === 'dark' ? 'bg-gray-700/80 text-white' : 'bg-gray-200/80 text-black'"
-            v-html="iconComponent">
+            :class="theme === 'dark' ? 'bg-gray-700/80 text-white' : 'bg-gray-200/80 text-black'" v-html="iconComponent">
         </button>
     </div>
 </template>
@@ -434,7 +458,6 @@ const iconComponent = computed(() => {
     animation: spin 1s linear infinite;
 }
 
-/* New styles for better visuals */
 .ltbms-product-detail {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
@@ -443,15 +466,12 @@ const iconComponent = computed(() => {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
-/* Hide scrollbar for thumbnail gallery but keep functionality */
 .overflow-x-auto::-webkit-scrollbar {
     display: none;
 }
 
 .overflow-x-auto {
     -ms-overflow-style: none;
-    /* IE and Edge */
     scrollbar-width: none;
-    /* Firefox */
 }
 </style>

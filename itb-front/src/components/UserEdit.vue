@@ -1,7 +1,8 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { computed, ref, onMounted } from 'vue'
-// import Cookies from 'js-cookie'
+import { editItemWithAuth } from '@/libs/fetchUtilsOur';
+import Cookies from 'js-cookie'
 
 const router = useRouter()
 const theme = ref(localStorage.getItem('theme') || 'dark')
@@ -67,43 +68,35 @@ const navigateToProfile = () => {
 
 // **Function to handle saving changes to the backend (PUT/PATCH request)**
 const saveProfile = async () => {
+
     if (!isSaveEnabled.value) return;
+    const token = Cookies.get('access_token') // หรือดึงจาก Cookie ก็ได้
 
-    // TODO: Implement the PUT/PATCH request to your backend here
-    // const token = Cookies.get('access_token');
-    // const userId = ...;
-    // const API_URL = `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/${userId}`;
+    try{
+        const result = await editItemWithAuth(
+            'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users',
+            userProfile.value.id, // id ของ user ที่จะแก้
+            {
+            nickname: userProfile.value.nickname,
+            fullname: userProfile.value.fullname
+            },
+            token
+        )
+
+        if (result.status !== 200 || !result.data?.id) {
+                throw new Error('Edit failed')
+            }
+
+        navigateToProfile();
+        
+    } catch (err) {
+        console.error(err)
+        responseMessage.value = 'เกิดข้อผิดพลาดในการแก้ไขสินค้า'
+    }
     
-    // try {
-    //     const response = await fetch(API_URL, {
-    //         method: 'PUT', // or 'PATCH'
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //             'Authorization': `Bearer ${token}`
-    //         },
-    //         body: JSON.stringify({
-    //             nickname: userProfile.value.nickname,
-    //             fullname: userProfile.value.fullname,
-    //             email: userProfile.value.email,
-    //             password: isSeller.value ? userProfile.value.password : undefined
-    //         })
-    //     });
-
-    //     if (!response.ok) {
-    //         throw new Error(`Failed to update user profile: ${response.statusText}`);
-    //     }
-
-    //     console.log('Profile updated successfully!');
-    //     navigateToProfile();
-    // } catch (error) {
-    //     console.error('Error saving profile:', error);
-    // }
-
-    // Placeholder until the backend endpoint is available
-    console.log('Saving profile...');
-    console.log('User Data to be saved:', userProfile.value);
-    navigateToProfile();
 }
+
+
 
 const decodeJwtToken = (token) => {
     try {
@@ -118,7 +111,7 @@ const decodeJwtToken = (token) => {
 
 // **Function to fetch user data for pre-filling the form**
 const fetchUserProfileForEdit = async () => {
-    const token = localStorage.getItem('access_token');
+    const token = Cookies.get('access_token');
 
     if (!token) {
         console.error('Authentication error: No access token found in storage.');
@@ -169,19 +162,22 @@ onMounted(() => {
     applyTheme(theme.value);
 });
 
+// แก้ไขในส่วนนี้
 const maskedMobileNumber = computed(() => {
-    if (!userProfile.value?.mobile || userProfile.value.mobile.length < 4) return userProfile.value?.mobile;
-    const len = userProfile.value.mobile.length;
-    return userProfile.value.mobile.slice(0, len - 4).replace(/./g, 'x') + userProfile.value.mobile.slice(len - 4);
+    const mobile = userProfile.value?.mobile;
+    if (!mobile || mobile.length <= 4) return mobile;
+    const unmaskedPart = mobile.slice(-4, -1);
+    const maskedPart = 'x'.repeat(mobile.length - 4);
+    return `${maskedPart}${unmaskedPart}x`;
 })
 
-const maskedNationalId = computed(() => {
-    if (!userProfile.value?.nationalId || userProfile.value.nationalId.length < 4) return userProfile.value?.nationalId;
-    const len = userProfile.value.nationalId.length;
-    const start = userProfile.value.nationalId.slice(0, len - 4).replace(/./g, 'x');
-    const middle = userProfile.value.nationalId.slice(len - 4, len - 1);
-    const end = userProfile.value.nationalId.slice(len - 1);
-    return `${start}${middle}${end}`;
+// แก้ไขในส่วนนี้
+const maskedBankNumber = computed(() => {
+    const bankNumber = userProfile.value?.bankNumber;
+    if (!bankNumber || bankNumber.length <= 4) return bankNumber;
+    const unmaskedPart = bankNumber.slice(-4, -1);
+    const maskedPart = 'x'.repeat(bankNumber.length - 4);
+    return `${maskedPart}${unmaskedPart}x`;
 })
 </script>
 
@@ -194,9 +190,9 @@ const maskedNationalId = computed(() => {
         
         <div class="relative z-10 w-full max-w-2xl animate-fade-in-up">
             <div v-if="userProfile" :class="cardClass" class="p-8 md:p-12 rounded-[2rem] space-y-6">
-                 <div class="flex justify-center mb-6">
+                <div class="flex justify-center mb-6">
                     <img :src="userPicture.image" alt="User Profile Picture" 
-                         class="w-32 h-32 rounded-full border-4 border-orange-500 object-cover shadow-lg transform hover:scale-110 transition-transform duration-300" />
+                            class="w-32 h-32 rounded-full border-4 border-orange-500 object-cover shadow-lg transform hover:scale-110 transition-transform duration-300" />
                 </div>
                 
                 <h2 class="text-4xl font-bold text-center mb-6">Edit Profile</h2>
@@ -205,22 +201,22 @@ const maskedNationalId = computed(() => {
                     <div class="flex flex-col gap-2">
                         <label for="nickname" class="text-sm opacity-75">Nickname</label>
                         <input type="text" id="nickname" v-model="userProfile.nickname"
-                            class="w-full p-4 rounded-xl placeholder-gray-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                            :class="theme === 'dark' ? 'bg-gray-800 shadow-xl border border-gray-700' : 'bg-gray-200 shadow-xl border border-gray-300'" />
+                                class="w-full p-4 rounded-xl placeholder-gray-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                                :class="theme === 'dark' ? 'bg-gray-800 shadow-xl border border-gray-700' : 'bg-gray-200 shadow-xl border border-gray-300'" />
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label for="fullname" class="text-sm opacity-75">Fullname</label>
                         <input type="text" id="fullname" v-model="userProfile.fullname"
-                            class="w-full p-4 rounded-xl placeholder-gray-500 transition-all focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            :class="theme === 'dark' ? 'bg-gray-800 shadow-xl border border-gray-700' : 'bg-gray-200 shadow-xl border border-gray-300'" />
+                                class="w-full p-4 rounded-xl placeholder-gray-500 transition-all focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                :class="theme === 'dark' ? 'bg-gray-800 shadow-xl border border-gray-700' : 'bg-gray-200 shadow-xl border border-gray-300'" />
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label for="email" class="text-sm opacity-75">Email</label>
-                        <input type="email" id="email" v-model="userProfile.email"
-                            class="w-full p-4 rounded-xl placeholder-gray-500 transition-all focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            :class="theme === 'dark' ? 'bg-gray-800 shadow-xl border border-gray-700' : 'bg-gray-200 shadow-xl border border-gray-300'" />
+                        <input type="email" id="email" v-model="userProfile.email" disabled
+                                class="w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed"
+                                        :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-200 border border-gray-300'" />
                     </div>
 
                     <template v-if="isSeller">
@@ -232,13 +228,14 @@ const maskedNationalId = computed(() => {
                         </div>
                         <div class="flex flex-col gap-2">
                             <label class="text-sm opacity-75">Bank Name</label>
-                            <input type="text" :value="userProfile.bankName ? 'Provided' : ''" disabled
+                            <input type="text" :value="userProfile.bankName" disabled
                                 class="w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed text-orange-500 font-semibold"
                                 :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-200 border border-gray-300'" />
                         </div>
+                        
                         <div class="flex flex-col gap-2">
                             <label class="text-sm opacity-75">Bank Account Number</label>
-                            <input type="text" :value="userProfile.bankNumber" disabled
+                            <input type="text" :value="maskedBankNumber" disabled
                                 class="w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed"
                                 :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-200 border border-gray-300'" />
                         </div>
