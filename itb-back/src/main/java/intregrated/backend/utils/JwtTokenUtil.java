@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtTokenUtil {
@@ -40,43 +42,25 @@ public class JwtTokenUtil {
 
     public String generateToken(UsersAccount user, String role) {
     long now = System.currentTimeMillis();
-    
-    if ("SELLER".equals(role)) { // Corrected line
-        return Jwts.builder()
+
+        JwtBuilder builder = Jwts.builder()
                 .setIssuer(ISSUER)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + EXPIRATION_MS))
                 .claim("nickname", user.getNickname())
+                .claim("typ", "access_token")
                 .claim("id", user.getId())
-                .claim("seller_id", user.getSeller().getId())
-                .claim("email", user.getEmail())
                 .claim("role", role)
-                .signWith(key)
-                .compact();
-    } else if ("BUYER".equals(role)) { // Corrected line
-        return Jwts.builder()
-                .setIssuer(ISSUER)
-                .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + EXPIRATION_MS))
-                .claim("nickname", user.getNickname())
-                .claim("id", user.getId())
-                .claim("email", user.getEmail())
-                .claim("role", role)
-                .signWith(key)
-                .compact();
-    } else {
-            return Jwts.builder()
-                .setIssuer(ISSUER)
-                .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + EXPIRATION_MS))
-                .claim("nickname", user.getNickname())
-                .claim("id", user.getId())
-                .claim("seller_id", user.getSeller().getId())
-                .claim("email", user.getEmail())
-                .claim("role", role)
-                .signWith(key)
-                .compact();
+                .claim("email", user.getEmail());
+
+        if (user.getSeller() != null) {
+            builder.claim("seller_id", user.getSeller().getId());
         }
+        if (user.getBuyer() != null) {
+            builder.claim("buyer_id", user.getBuyer().getId());
+        }
+
+        return builder.signWith(key).compact();
     }
 
     public String generateRefreshToken(UsersAccount user) {
@@ -87,6 +71,7 @@ public class JwtTokenUtil {
                 .setIssuer(ISSUER)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + refreshExpirationMs))
+                .claim("typ", "refresh_token")
                 .claim("id", user.getId())
                 .signWith(key)
                 .compact();
