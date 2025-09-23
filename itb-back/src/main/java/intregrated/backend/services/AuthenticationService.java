@@ -140,9 +140,7 @@ public class AuthenticationService {
     }
 
     public String getRole(UsersAccount userAccount) {
-        if (userAccount.getSeller() != null && userAccount.getBuyer() != null) {
-            return "BUYER, SELLER";
-        } else if (userAccount.getSeller() != null) {
+        if (userAccount.getSeller() != null) {
             return "SELLER";
         } else if (userAccount.getBuyer() != null) {
             return "BUYER";
