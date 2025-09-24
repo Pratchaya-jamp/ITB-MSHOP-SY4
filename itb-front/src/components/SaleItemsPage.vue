@@ -983,13 +983,13 @@ const removeActiveFilter = (filter) => {
           <tbody>
             <tr v-for="item in items" :key="item.id" class="itbms-row transition-colors duration-200"
               :class="theme === 'dark' ? 'bg-gray-900 text-gray-200 hover:bg-gray-800' : 'bg-white text-gray-800 hover:bg-gray-100'">
-              <td class="px-4 py-3">{{ item.id }}</td>
-              <td class="px-4 py-3">{{ item.brandName }}</td>
-              <td class="px-4 py-3">{{ item.model }}</td>
-              <td class="px-4 py-3">{{ item.ramGb || '-' }}</td>
-              <td class="px-4 py-3">{{ item.storageGb || '-' }}</td>
-              <td class="px-4 py-3">{{ item.color || '-' }}</td>
-              <td class="px-4 py-3">{{ item.price.toLocaleString() }}</td>
+              <td class="itbms-id px-4 py-3">{{ item.id }}</td>
+              <td class="itbms-brand px-4 py-3">{{ item.brandName }}</td>
+              <td class="itbms-model px-4 py-3">{{ item.model }}</td>
+              <td class="itbms-ramGb px-4 py-3">{{ item.ramGb || '-' }}</td>
+              <td class="itbms-storageGb px-4 py-3">{{ item.storageGb || '-' }}</td>
+              <td class="itbms-color px-4 py-3">{{ item.color || '-' }}</td>
+              <td class="itbms-price px-4 py-3">{{ item.price.toLocaleString() }}</td>
               <td class="px-4 py-3 space-x-2">
                 <button @click.stop="goToEditItem(item.id)"
                   class="itbms-edit-button font-semibold border-2 rounded-full px-4 py-1 transition-colors duration-300"
@@ -1030,16 +1030,20 @@ const removeActiveFilter = (filter) => {
         &lt; Prev
       </button>
 
-      <button v-for="page in visiblePages" :key="'page-' + page" @click="() => { lastAction = ''; goToPage(page - 1) }"
-        class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm" :class="[
+      <button v-for="(page, index) in visiblePages" 
+        :key="'page-' + page" 
+        @click="() => { lastAction = ''; goToPage(page - 1) }"
+        :class="[
+          'itbms-page-' + index, // แก้ไขตรงนี้
+          'px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm',
           currentPage === page - 1
             ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
             : theme === 'dark'
               ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:cursor-pointer'
               : 'bg-white text-gray-800 hover:bg-gray-100 hover:cursor-pointer'
         ]">
-        {{ page }}
-      </button>
+  {{ page }}
+</button>
 
       <button @click="() => { lastAction = 'next'; goToPage(currentPage + 1) }"
         :disabled="currentPage === totalPages - 1"
@@ -1189,7 +1193,7 @@ const removeActiveFilter = (filter) => {
         <div class="p-6 rounded-3xl shadow-lg text-center"
           :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
           <h2 class="text-xl font-semibold mb-4">Success!</h2>
-          <p class="itbms-message mb-4">The sale item has been successfully added!</p>
+          <p class="itbms-message mb-4">The sale item has been successfully added.</p>
           <button @click="closeSuccessPopup"
             class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
         </div>

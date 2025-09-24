@@ -201,21 +201,21 @@ const maskedBankNumber = computed(() => {
                     <div class="flex flex-col gap-2">
                         <label for="nickname" class="text-sm opacity-75">Nickname</label>
                         <input type="text" id="nickname" v-model="userProfile.nickname"
-                                class="w-full p-4 rounded-xl placeholder-gray-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                                class="itbms-nickname w-full p-4 rounded-xl placeholder-gray-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                                 :class="theme === 'dark' ? 'bg-gray-800 shadow-xl border border-gray-700' : 'bg-gray-200 shadow-xl border border-gray-300'" />
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label for="fullname" class="text-sm opacity-75">Fullname</label>
                         <input type="text" id="fullname" v-model="userProfile.fullname"
-                                class="w-full p-4 rounded-xl placeholder-gray-500 transition-all focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                class="itbms-fullname w-full p-4 rounded-xl placeholder-gray-500 transition-all focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                 :class="theme === 'dark' ? 'bg-gray-800 shadow-xl border border-gray-700' : 'bg-gray-200 shadow-xl border border-gray-300'" />
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label for="email" class="text-sm opacity-75">Email</label>
                         <input type="email" id="email" v-model="userProfile.email" disabled
-                                class="w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed"
+                                class="itbms-email w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed"
                                         :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-200 border border-gray-300'" />
                     </div>
 
@@ -223,20 +223,20 @@ const maskedBankNumber = computed(() => {
                         <div class="flex flex-col gap-2">
                             <label class="text-sm opacity-75">Mobile Number</label>
                             <input type="text" :value="maskedMobileNumber" disabled
-                                class="w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed"
+                                class="itbms-mobile w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed"
                                 :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-200 border border-gray-300'" />
                         </div>
                         <div class="flex flex-col gap-2">
                             <label class="text-sm opacity-75">Bank Name</label>
                             <input type="text" :value="userProfile.bankName" disabled
-                                class="w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed text-orange-500 font-semibold"
+                                class="itbms-bankName w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed text-orange-500 font-semibold"
                                 :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-200 border border-gray-300'" />
                         </div>
                         
                         <div class="flex flex-col gap-2">
                             <label class="text-sm opacity-75">Bank Account Number</label>
                             <input type="text" :value="maskedBankNumber" disabled
-                                class="w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed"
+                                class="itbms-bankAccount w-full p-4 rounded-xl transition-all opacity-50 cursor-not-allowed"
                                 :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-200 border border-gray-300'" />
                         </div>
                     </template>
@@ -245,12 +245,12 @@ const maskedBankNumber = computed(() => {
                 <div class="flex flex-col sm:flex-row gap-4 pt-4">
                     <button @click="saveProfile"
                         :disabled="!isSaveEnabled"
-                        class="w-full sm:w-1/2 px-10 py-3 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
+                        class="itbms-save-button w-full sm:w-1/2 px-10 py-3 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
                         :class="isSaveEnabled ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:-translate-y-1' : 'bg-gray-500 cursor-not-allowed'">
                         Save
                     </button>
                     <button @click="navigateToProfile"
-                        class="w-full sm:w-1/2 px-10 py-3 font-semibold rounded-full transition-all duration-300 transform hover:bg-white/10 hover:border-white/50"
+                        class="itbms-cancel-button w-full sm:w-1/2 px-10 py-3 font-semibold rounded-full transition-all duration-300 transform hover:bg-white/10 hover:border-white/50"
                         :class="theme === 'dark' ? 'border-2 border-white/20 text-white hover:bg-white/10 hover:border-white/50' : 'border-2 border-gray-400 text-gray-800 hover:bg-gray-200/50 hover:border-gray-500'">
                         Cancel
                     </button>

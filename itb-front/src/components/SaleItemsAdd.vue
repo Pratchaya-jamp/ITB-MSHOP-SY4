@@ -601,13 +601,13 @@ const token = Cookies.get('access_token');
 
         setTimeout(() => {
             isLoading.value = false
-            router.push({ path: '/sale-items', query: { addSuccess: 'true' } })
+            router.push({ path: '/sale-items/list', query: { addSuccess: 'true' } })
         }, 1000)
     } catch (err) {
         console.error(err)
         responseMessage.value = 'เกิดข้อผิดพลาดในการเพิ่มสินค้า'
         isLoading.value = false
-        router.push({ path: '/sale-items', query: { addFail: 'true' } })
+        router.push({ path: '/sale-items/list', query: { addFail: 'true' } })
     }
 }
 

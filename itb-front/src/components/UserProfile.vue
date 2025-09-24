@@ -121,6 +121,24 @@ onMounted(() => {
     applyTheme(theme.value);
 });
 
+// แก้ไขในส่วนนี้
+const maskedMobileNumber = computed(() => {
+    const mobile = userProfile.value?.mobile;
+    if (!mobile || mobile.length <= 4) return mobile;
+    const unmaskedPart = mobile.slice(-4, -1);
+    const maskedPart = 'x'.repeat(mobile.length - 4);
+    return `${maskedPart}${unmaskedPart}x`;
+})
+
+// แก้ไขในส่วนนี้
+const maskedBankNumber = computed(() => {
+    const bankNumber = userProfile.value?.bankNumber;
+    if (!bankNumber || bankNumber.length <= 4) return bankNumber;
+    const unmaskedPart = bankNumber.slice(-4, -1);
+    const maskedPart = 'x'.repeat(bankNumber.length - 4);
+    return `${maskedPart}${unmaskedPart}x`;
+})
+
 </script>
 
 <template>
@@ -145,7 +163,7 @@ onMounted(() => {
                         <i class="fas fa-user-circle text-orange-500 text-2xl"></i>
                         <div>
                             <p class="text-sm opacity-75">Nickname</p>
-                            <p class="font-semibold text-lg">{{ userProfile.nickname }}</p>
+                            <p class="itbms-nickname font-semibold text-lg">{{ userProfile.nickname }}</p>
                         </div>
                     </div>
                     
@@ -153,7 +171,7 @@ onMounted(() => {
                         <i class="fas fa-id-card-alt text-red-500 text-2xl"></i>
                         <div>
                             <p class="text-sm opacity-75">Fullname</p>
-                            <p class="font-semibold text-lg">{{ userProfile.fullname }}</p>
+                            <p class="itbms-fullname font-semibold text-lg">{{ userProfile.fullname }}</p>
                         </div>
                     </div>
 
@@ -161,30 +179,38 @@ onMounted(() => {
                         <i class="fas fa-envelope text-teal-500 text-2xl"></i>
                         <div>
                             <p class="text-sm opacity-75">Email</p>
-                            <p class="font-semibold text-lg">{{ userProfile.email }}</p>
+                            <p class="itbms-email font-semibold text-lg">{{ userProfile.email }}</p>
                         </div>
                     </div>
+
+                    <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
+                            <i class="fas fa-credit-card text-green-500 text-2xl"></i>
+                            <div>
+                                <p class="text-sm opacity-75">Type</p>
+                                <p class="itbms-type font-semibold text-lg">{{ userProfile.userType }}</p>
+                            </div>
+                        </div>
 
                     <template v-if="isSeller">
                         <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
                             <i class="fas fa-mobile-alt text-purple-500 text-2xl"></i>
                             <div>
                                 <p class="text-sm opacity-75">Mobile</p>
-                                <p class="font-semibold text-lg">{{ userProfile.mobile }}</p>
+                                <p class="itbms-mobile font-semibold text-lg">{{ maskedMobileNumber }}</p>
                             </div>
                         </div>
                         <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
                             <i class="fas fa-university text-blue-500 text-2xl"></i>
                             <div>
                                 <p class="text-sm opacity-75">Bank Name</p>
-                                <p class="font-semibold text-lg text-orange-500">{{ userProfile.bankName }}</p>
+                                <p class="itbms-bankName font-semibold text-lg text-orange-500">{{ userProfile.bankName }}</p>
                             </div>
                         </div>
                         <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
                             <i class="fas fa-credit-card text-green-500 text-2xl"></i>
                             <div>
                                 <p class="text-sm opacity-75">Bank Account</p>
-                                <p class="font-semibold text-lg">{{ userProfile.bankNumber }}</p>
+                                <p class="itbms-bankAccount font-semibold text-lg">{{ maskedBankNumber }}</p>
                             </div>
                         </div>
                         <!-- <div class="p-4 rounded-xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'">
@@ -197,7 +223,7 @@ onMounted(() => {
                     </template>
                 </div>
 
-                <div class="pt-4">
+                <div class="itbms-profile-button pt-4">
                     <button @click="navigateToEdit"
                         class="w-full px-10 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
                         Edit Profile
