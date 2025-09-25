@@ -284,6 +284,10 @@ const cardClass = computed(() => {
     ? 'bg-gray-900 shadow-xl border border-gray-800'
     : 'bg-gray-100 shadow-xl border border-gray-200';
 });
+
+const formatMobileNumber = () => {
+  mobileNumber.value = mobileNumber.value.replace(/[^0-9]/g, '');
+};
 </script>
 
 <template>
@@ -391,7 +395,7 @@ const cardClass = computed(() => {
           <h4 class="font-semibold text-xl">Seller Information</h4>
           <p v-if="SellerError" class="itbms-message text-red-500 text-sm mt-1">{{ SellerError }}</p>
           <input type="text" v-model="mobileNumber" class="itbms-mobile w-full p-4 rounded-xl placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all"
-                 :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700 text-white' : 'bg-white border border-gray-300 text-gray-950'" placeholder="Mobile Number"  />
+                 :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700 text-white' : 'bg-white border border-gray-300 text-gray-950'" placeholder="Mobile Number" @blur="formatMobileNumber" />
           <input type="text" v-model="bankAccountNumber" class="itbms-bank-account-no w-full p-4 rounded-xl placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all"
                  :class="theme === 'dark' ? 'bg-gray-800 border border-gray-700 text-white' : 'bg-white border border-gray-300 text-gray-950'" placeholder="Bank Account Number"  />
           <input type="text" v-model="bankName" class="itbms-bank-name w-full p-4 rounded-xl placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all"
