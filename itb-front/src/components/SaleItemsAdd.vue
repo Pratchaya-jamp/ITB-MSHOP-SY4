@@ -204,7 +204,7 @@ const currentMainImage = computed(() => {
 
 onMounted(async () => {
     try {
-        const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/brands')
+        const data = await getItems('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/brands')
         brandList.value = data.sort((a, b) => {
             if (a.brandName < b.brandName) {
                 return -1;
@@ -219,7 +219,7 @@ onMounted(async () => {
     }
     if (id) {
         isEditMode.value = true
-        const data = await getItemById('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', id)
+        const data = await getItemById('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', id)
         if (data) {
             const formattedProduct = {
                 id: data.id,
@@ -246,7 +246,7 @@ onMounted(async () => {
             //     .map(img => ({
             //         id: img.id,
             //         name: img.fileName,
-            //         url: `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/images/${img.fileName}`,
+            //         url: `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/images/${img.fileName}`,
             //         isExisting: true
             //     }));
 
@@ -266,7 +266,7 @@ onMounted(async () => {
             pictures.value = originalPictures.value.map(img => ({
                 id: img.id,
                 name: img.fileName,
-                url: `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/images/${img.fileName}`,
+                url: `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/images/${img.fileName}`,
                 order: img.order,
                 status: 'keep',  // ค่าเริ่มต้นคือ keep
                 file: null       // ไม่มีไฟล์ใหม่
@@ -589,7 +589,7 @@ const token = Cookies.get('access_token');
 
     try {
         const result = await addItemWithAuth(
-            'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items',
+            'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items',
             formData,
             true,
 	token ,
@@ -646,7 +646,7 @@ for (let [key, value] of formData.entries()) {
 
   try {
     const result = await editItem(
-      'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items',
+      'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items',
       route.params.id,
       formData,
       true

@@ -46,7 +46,7 @@ const verifyEmail = async () => {
     setTimeout(async () => {
         try {
             const response = await addItem(
-  `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/verify-email?token=${token}`
+  `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/verify-email?token=${token}`
 );
 
 
@@ -118,7 +118,7 @@ onMounted(() => {
                     {{ message }}
                 </p>
                 <!-- <button
-                    @click="() => window.location.href = 'http://intproj24.sit.kmutt.ac.th/<TEAMCODE>/forgot-password'"
+                    @click="() => window.location.href = 'https://intproj24.sit.kmutt.ac.th/<TEAMCODE>/forgot-password'"
                     class="mt-6 px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-105"
                 >
                     Request a New Link

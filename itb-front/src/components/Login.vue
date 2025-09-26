@@ -92,7 +92,7 @@ const handleSubmit = async () => {
 
   try {
     const response = await addItem(
-      'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/login',
+      'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/login',
       {
         email: email.value,
         password: password.value,

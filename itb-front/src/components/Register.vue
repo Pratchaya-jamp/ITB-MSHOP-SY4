@@ -249,7 +249,7 @@ const confirmSignUp = async () => {
     }
 
     try {
-        const result = await addItem('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/register', formData, true);
+        const result = await addItem('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/register', formData, true);
 
         if (result.status === 409) {
             let msg = result.data.message || 'Email already exists';

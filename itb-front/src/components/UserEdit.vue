@@ -74,7 +74,7 @@ const saveProfile = async () => {
 
     try{
         const result = await editItemWithAuth(
-            'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users',
+            'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users',
             userProfile.value.id, // id ของ user ที่จะแก้
             {
             nickname: userProfile.value.nickname,
@@ -128,7 +128,7 @@ const fetchUserProfileForEdit = async () => {
     }
 
     const userId = decodedToken.id;
-    const API_URL = `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/${userId}`;
+    const API_URL = `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/${userId}`;
 
     try {
         const response = await fetch(API_URL, {

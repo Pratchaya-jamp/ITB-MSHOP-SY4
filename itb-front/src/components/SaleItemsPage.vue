@@ -174,7 +174,7 @@ async function fetchItems() {
     if (token && userRole === 'SELLER') {
       // เรียกสินค้าของ seller
       response = await getItemsWithAuth(
-        `http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sellers/${userId}/sale-items`,
+        `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sellers/${userId}/sale-items`,
         {
           params: {
             filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
@@ -198,7 +198,7 @@ async function fetchItems() {
     } else {
       // ถ้าไม่ login หรือไม่ใช่ seller → ใช้ public endpoint
       response = await getItems(
-        'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/page-sale-items',
+        'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/page-sale-items',
         {
           params: {
             filterBrands: selectedBrands.value.length ? selectedBrands.value : undefined,
@@ -230,7 +230,7 @@ async function fetchItems() {
 
 async function fetchbrand() {
   try {
-    const data = await getItems('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/brands')
+    const data = await getItems('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/brands')
     brandList.value = data.sort((a, b) => {
       const brandA = a.brandName ? a.brandName.toLowerCase() : ''
       const brandB = b.brandName ? b.brandName.toLowerCase() : ''
@@ -517,7 +517,7 @@ const confirmDelete = async () => {
   showDeleteConfirmationPopup.value = false
   isDeleting.value = true
   try {
-    const statusCode = await deleteItemById('http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items', deleteSale.value);
+    const statusCode = await deleteItemById('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items', deleteSale.value);
     if (statusCode === 204) {
       setTimeout(async () => {
         isDeleting.value = false

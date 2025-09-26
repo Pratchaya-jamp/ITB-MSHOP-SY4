@@ -79,7 +79,7 @@ const fetchUserProfile = async () => {
 
     try {
 const response = await getItemByIdWithAuth(
-        'http://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users',
+        'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users',
         userId,
         token
         );

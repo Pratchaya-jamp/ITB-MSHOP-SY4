@@ -7,12 +7,13 @@ services:
       dockerfile: ./itb-front/dockerfile
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
     networks:
       - itb-net
-    # volumes:
-    #   - ./product-images:/usr/share/nginx/html/product-images
 
   backend:
     build:

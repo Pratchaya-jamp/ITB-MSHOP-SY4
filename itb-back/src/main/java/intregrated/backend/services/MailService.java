@@ -14,7 +14,7 @@ public class MailService {
 
     public void sendVerificationEmail(String to, String jwtToken) {
         String subject = "Verify your email address - ITBM-SHOP";
-        String verificationUrl = "http://intproj24.sit.kmutt.ac.th/sy4/verify-email/?token=" + jwtToken;
+        String verificationUrl = "https://intproj24.sit.kmutt.ac.th/sy4/verify-email/?token=" + jwtToken;
 
         // HTML content with styled button
         String htmlContent = """
