@@ -19,8 +19,8 @@ services:
     build:
       context: ./itb-back
     ports:
-      - "8080:8080"
-      - "5005:5005"
+    #  - "8080:8080"
+    #  - "5005:5005"
       - "8443:8443"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/itb
