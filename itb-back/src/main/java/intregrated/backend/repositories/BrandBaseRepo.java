@@ -1,6 +1,6 @@
 package intregrated.backend.repositories;
 
-import intregrated.backend.entities.BrandBase;
+import intregrated.backend.entities.brands.BrandBase;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

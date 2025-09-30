@@ -1,10 +1,10 @@
 package intregrated.backend.repositories;
 
-import intregrated.backend.entities.UsersAccount;
+import intregrated.backend.entities.accounts.UsersAccount;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface UsersAccountRepository extends JpaRepository<UsersAccount, Integer> {
+public interface UsersAccountRepo extends JpaRepository<UsersAccount, Integer> {
     Optional<UsersAccount> findByEmail(String email);
 }

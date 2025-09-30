@@ -1,6 +1,6 @@
 package intregrated.backend.repositories;
 
-import intregrated.backend.entities.SaleItemPicture;
+import intregrated.backend.entities.saleitems.SaleItemPicture;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

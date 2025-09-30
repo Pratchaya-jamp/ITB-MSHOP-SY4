@@ -1,5 +1,6 @@
-package intregrated.backend.entities;
+package intregrated.backend.entities.orders;
 
+import intregrated.backend.entities.saleitems.SaleItemBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -14,8 +15,8 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "sale_item_picture")
-public class SaleItemPicture {
+@Table(name = "order_item")
+public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -24,35 +25,35 @@ public class SaleItemPicture {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "sale_id", nullable = false)
-    private SaleItemBase sale;
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "sale_item_id", nullable = false)
+    private SaleItemBase saleItem;
+
+    @NotNull
+    @Column(name = "price", nullable = false)
+    private Integer price;
+
+    @NotNull
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
 
     @Size(max = 255)
-    @NotNull
-    @Column(name = "old_picture_name", nullable = false)
-    private String oldPictureName;
-
-    @Size(max = 255)
-    @NotNull
-    @Column(name = "new_picture_name", nullable = false)
-    private String newPictureName;
-
-    @NotNull
-    @Column(name = "file_size_bytes", nullable = false)
-    private Integer fileSizeBytes;
-
-    @NotNull
-    @Column(name = "picture_order", nullable = false)
-    private Integer pictureOrder;
+    @Column(name = "description")
+    private String description;
 
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "createdon", nullable = false)
+    @Column(name = "createdOn", nullable = false)
     private Instant createdOn;
 
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "updatedon", nullable = false)
+    @Column(name = "updatedOn", nullable = false)
     private Instant updatedOn;
 
 }

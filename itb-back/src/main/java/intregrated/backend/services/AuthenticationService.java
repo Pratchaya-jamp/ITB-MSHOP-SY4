@@ -3,9 +3,9 @@ package intregrated.backend.services;
 import intregrated.backend.dtos.authentications.LoginRequestDto;
 import intregrated.backend.dtos.authentications.LoginResponseDto;
 import intregrated.backend.entities.RefreshToken;
-import intregrated.backend.entities.UsersAccount;
-import intregrated.backend.repositories.RefreshTokenRepository;
-import intregrated.backend.repositories.UsersAccountRepository;
+import intregrated.backend.entities.accounts.UsersAccount;
+import intregrated.backend.repositories.RefreshTokenRepo;
+import intregrated.backend.repositories.UsersAccountRepo;
 import intregrated.backend.utils.JwtTokenUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +21,10 @@ import java.util.Optional;
 public class AuthenticationService {
 
     @Autowired
-    private UsersAccountRepository usersRepo;
+    private UsersAccountRepo usersRepo;
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepo;
+    private RefreshTokenRepo refreshTokenRepo;
 
     @Autowired
     private RefreshTokenService refreshTokenService;

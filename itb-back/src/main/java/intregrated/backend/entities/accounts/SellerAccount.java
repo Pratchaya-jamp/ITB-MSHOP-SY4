@@ -1,4 +1,4 @@
-package intregrated.backend.entities;
+package intregrated.backend.entities.accounts;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

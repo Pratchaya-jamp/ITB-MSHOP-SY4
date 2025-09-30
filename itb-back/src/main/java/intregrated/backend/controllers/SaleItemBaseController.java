@@ -5,7 +5,7 @@ import intregrated.backend.dtos.saleItems.NewSaleItemDto;
 import intregrated.backend.dtos.saleItems.SaleItemBaseByIdDto;
 import intregrated.backend.dtos.saleItems.SaleItemBaseDto;
 import intregrated.backend.dtos.saleItems.SaleItemWithImageInfo;
-import intregrated.backend.entities.SaleItemBase;
+import intregrated.backend.entities.saleitems.SaleItemBase;
 import intregrated.backend.services.SaleItemBaseService;
 import intregrated.backend.utils.JwtTokenUtil;
 import intregrated.backend.utils.ListMapper;
