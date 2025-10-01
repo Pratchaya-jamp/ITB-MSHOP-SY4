@@ -35,24 +35,21 @@ public class CartService {
     @Autowired
     private UsersAccountRepo usersAccountRepo;
 
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
-
     @Transactional
     public CartResponseDto addToCart(CartRequestDto request, Integer userId) {
 
         if (userId == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token does not contain buyer_id");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token does not contain userId");
         }
 
-        UsersAccount buyer = usersAccountRepo.findById(userId)
+        UsersAccount user = usersAccountRepo.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Buyer not found"));
 
         // หา/สร้าง cart ของ buyer
-        Cart cart = cartRepo.findByBuyer(buyer)
+        Cart cart = cartRepo.findByBuyer(user)
                 .orElseGet(() -> {
                     Cart c = new Cart();
-                    c.setBuyer(buyer);
+                    c.setBuyer(user);
                     c.setCreatedOn(Instant.now());
                     c.setUpdatedOn(Instant.now());
                     return cartRepo.save(c);
@@ -63,9 +60,9 @@ public class CartService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found"));
 
             // ห้ามซื้อสินค้าของตัวเอง
-            if (saleItem.getSeller() != null && buyer.getSeller() != null &&
-                    saleItem.getSeller().getId().equals(buyer.getSeller().getId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot add your own product");
+            if (saleItem.getSeller() != null && user.getSeller() != null &&
+                    saleItem.getSeller().getId().equals(user.getSeller().getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot buy your own product");
             }
 
             // Stock ไม่พอ -> 409 Conflict
@@ -93,10 +90,6 @@ public class CartService {
                 cartItemRepo.save(newItem);
                 cart.getItems().add(newItem);
             }
-
-            // ลด stock
-            saleItem.setQuantity(saleItem.getQuantity() - dto.getQuantity());
-            saleItemRepo.save(saleItem);
         }
 
         cart.setUpdatedOn(Instant.now());

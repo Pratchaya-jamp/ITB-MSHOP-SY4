@@ -64,5 +64,4 @@ public class SellerAccount {
 
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SellerPicture> pictures = new ArrayList<>();
-
 }
