@@ -33,6 +33,7 @@ const showEditSuccessPopup = ref(false)
 const showEditFallPopup = ref(false)
 
 const userRole = ref(null)
+const isAuthenticated = ref(false)
 
 const isSeller = computed(() => userRole.value === 'SELLER')
 
@@ -47,6 +48,9 @@ const decodeTokenAndSetRole = () => {
         if (token) {
             const decodedToken = jwtDecode(token)
             userRole.value = decodedToken.role
+            isAuthenticated.value = true
+        } else {
+            isAuthenticated.value = false
         }
     } catch (error) {
         console.error('Failed to decode JWT token:', error)
@@ -77,8 +81,100 @@ const handleMainImageError = () => {
     }
 };
 
+const cartCount = ref(0) 
+const itemQuantityToAddToCart = ref(1)
+
+const itemStorageKey = computed(() => `cart_item_qty_${id}`)
+
+const totalCartCountKey = 'total_cart_count' 
+
+const loadCartState = () => {
+    const savedTotalCartCount = localStorage.getItem(totalCartCountKey)
+    if (savedTotalCartCount) {
+        cartCount.value = parseInt(savedTotalCartCount) || 0
+    }
+
+    const savedQuantity = localStorage.getItem(itemStorageKey.value)
+    
+    const maxAvailable = product.value?.quantity || 1;
+    let initialQty = 1;
+
+    if (savedQuantity) {
+        const qty = parseInt(savedQuantity);
+        initialQty = (qty > maxAvailable) ? maxAvailable : (qty > 0 ? qty : 1);
+    } else {
+        initialQty = maxAvailable > 0 ? 1 : 0; 
+    }
+    
+    itemQuantityToAddToCart.value = initialQty;
+}
+
+const increaseQuantity = () => {
+    if (product.value && itemQuantityToAddToCart.value < product.value.quantity) {
+        itemQuantityToAddToCart.value++
+    }
+}
+
+const decreaseQuantity = () => {
+    if (itemQuantityToAddToCart.value > 1) {
+        itemQuantityToAddToCart.value--
+    }
+}
+
+const isDecreaseDisabled = computed(() => itemQuantityToAddToCart.value <= 1)
+const isIncreaseDisabled = computed(() => 
+    !product.value || itemQuantityToAddToCart.value >= product.value.quantity || product.value.quantity <= 0
+)
+
+// ฟังก์ชัน Add to Cart
+const addToCart = () => {
+    if (!isAuthenticated.value) {
+        router.push('/signin')
+        console.log('Redirecting to /signin: User is not authenticated.')
+        return
+    }
+
+    if (product.value && product.value.quantity > 0) {
+        const qtyToAdd = itemQuantityToAddToCart.value;
+        
+        let currentTotalCount = parseInt(localStorage.getItem(totalCartCountKey) || '0');
+        currentTotalCount += qtyToAdd; 
+        cartCount.value = currentTotalCount; 
+
+        localStorage.setItem(totalCartCountKey, cartCount.value.toString())
+        
+        localStorage.setItem(itemStorageKey.value, itemQuantityToAddToCart.value.toString())
+
+        window.dispatchEvent(new Event('storage'));
+
+        console.log(`Added ${qtyToAdd} of ${product.value.model} to cart. Total items: ${cartCount.value}`)
+    }
+}
+
+watch(product, (newProduct) => {
+    if (newProduct) {
+        loadCartState()
+    }
+})
+watch(itemQuantityToAddToCart, (newQty) => {
+    localStorage.setItem(itemStorageKey.value, newQty.toString())
+})
+
+// Listener สำหรับการ Sync ตะกร้าจากหน้าต่างอื่น
+const handleStorageChange = (event) => {
+    if (event.key === totalCartCountKey) {
+        loadCartState();
+    }
+}
+
 onMounted(async () => {
     decodeTokenAndSetRole()
+    
+    // โหลด theme ก่อน
+    const savedTheme = localStorage.getItem('theme')
+    if (savedTheme) {
+        applyTheme(savedTheme)
+    }
 
     try {
         const data = await getItemById('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', id)
@@ -96,10 +192,12 @@ onMounted(async () => {
             const sortedImages = data.saleItemImages
                 .sort((a, b) => a.imageViewOrder - b.imageViewOrder)
                 .map(img => `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/images/${img.fileName}`)
-        
+            
             productImages.value = sortedImages
             mainImage.value = sortedImages[0]
         }
+        
+        // *Note: loadCartState() ถูกเรียกใน watch(product, ...) แล้ว
 
     } catch (error) {
         console.error('Failed to fetch product:', error)
@@ -109,10 +207,9 @@ onMounted(async () => {
             router.push('/sale-items')
         }, 3000)
     }
-    const savedTheme = localStorage.getItem('theme')
-    if (savedTheme) {
-        applyTheme(savedTheme)
-    }
+    
+    
+    window.addEventListener('storage', handleStorageChange)
 })
 
 watch(() => mainImage.value, (newVal) => {
@@ -193,9 +290,28 @@ const iconComponent = computed(() => {
         : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>` // moon icon
 })
 </script>
-
 <template>
     <div :class="themeClass" class="p-4 w-full min-h-screen font-sans transition-colors duration-500">
+        <div class="flex justify-end items-center space-x-4 mb-4 max-w-6xl mx-auto">
+            <div class="relative itbms-cart-icon cursor-pointer" @click="router.push('/cart-page')">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                    class="h-8 w-8"
+                    :class="theme === 'dark' ? 'text-white' : 'text-black'"
+                    viewBox="0 0 128 128"
+                    fill="currentColor">
+                    <g>
+                        <path
+                            d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z" />
+                    </g>
+                </svg>
+            
+                <span v-if="cartCount > 0"
+                    class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold animate-bounce">
+                    {{ cartCount > 99 ? '99+' : cartCount }}
+                </span>
+            </div>
+        </div>
+
         <nav class="text-sm mb-6 max-w-6xl mx-auto transition-colors duration-500"
             :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-500'">
             <router-link to="/sale-items" class="itbms-home-button hover:underline cursor-pointer">
@@ -234,7 +350,7 @@ const iconComponent = computed(() => {
                     </div>
                 </div>
             </div>
-
+            
             <div class="itbms-row space-y-5 text-base transition-colors duration-500">
                 <h1 class="text-3xl lg:text-4xl font-bold mb-2">
                     {{ product?.model || 'Product Name' }}
@@ -266,7 +382,7 @@ const iconComponent = computed(() => {
                     :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">
                     {{ product?.description || 'No description available for this product.' }}
                 </p>
-
+                
                 <div class="grid grid-cols-2 gap-4">
                     <div class="itbms-ramGb">
                         <strong class="font-semibold block text-gray-500 mb-1">RAM</strong>
@@ -299,7 +415,6 @@ const iconComponent = computed(() => {
                         </span>
                     </div>
                 </div>
-
                 <div class="flex flex-col sm:flex-row gap-4 pt-4">
                     <div v-if="isSeller" class="flex flex-col sm:flex-row gap-4 pt-4 w-full">
                         <button @click="router.push(`/sale-items/${product.id}/edit`)"
@@ -318,17 +433,45 @@ const iconComponent = computed(() => {
                         </button>
                     </div>
 
-                    <div v-else class="w-full">
+                    <div v-else class="w-full flex flex-col gap-4">
+                        <div v-if="product?.quantity > 0" class="flex items-center space-x-4">
+                            
+                            <div class="itbms-quantity-control flex items-center border border-gray-300 rounded-lg p-0 h-12 flex-grow max-w-[180px] transition-colors duration-300"
+                                 :class="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-100 border-gray-300 text-gray-900'">
+                                
+                                <button @click="decreaseQuantity"
+                                    :disabled="isDecreaseDisabled"
+                                    class="itbms-decrease-qty-button text-lg font-bold w-1/3 h-full flex items-center justify-center transition-all duration-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                                    :class="{ 'text-gray-400': isDecreaseDisabled }">
+                                    <span>−</span>
+                                </button>
+                            
+                                <div class="itbms-quantity-input flex-grow text-center text-lg font-semibold h-full flex items-center justify-center border-l border-r"
+                                     :class="theme === 'dark' ? 'border-gray-600' : 'border-gray-300'">
+                                    {{ itemQuantityToAddToCart }}
+                                </div>
+                                
+                                <button @click="increaseQuantity"
+                                    :disabled="isIncreaseDisabled"
+                                    class="itbms-increase-qty-button text-lg font-bold w-1/3 h-full flex items-center justify-center transition-all duration-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                                    :class="{ 'text-gray-400': isIncreaseDisabled }">
+                                    <span>+</span>
+                                </button>
+                            </div>
+                            <div class="hidden sm:block sm:flex-grow"></div> 
+                        </div>
+                    
                         <button v-if="product?.quantity < 1"
                             class="itbms-sold-out-button w-full font-semibold border-2 rounded-xl px-6 py-3 shadow-md cursor-not-allowed"
                             :class="theme === 'dark' ? 'bg-gray-700 text-gray-400 border-gray-700' : 'bg-gray-300 text-gray-600 border-gray-300'">
                             Sold Out
                         </button>
-                        <button v-else
-                            class="itbms-add-to-cart-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
-                            :class="theme === 'dark'
-                                ? 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600'
-                                : 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600'">
+                        
+                        <button v-else @click="addToCart"
+                            class="itbms-add-to-cart-button w-full sm:w-auto font-semibold border-2 rounded-lg px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white"
+                            :class="{
+                                'bg-transparent text-blue-500 border-blue-500 hover:bg-blue-600 hover:text-white': theme === 'light' || theme === 'dark'
+                            }">
                             Add to Cart
                         </button>
                     </div>

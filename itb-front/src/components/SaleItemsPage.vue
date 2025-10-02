@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItems, deleteItemById,getItemsWithAuth } from '@/libs/fetchUtilsOur';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
@@ -27,6 +27,8 @@ const currentPage = ref(!isNaN(savedPage) ? savedPage : 0)
 const pageSize = ref(savedPageSize ? parseInt(savedPageSize) : 10)
 const showLoginSuccess = ref(false)
 const userRole = ref('');
+const cartCount = ref(0)
+const totalCartCountKey = 'total_cart_count' 
 
 // Price
 const displayedPrice = computed(() => {
@@ -101,6 +103,53 @@ const debouncedFetchItems = debounce(() => {
   fixedStart.value = 0
   fetchItems();
 }, 500);
+
+const addToCart = (item) => {
+    const token = Cookies.get('access_token');
+    if (!token) {
+        router.push('/signin')
+        return;
+    }
+
+    if (item.quantity > 0) {
+        const saleItemId = item.id;
+        const itemStorageKey = `cart_item_qty_${saleItemId}`;
+        
+        let currentQty = parseInt(localStorage.getItem(itemStorageKey) || '0');
+        
+        if (currentQty < item.quantity) {
+            currentQty++;
+            
+            localStorage.setItem(itemStorageKey, currentQty.toString());
+
+            // 4. อัปเดตจำนวนรวมของสินค้าทั้งหมดในตะกร้า
+            let currentTotalCount = parseInt(localStorage.getItem(totalCartCountKey) || '0');
+            currentTotalCount++;
+            localStorage.setItem(totalCartCountKey, currentTotalCount.toString());
+            cartCount.value = currentTotalCount;
+            
+            console.log(`Added item ${saleItemId}. Total items: ${cartCount.value}`);
+        } else {
+            console.log(`Cannot add more: Reached max quantity for item ${saleItemId}`);
+        }
+    }
+};
+
+const loadCartCount = () => {
+    const savedTotalCartCount = localStorage.getItem(totalCartCountKey)
+    if (savedTotalCartCount) {
+        cartCount.value = parseInt(savedTotalCartCount) || 0
+    } else {
+        cartCount.value = 0
+    }
+}
+
+const handleStorageChange = (event) => {
+    // ตรวจสอบเฉพาะคีย์ที่เราสนใจเท่านั้น
+    if (event.key === totalCartCountKey) {
+        loadCartCount();
+    }
+}
 
 const savedSort = sessionStorage.getItem('sortOrder')
 const currentSortOrder = ref(savedSort || 'createdOn')
@@ -487,6 +536,7 @@ onMounted(() => {
   fetchItems()
   fetchbrand()
   checkUserRole()
+  loadCartCount()
 
   // Load theme from localStorage on component mount
   const savedTheme = localStorage.getItem('theme')
@@ -501,6 +551,11 @@ onMounted(() => {
     }
   })
   document.addEventListener('click', handleClickOutside)
+  window.addEventListener('storage', handleStorageChange)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('storage', handleStorageChange)
 })
 
 // --- Delete Item Functions ---
@@ -692,19 +747,23 @@ const removeActiveFilter = (filter) => {
 
       <div class="itbms-icons flex flex-col items-end space-y-2">
         <div class="flex items-center space-x-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 cursor-pointer"
-            :class="theme === 'dark' ? 'text-white' : 'text-black'" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" class="h-8 w-8 cursor-pointer"
-            :class="theme === 'dark' ? 'text-white' : 'text-black'" viewBox="0 0 128 128">
-            <g>
-              <path
-                d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z" />
-            </g>
-          </svg>
+          <div class="relative">
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+              class="itbms-cart-icon h-8 w-8 cursor-pointer"
+              :class="theme === 'dark' ? 'text-white' : 'text-black'"
+              viewBox="0 0 128 128"
+              fill="currentColor">
+              <g>
+                <path
+                  d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z" />
+              </g>
+            </svg>
+          
+            <span v-if="cartCount > 0"
+              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold animate-bounce"> 
+              {{ cartCount > 99 ? '99+' : cartCount }} 
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -961,6 +1020,17 @@ const removeActiveFilter = (filter) => {
             </div>
             <div class="itbms-price mt-2 font-extrabold text-2xl">{{ item.price.toLocaleString() }}</div>
             <div class="itbms-price-unit text-sm font-light opacity-80">Baht</div>
+            <button
+              @click.stop="addToCart(item)"
+              :disabled="item.quantity === 0"
+              class="mt-2 px-4 py-2 rounded-full font-semibold transition-colors duration-300 hover:cursor-pointer"
+              :class="item.quantity === 0
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                : theme === 'dark'
+                  ? 'bg-orange-500 text-white hover:bg-orange-600'
+                  : 'bg-orange-500 text-white hover:bg-orange-600'">
+              {{ item.quantity === 0 ? 'Sold Out' : 'Add to Cart' }}
+            </button>
           </div>
         </div>
       </div>
