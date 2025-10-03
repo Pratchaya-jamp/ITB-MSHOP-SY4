@@ -747,8 +747,8 @@ const removeActiveFilter = (filter) => {
 
       <div class="itbms-icons flex flex-col items-end space-y-2">
         <div class="flex items-center space-x-4">
-          <div class="relative">
-            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+          <div class="relative itbms-cart-icon cursor-pointer">
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"  @click="router.push('/cart')"
               class="itbms-cart-icon h-8 w-8 cursor-pointer"
               :class="theme === 'dark' ? 'text-white' : 'text-black'"
               viewBox="0 0 128 128"

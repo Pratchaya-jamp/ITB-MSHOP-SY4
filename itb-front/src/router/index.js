@@ -14,6 +14,8 @@ import Register from '@/components/Register.vue'
 import VerifyEmail from '@/components/VerifyEmail.vue'
 import UserProfile from '@/components/UserProfile.vue'
 import UserEdit from '@/components/UserEdit.vue'
+import Cart from '@/components/Cart.vue'
+import PlaceOrder from '@/components/PlaceOrder.vue'
 
 const routes = [
   {
@@ -94,6 +96,16 @@ const routes = [
   path: '/profile/edit',
   name: 'userEdit',
   component: UserEdit,
+},
+{
+  path: '/cart',
+  name: 'cart',
+  component: Cart,
+},
+{
+  path: '/order',
+  name: 'placeOrder',
+  component: PlaceOrder,
 },
 ]
 
