@@ -141,6 +141,57 @@ CONSTRAINT ck_old_picture_name CHECK (TRIM(old_picture_name) <> ''),
 CONSTRAINT ck_new_picture_name CHECK (TRIM(new_picture_name) <> '')
 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS cart (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    buyer_id INT NOT NULL,
+    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cart_buyer FOREIGN KEY (buyer_id) REFERENCES users_account(uid) ON DELETE CASCADE
+) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS cart_item (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cart_id INT NOT NULL,
+    sale_item_id INT,
+    seller_id INT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cart_item_cart FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cart_item_sale FOREIGN KEY (sale_item_id) REFERENCES sale_item_base(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cart_item_seller FOREIGN KEY (seller_id) REFERENCES seller_account(sellerid) ON DELETE CASCADE,
+    CONSTRAINT ck_cart_item_quantity CHECK (quantity > 0)
+) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    buyer_id INT NOT NULL,
+    seller_id INT NOT NULL,
+    order_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    shipping_address VARCHAR(255) NOT NULL,
+    order_note VARCHAR(255),
+    order_status ENUM('COMPLETED', 'CANCELED') NOT NULL DEFAULT 'COMPLETED',
+    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_orders_buyer FOREIGN KEY (buyer_id) REFERENCES users_account(uid) ON DELETE CASCADE,
+    CONSTRAINT fk_orders_seller FOREIGN KEY (seller_id) REFERENCES seller_account(sellerid) ON DELETE CASCADE
+) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS order_item (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    sale_item_id INT NOT NULL,
+    price INT NOT NULL,
+    quantity INT NOT NULL,
+    description VARCHAR(255),
+    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_order_item_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    CONSTRAINT fk_order_item_sale FOREIGN KEY (sale_item_id) REFERENCES sale_item_base(id) ON DELETE CASCADE,
+    CONSTRAINT ck_order_item_quantity CHECK (quantity > 0),
+    CONSTRAINT ck_order_item_price CHECK (price >= 0)
+) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO brand_base (name, websiteUrl, isActive, countryOfOrigin) VALUES
 ('Samsung', 'https://www.samsung.com', 1, 'South Korea'),
 ('Apple', 'https://www.apple.com', 1, 'United States'),
