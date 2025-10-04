@@ -47,7 +47,7 @@ public class SaleItemBaseController {
 
     @GetMapping("/{id}")
     public ResponseEntity<SaleItemBaseByIdDto> getSaleItemBaseById(@PathVariable Integer id) {
-        SaleItemBaseByIdDto dto = saleItemBaseService.getSaleItemBaseRepoById(id); // เรียก method ใหม่
+        SaleItemBaseByIdDto dto = saleItemBaseService.getSaleItemBaseById(id); // เรียก method ใหม่
         return ResponseEntity.ok(dto);
     }
 

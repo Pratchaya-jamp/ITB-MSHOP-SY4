@@ -63,7 +63,7 @@ public class SaleItemBaseService {
     }
 
     @Transactional
-    public SaleItemBaseByIdDto getSaleItemBaseRepoById(Integer id) {
+    public SaleItemBaseByIdDto getSaleItemBaseById(Integer id) {
         SaleItemBase saleItem = saleItemBaseRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,

@@ -52,7 +52,7 @@ public class Order {
     private String orderNote;
 
     @NotNull
-    @ColumnDefault("'PENDING'")
+    @ColumnDefault("'COMPLETED'")
     @Lob
     @Column(name = "order_status", nullable = false)
     @Enumerated(EnumType.STRING)

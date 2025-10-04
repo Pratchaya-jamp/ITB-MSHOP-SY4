@@ -1,34 +1,35 @@
 package intregrated.backend.dtos.orders;
 
 import intregrated.backend.entities.orders.OrderStatus;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.List;
 
 @Data
 public class OrderRequestDto {
-    @NotBlank(message = "Missing request parameters")
+    @NotNull
     private Integer buyerId;
 
-    @NotBlank(message = "Missing request parameters")
+    @NotNull
     private Integer sellerId;
 
-    @NotBlank(message = "Missing request parameters")
+    @NotNull
     private Instant orderDate;
 
-    @NotBlank(message = "Missing request parameters")
+    @NotBlank
     private String shippingAddress;
 
-    @NotBlank(message = "Missing request parameters")
+    @NotBlank
     private String orderNote;
 
-    @NotBlank(message = "Missing request parameters")
+    @NotNull
+    @NotEmpty
     private List<OrderItemDto> orderItems;
 
-    @NotBlank(message = "Missing request parameters")
+    @NotNull
     private OrderStatus orderStatus;
 }
