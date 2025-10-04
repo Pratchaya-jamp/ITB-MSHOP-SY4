@@ -3,12 +3,15 @@ package intregrated.backend.services;
 import intregrated.backend.dtos.registers.UserRegisterRequestDto;
 import intregrated.backend.dtos.registers.UserRegisterResponseDto;
 import intregrated.backend.dtos.saleItems.SaleItemImageDto;
-import intregrated.backend.entities.*;
+import intregrated.backend.entities.accounts.BuyerAccount;
+import intregrated.backend.entities.accounts.SellerAccount;
+import intregrated.backend.entities.accounts.SellerPicture;
+import intregrated.backend.entities.accounts.UsersAccount;
 import intregrated.backend.fileproperties.SellerFileProperties;
-import intregrated.backend.repositories.BuyerAccountRepository;
-import intregrated.backend.repositories.SellerAccountRepository;
-import intregrated.backend.repositories.SellerPictureRepository;
-import intregrated.backend.repositories.UsersAccountRepository;
+import intregrated.backend.repositories.BuyerAccountRepo;
+import intregrated.backend.repositories.SellerAccountRepo;
+import intregrated.backend.repositories.SellerPictureRepo;
+import intregrated.backend.repositories.UsersAccountRepo;
 import intregrated.backend.utils.JwtTokenUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
@@ -32,16 +35,16 @@ import java.util.*;
 @Service
 public class EmailRegisterService {
     @Autowired
-    private BuyerAccountRepository buyerRepo;
+    private BuyerAccountRepo buyerRepo;
 
     @Autowired
-    private UsersAccountRepository userRepo;
+    private UsersAccountRepo userRepo;
 
     @Autowired
-    private SellerAccountRepository sellerRepo;
+    private SellerAccountRepo sellerRepo;
 
     @Autowired
-    private SellerPictureRepository sellerPictureRepo;
+    private SellerPictureRepo sellerPictureRepo;
 
     @Autowired
     @Qualifier("sellerFileService")

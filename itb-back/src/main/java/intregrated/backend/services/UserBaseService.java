@@ -1,16 +1,14 @@
 package intregrated.backend.services;
 
-import intregrated.backend.dtos.registers.UserRegisterRequestDto;
 import intregrated.backend.dtos.registers.UserRegisterResponseDto;
 import intregrated.backend.dtos.users.BuyerResponseDto;
 import intregrated.backend.dtos.users.EditUserRequestDto;
 import intregrated.backend.dtos.users.SellerResponseDto;
 import intregrated.backend.dtos.users.UserResponseDto;
-import intregrated.backend.entities.BuyerAccount;
-import intregrated.backend.entities.SellerAccount;
-import intregrated.backend.entities.UsersAccount;
-import intregrated.backend.repositories.UsersAccountRepository;
-import jakarta.persistence.criteria.CriteriaBuilder;
+import intregrated.backend.entities.accounts.BuyerAccount;
+import intregrated.backend.entities.accounts.SellerAccount;
+import intregrated.backend.entities.accounts.UsersAccount;
+import intregrated.backend.repositories.UsersAccountRepo;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,7 +21,7 @@ import java.util.List;
 public class UserBaseService {
 
     @Autowired
-    private UsersAccountRepository userRepo;
+    private UsersAccountRepo userRepo;
 
 
     @Transactional

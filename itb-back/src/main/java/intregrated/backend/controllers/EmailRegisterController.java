@@ -1,13 +1,9 @@
 package intregrated.backend.controllers;
 
-import intregrated.backend.dtos.brands.BrandBaseDto;
 import intregrated.backend.dtos.registers.UserRegisterRequestDto;
 import intregrated.backend.dtos.registers.UserRegisterResponseDto;
-import intregrated.backend.entities.UsersAccount;
 import intregrated.backend.services.EmailRegisterService;
-import intregrated.backend.utils.ListMapper;
 import jakarta.validation.Valid;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,11 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/v2/auth")

@@ -1,6 +1,5 @@
-package intregrated.backend.entities;
+package intregrated.backend.entities.saleitems;
 
-import intregrated.backend.entities.accounts.UsersAccount;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -15,41 +14,45 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "refresh_token")
-public class RefreshToken {
+@Table(name = "sale_item_picture")
+public class SaleItemPicture {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private Long id;
+    private Integer id;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UsersAccount user;
+    @JoinColumn(name = "sale_id", nullable = false)
+    private SaleItemBase sale;
 
-    @Size(max = 512)
+    @Size(max = 255)
     @NotNull
-    @Column(name = "token", nullable = false, length = 512)
-    private String token;
+    @Column(name = "old_picture_name", nullable = false)
+    private String oldPictureName;
+
+    @Size(max = 255)
+    @NotNull
+    @Column(name = "new_picture_name", nullable = false)
+    private String newPictureName;
 
     @NotNull
-    @Column(name = "expiry_date", nullable = false)
-    private Instant expiryDate;
+    @Column(name = "file_size_bytes", nullable = false)
+    private Integer fileSizeBytes;
 
     @NotNull
-    @ColumnDefault("0")
-    @Column(name = "revoked", nullable = false)
-    private Boolean revoked = false;
+    @Column(name = "picture_order", nullable = false)
+    private Integer pictureOrder;
 
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_on", nullable = false)
+    @Column(name = "createdon", nullable = false)
     private Instant createdOn;
 
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "updated_on", nullable = false)
+    @Column(name = "updatedon", nullable = false)
     private Instant updatedOn;
 
 }

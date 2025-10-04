@@ -1,8 +1,8 @@
 package intregrated.backend.services;
 
 import intregrated.backend.entities.RefreshToken;
-import intregrated.backend.entities.UsersAccount;
-import intregrated.backend.repositories.RefreshTokenRepository;
+import intregrated.backend.entities.accounts.UsersAccount;
+import intregrated.backend.repositories.RefreshTokenRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +13,7 @@ import java.util.Optional;
 public class RefreshTokenService {
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private RefreshTokenRepo refreshTokenRepo;
 
     public RefreshToken createRefreshToken(UsersAccount user, String token, long expirySeconds) {
         RefreshToken refreshToken = new RefreshToken();
@@ -23,18 +23,18 @@ public class RefreshTokenService {
         refreshToken.setRevoked(false);
         refreshToken.setCreatedOn(Instant.now());
         refreshToken.setUpdatedOn(Instant.now());
-        return refreshTokenRepository.save(refreshToken);
+        return refreshTokenRepo.save(refreshToken);
     }
 
     public Optional<RefreshToken> findByToken(String token) {
-        return refreshTokenRepository.findByToken(token);
+        return refreshTokenRepo.findByToken(token);
     }
 
     public void revokeToken(String token) {
-        refreshTokenRepository.findByToken(token).ifPresent(rt -> {
+        refreshTokenRepo.findByToken(token).ifPresent(rt -> {
             rt.setRevoked(true);
             rt.setUpdatedOn(Instant.now());
-            refreshTokenRepository.save(rt);
+            refreshTokenRepo.save(rt);
         });
     }
 

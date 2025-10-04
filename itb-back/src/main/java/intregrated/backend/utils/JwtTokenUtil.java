@@ -1,16 +1,14 @@
 package intregrated.backend.utils;
 
 
-import intregrated.backend.entities.UsersAccount;
+import intregrated.backend.entities.accounts.UsersAccount;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 @Component
 public class JwtTokenUtil {

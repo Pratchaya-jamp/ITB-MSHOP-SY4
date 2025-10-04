@@ -1,4 +1,4 @@
-package intregrated.backend.entities;
+package intregrated.backend.entities.accounts;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -64,5 +64,4 @@ public class SellerAccount {
 
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SellerPicture> pictures = new ArrayList<>();
-
 }

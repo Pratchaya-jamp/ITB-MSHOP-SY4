@@ -1,16 +1,16 @@
 package intregrated.backend.services;
 
 import intregrated.backend.dtos.saleItems.*;
-import intregrated.backend.entities.SellerAccount;
+import intregrated.backend.entities.accounts.SellerAccount;
 import intregrated.backend.fileproperties.ProductFileProperties;
-import intregrated.backend.entities.BrandBase;
-import intregrated.backend.entities.SaleItemBase;
-import intregrated.backend.entities.SaleItemPicture;
+import intregrated.backend.entities.brands.BrandBase;
+import intregrated.backend.entities.saleitems.SaleItemBase;
+import intregrated.backend.entities.saleitems.SaleItemPicture;
 import intregrated.backend.repositories.BrandBaseRepo;
 import intregrated.backend.repositories.SaleItemBaseRepo;
 import intregrated.backend.repositories.SaleItemPictureRepo;
 //import jakarta.transaction.Transactional;
-import intregrated.backend.repositories.SellerAccountRepository;
+import intregrated.backend.repositories.SellerAccountRepo;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -45,7 +45,7 @@ public class SaleItemBaseService {
     private SaleItemPictureRepo saleItemPictureRepo;
 
     @Autowired
-    private SellerAccountRepository sellerAccountRepo;
+    private SellerAccountRepo sellerAccountRepo;
     @Autowired
     private ProductFileProperties fileStorageProperties;
 
@@ -63,7 +63,7 @@ public class SaleItemBaseService {
     }
 
     @Transactional
-    public SaleItemBaseByIdDto getSaleItemBaseRepoById(Integer id) {
+    public SaleItemBaseByIdDto getSaleItemBaseById(Integer id) {
         SaleItemBase saleItem = saleItemBaseRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,

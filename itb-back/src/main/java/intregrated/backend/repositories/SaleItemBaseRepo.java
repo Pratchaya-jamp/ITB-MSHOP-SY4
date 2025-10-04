@@ -1,6 +1,6 @@
 package intregrated.backend.repositories;
 
-import intregrated.backend.entities.SaleItemBase;
+import intregrated.backend.entities.saleitems.SaleItemBase;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

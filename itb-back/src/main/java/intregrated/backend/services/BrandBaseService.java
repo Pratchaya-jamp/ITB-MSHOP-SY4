@@ -2,7 +2,7 @@ package intregrated.backend.services;
 
 import intregrated.backend.dtos.brands.BrandBaseByIdDto;
 import intregrated.backend.dtos.brands.NewBrandBaseDto;
-import intregrated.backend.entities.BrandBase;
+import intregrated.backend.entities.brands.BrandBase;
 import intregrated.backend.repositories.BrandBaseRepo;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
