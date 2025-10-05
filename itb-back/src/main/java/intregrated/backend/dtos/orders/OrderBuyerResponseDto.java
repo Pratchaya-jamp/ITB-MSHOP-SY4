@@ -9,11 +9,12 @@ import java.util.List;
 
 @Data
 @Builder
-public class OrderResponseDto {
+public class OrderBuyerResponseDto {
     private Integer id;
     private Integer buyerId;
     private OrderSellerDto seller;
     private Instant orderDate;
+    private Instant paymentDate;
     private String shippingAddress;
     private String orderNote;
     private List<OrderItemDto> orderItems;

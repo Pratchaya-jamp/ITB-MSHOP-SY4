@@ -42,6 +42,11 @@ public class Order {
     @Column(name = "order_date", nullable = false)
     private Instant orderDate;
 
+    @NotNull
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "payment_date", nullable = false)
+    private Instant paymentDate;
+
     @Size(max = 255)
     @NotNull
     @Column(name = "shipping_address", nullable = false)
