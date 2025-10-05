@@ -1,6 +1,7 @@
 package intregrated.backend.services;
 
 import intregrated.backend.dtos.orders.*;
+import intregrated.backend.entities.accounts.BuyerAccount;
 import intregrated.backend.entities.accounts.SellerAccount;
 import intregrated.backend.entities.accounts.UsersAccount;
 import intregrated.backend.entities.orders.Order;
@@ -28,6 +29,9 @@ public class OrderService {
     private UsersAccountRepo usersRepo;
     @Autowired
     private SellerAccountRepo sellerRepo;
+
+    @Autowired BuyerAccountRepo buyerRepo;
+
     @Autowired
     private SaleItemBaseRepo saleItemRepo;
     @Autowired
@@ -59,6 +63,7 @@ public class OrderService {
             order.setBuyer(user);
             order.setSeller(seller);
             order.setOrderDate(Instant.now());
+            order.setPaymentDate(Instant.now());
             order.setShippingAddress(request.getShippingAddress());
             order.setOrderNote(request.getOrderNote());
             order.setCreatedOn(Instant.now());
@@ -73,6 +78,12 @@ public class OrderService {
 
                 if (saleItem.getQuantity() < dto.getQuantity()) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "Quantity Not Enough");
+                }
+
+                // ห้ามซื้อสินค้าของตัวเอง
+                if (saleItem.getSeller() != null && user.getSeller() != null &&
+                        saleItem.getSeller().getId().equals(user.getSeller().getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot buy your own product");
                 }
 
                 saleItem.setQuantity(saleItem.getQuantity() - dto.getQuantity());
@@ -102,6 +113,7 @@ public class OrderService {
                             .nickname(order.getSeller().getNickname())
                             .build())
                     .orderDate(order.getOrderDate())
+                    .paymentDate(order.getPaymentDate())
                     .shippingAddress(order.getShippingAddress())
                     .orderNote(order.getOrderNote())
                     .orderItems(order.getOrderItems().stream()
@@ -119,15 +131,21 @@ public class OrderService {
         return orderResponseDtos;
     }
 
-    public OrderBuyerResponseDto getOrderById(Integer buyerId, Integer sellerId, Long orderId) {
+    public OrderBuyerResponseDto getOrderById(String role, Integer buyerId, Integer sellerId, Long orderId) {
         Order order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order id with " + orderId + " does not exist"));
 
-        boolean isOwner = (order.getBuyer() != null && order.getBuyer().getId().equals(buyerId))
-                || (order.getSeller() != null && order.getSeller().getId().equals(sellerId));
+        boolean isOwner = false;
+
+        if ("SELLER".equalsIgnoreCase(role) && order.getSeller() != null) {
+            isOwner = order.getSeller().getId().equals(sellerId);
+        } else if ("BUYER".equalsIgnoreCase(role) && order.getBuyer() != null) {
+            isOwner = order.getBuyer().getId().equals(buyerId);
+        }
 
         if (!isOwner) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User id not an owner (seller/buyer) of the order");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "User id not an owner (seller/buyer) of the order");
         }
 
         UsersAccount sellerUser = usersRepo.findBySellerId(order.getSeller().getId())
@@ -159,23 +177,14 @@ public class OrderService {
                 .build();
     }
 
-    public Page<OrderBuyerResponseDto> getAllOrders(Integer userId, Integer page, Integer size, String sortField, String sortDirection) {
-        UsersAccount usersAccount = usersRepo.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with " + userId + " not found"));
+    public Page<OrderBuyerResponseDto> getAllBuyerOrders(Integer id, Integer page, Integer size, String sortField, String sortDirection) {
+        BuyerAccount buyerAccount = buyerRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with " + id + " not found"));
 
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortField);
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<Order> orders;
-        if (usersAccount.getBuyer() != null) {
-            orders = orderRepo.findByBuyer_Id(usersAccount.getBuyer().getId(), pageable);
-        } else if (usersAccount.getSeller() != null) {
-            orders = orderRepo.findBySeller_Id(usersAccount.getSeller().getId(), pageable);
-        } else {
-            // ไม่มี role ที่ถูกต้อง
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "User is neither buyer nor seller");
-        }
+        Page<Order> orders = orderRepo.findByBuyer_Id(buyerAccount.getId(), pageable);
 
         return orders.map(order -> {
             UsersAccount sellerUser = usersRepo.findBySellerId(order.getSeller().getId())
@@ -219,34 +228,30 @@ public class OrderService {
 
         Page<Order> orders = orderRepo.findBySeller_Id(sellerAccount.getId(), pageable);
 
-        return orders.map(order -> {
-            UsersAccount sellerUser = usersRepo.findBySellerId(order.getSeller().getId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Seller user not found"));
-
-            return OrderSellerResponseDto.builder()
-                    .id(order.getId())
-                    .sellerId(order.getSeller().getId())
-                    .buyer(OrderBuyerDto.builder()
-                            .id(order.getSeller().getId())
-                            .username(order.getSeller().getFullname())
-                            .build())
-                    .orderDate(order.getOrderDate())
-                    .paymentDate(order.getPaymentDate())
-                    .shippingAddress(order.getShippingAddress())
-                    .orderNote(order.getOrderNote())
-                    .orderItems(order.getOrderItems().stream()
-                            .map(oi -> OrderItemDto.builder()
-                                    .no(oi.getId())
-                                    .saleItemId(oi.getSaleItem().getId())
-                                    .price(oi.getPrice())
-                                    .quantity(oi.getQuantity())
-                                    .description(oi.getDescription())
-                                    .build())
-                            .toList())
-                    .orderStatus(order.getOrderStatus())
-                    .build();
-        });
+        return orders.map(order ->
+                OrderSellerResponseDto.builder()
+                        .id(order.getId())
+                        .sellerId(order.getSeller().getId())
+                        .buyer(OrderBuyerDto.builder()
+                                .id(order.getBuyer().getId())
+                                .username(order.getBuyer().getFullname())
+                                .build())
+                        .orderDate(order.getOrderDate())
+                        .paymentDate(order.getPaymentDate())
+                        .shippingAddress(order.getShippingAddress())
+                        .orderNote(order.getOrderNote())
+                        .orderItems(order.getOrderItems().stream()
+                                .map(oi -> OrderItemDto.builder()
+                                        .no(oi.getId())
+                                        .saleItemId(oi.getSaleItem().getId())
+                                        .price(oi.getPrice())
+                                        .quantity(oi.getQuantity())
+                                        .description(oi.getDescription())
+                                        .build())
+                                .toList())
+                        .orderStatus(order.getOrderStatus())
+                        .build()
+        );
     }
 
     public String resolveUserType(UsersAccount user) {

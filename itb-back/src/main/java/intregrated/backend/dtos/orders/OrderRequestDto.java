@@ -20,6 +20,9 @@ public class OrderRequestDto {
     @NotNull
     private Instant orderDate;
 
+    @NotNull
+    private Instant paymentDate;
+
     @NotBlank
     private String shippingAddress;
 

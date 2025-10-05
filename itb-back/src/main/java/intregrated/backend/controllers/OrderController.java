@@ -26,10 +26,10 @@ public class OrderController {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
-    @GetMapping("/users/{userId}/orders")
-    public ResponseEntity<PageResponseDto<OrderBuyerResponseDto>> getAllOrders(
+    @GetMapping("/users/{id}/orders")
+    public ResponseEntity<PageResponseDto<OrderBuyerResponseDto>> getAllBuyerOrders(
             @RequestHeader("Authorization") String token,
-            @PathVariable Integer userId,
+            @PathVariable Integer id,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortField,
@@ -46,8 +46,20 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
         }
 
+        // ดึง claims
+        Claims claims = jwtTokenUtil.getClaims(token);
+        Integer buyerId = claims.get("buyer_id", Integer.class);
+
+        if (buyerId == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a Buyer");
+        }
+
+        if (!buyerId.equals(id)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User id in access token not matched with resource id");
+        }
+
         Page<OrderBuyerResponseDto> orderPage =
-                orderService.getAllOrders(userId, page, size, sortField, sortDirection);
+                orderService.getAllBuyerOrders(id, page, size, sortField, sortDirection);
 
         PageResponseDto<OrderBuyerResponseDto> response = PageResponseDto.<OrderBuyerResponseDto>builder()
                 .content(orderPage.getContent())
@@ -86,6 +98,10 @@ public class OrderController {
         // ดึง claims
         Claims claims = jwtTokenUtil.getClaims(token);
         Integer sellerId = claims.get("seller_id", Integer.class);
+
+        if (sellerId == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a Seller");
+        }
 
         if (!sellerId.equals(sid)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User id in access token not matched with resource id");
@@ -126,10 +142,11 @@ public class OrderController {
 
         // ดึง claims
         Claims claims = jwtTokenUtil.getClaims(token);
+        String role = claims.get("role", String.class);
         Integer buyerId = claims.get("buyer_id", Integer.class);
         Integer sellerId = claims.get("seller_id", Integer.class);
 
-        OrderBuyerResponseDto orderResponseDto = orderService.getOrderById(buyerId, sellerId, orderId);
+        OrderBuyerResponseDto orderResponseDto = orderService.getOrderById(role, buyerId, sellerId, orderId);
         return ResponseEntity.ok(orderResponseDto);
     }
 
