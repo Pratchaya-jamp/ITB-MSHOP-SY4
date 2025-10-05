@@ -29,7 +29,7 @@ public class AuthenticationController {
         // สร้าง HttpOnly Cookie สำหรับ Refresh Token
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", tokens.getRefresh_token())
                 .httpOnly(true)
-//                .secure(true) // enable in production with HTTPS
+                .secure(true)
                 .path("/sy4")
                 .maxAge(24 * 60 * 60)
                 .sameSite("Strict") // Add SameSite here
@@ -50,18 +50,10 @@ public class AuthenticationController {
 
         authenticationService.revokeRefreshToken(refreshToken);
 
-//        // Remove cookie
-//        Cookie cookie = new Cookie("refresh_token", "");
-//        cookie.setHttpOnly(true);
-////        cookie.setSecure(true);
-//        cookie.setPath("/sy4/itb-mshop/v2/auth/refresh");
-//        cookie.setMaxAge(0); // expire now
-//        response.addCookie(cookie);
-
         // สร้าง HttpOnly Cookie สำหรับ Refresh Token
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-//                .secure(true) // enable in production with HTTPS
+                .secure(true)
                 .path("/sy4/itb-mshop/v2/auth/refresh")
                 .maxAge(0)
                 .sameSite("Strict") // Add SameSite here
