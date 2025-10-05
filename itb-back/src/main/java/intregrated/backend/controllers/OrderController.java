@@ -1,7 +1,8 @@
 package intregrated.backend.controllers;
 
 import intregrated.backend.dtos.orders.OrderRequestDto;
-import intregrated.backend.dtos.orders.OrderResponseDto;
+import intregrated.backend.dtos.orders.OrderBuyerResponseDto;
+import intregrated.backend.dtos.orders.OrderSellerResponseDto;
 import intregrated.backend.dtos.paginations.PageResponseDto;
 import intregrated.backend.services.OrderService;
 import intregrated.backend.utils.JwtTokenUtil;
@@ -26,7 +27,7 @@ public class OrderController {
     private JwtTokenUtil jwtTokenUtil;
 
     @GetMapping("/users/{userId}/orders")
-    public ResponseEntity<PageResponseDto<OrderResponseDto>> getAllOrders(
+    public ResponseEntity<PageResponseDto<OrderBuyerResponseDto>> getAllOrders(
             @RequestHeader("Authorization") String token,
             @PathVariable Integer userId,
             @RequestParam(defaultValue = "0") Integer page,
@@ -45,10 +46,55 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
         }
 
-        Page<OrderResponseDto> orderPage =
+        Page<OrderBuyerResponseDto> orderPage =
                 orderService.getAllOrders(userId, page, size, sortField, sortDirection);
 
-        PageResponseDto<OrderResponseDto> response = PageResponseDto.<OrderResponseDto>builder()
+        PageResponseDto<OrderBuyerResponseDto> response = PageResponseDto.<OrderBuyerResponseDto>builder()
+                .content(orderPage.getContent())
+                .page(orderPage.getNumber())
+                .size(orderPage.getSize())
+                .totalPages(orderPage.getTotalPages())
+                .totalElements(orderPage.getTotalElements())
+                .first(orderPage.isFirst())
+                .last(orderPage.isLast())
+                .sort(sortField + ": " + sortDirection)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/sellers/{sid}/orders")
+    public ResponseEntity<PageResponseDto<OrderSellerResponseDto>> getAllSellerOrders(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Integer sid,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "ASC") String sortDirection
+    ) {
+        // ตรวจสอบสิทธิ์
+        if (token == null || !token.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
+        }
+
+        token = token.substring(7); // ตัด "Bearer "
+
+        if (!jwtTokenUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
+        }
+
+        // ดึง claims
+        Claims claims = jwtTokenUtil.getClaims(token);
+        Integer sellerId = claims.get("seller_id", Integer.class);
+
+        if (!sellerId.equals(sid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User id in access token not matched with resource id");
+        }
+
+        Page<OrderSellerResponseDto> orderPage =
+                orderService.getAllSellerOrders(sid, page, size, sortField, sortDirection);
+
+        PageResponseDto<OrderSellerResponseDto> response = PageResponseDto.<OrderSellerResponseDto>builder()
                 .content(orderPage.getContent())
                 .page(orderPage.getNumber())
                 .size(orderPage.getSize())
@@ -63,7 +109,7 @@ public class OrderController {
     }
 
     @GetMapping("/orders/{orderId}")
-    public ResponseEntity<OrderResponseDto> getOrderById(
+    public ResponseEntity<OrderBuyerResponseDto> getOrderById(
             @RequestHeader("Authorization") String token,
             @PathVariable Long orderId
     ) {
@@ -83,12 +129,12 @@ public class OrderController {
         Integer buyerId = claims.get("buyer_id", Integer.class);
         Integer sellerId = claims.get("seller_id", Integer.class);
 
-        OrderResponseDto orderResponseDto = orderService.getOrderById(buyerId, sellerId, orderId);
+        OrderBuyerResponseDto orderResponseDto = orderService.getOrderById(buyerId, sellerId, orderId);
         return ResponseEntity.ok(orderResponseDto);
     }
 
     @PostMapping("/orders")
-    public ResponseEntity<List<OrderResponseDto>> placeOrder(
+    public ResponseEntity<List<OrderBuyerResponseDto>> placeOrder(
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody List<@Valid OrderRequestDto> orderRequestDto
     ) {
@@ -105,7 +151,7 @@ public class OrderController {
 
         Integer userId = jwtTokenUtil.getClaims(token).get("id", Integer.class);
 
-        List<OrderResponseDto> orderResponseDto = orderService.placeOrder(orderRequestDto, userId);
+        List<OrderBuyerResponseDto> orderResponseDto = orderService.placeOrder(orderRequestDto, userId);
         return ResponseEntity.ok(orderResponseDto);
     }
 }
