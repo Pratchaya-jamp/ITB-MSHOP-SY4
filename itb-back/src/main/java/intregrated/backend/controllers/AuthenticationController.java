@@ -51,15 +51,15 @@ public class AuthenticationController {
         authenticationService.revokeRefreshToken(refreshToken);
 
         // สร้าง HttpOnly Cookie สำหรับ Refresh Token
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", "")
+        ResponseCookie deleteCookie = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
                 .secure(true)
-                .path("/sy4/itb-mshop/v2/auth/refresh")
+                .path("/sy4")
                 .maxAge(0)
                 .sameSite("Strict") // Add SameSite here
                 .build();
 
-        response.addHeader("Set-Cookie", refreshCookie.toString());
+        response.addHeader("Set-Cookie", deleteCookie.toString());
 
         return ResponseEntity.noContent().build(); // 204
     }
