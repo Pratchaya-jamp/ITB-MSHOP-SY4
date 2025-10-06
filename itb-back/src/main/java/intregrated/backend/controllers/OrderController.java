@@ -46,18 +46,6 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
         }
 
-        // ดึง claims
-        Claims claims = jwtTokenUtil.getClaims(token);
-        Integer buyerId = claims.get("buyer_id", Integer.class);
-
-        if (buyerId == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a Buyer");
-        }
-
-        if (!buyerId.equals(id)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User id in access token not matched with resource id");
-        }
-
         Page<OrderBuyerResponseDto> orderPage =
                 orderService.getAllBuyerOrders(id, page, size, sortField, sortDirection);
 

@@ -36,6 +36,26 @@ public class CartService {
     private UsersAccountRepo usersAccountRepo;
 
     @Transactional
+    public CartResponseDto getCartById(Integer userId) {
+        Cart cart = cartRepo.findByUser_Id(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart with userId " + userId + " not found"));
+
+        return CartResponseDto.builder()
+                .cartId(cart.getId())
+                .userId(cart.getUser().getId())
+                .carts(cart.getItems().stream().map(ci -> CartItemResponseDto.builder()
+                        .saleItemId(ci.getSaleItem().getId())
+                        .saleItemName(ci.getSaleItem().getModel())   // ต้องมี field name ใน SaleItemBase
+                        .saleItemPrice(ci.getSaleItem().getPrice()) // ต้องมี field price ใน SaleItemBase
+                        .quantity(ci.getQuantity())
+                        .sellerId(ci.getSeller().getId())
+                        .sellerName(ci.getSeller().getFullname())       // ต้องมี field name ใน SellerAccount
+                        .build()
+                ).toList())
+                .build();
+    }
+
+    @Transactional
     public CartResponseDto addToCart(CartRequestDto request, Integer userId) {
 
         if (userId == null) {
@@ -46,16 +66,16 @@ public class CartService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Buyer not found"));
 
         // หา/สร้าง cart ของ buyer
-        Cart cart = cartRepo.findByBuyer(user)
+        Cart cart = cartRepo.findByUser(user)
                 .orElseGet(() -> {
                     Cart c = new Cart();
-                    c.setBuyer(user);
+                    c.setUser(user);
                     c.setCreatedOn(Instant.now());
                     c.setUpdatedOn(Instant.now());
                     return cartRepo.save(c);
                 });
 
-        for (CartRequestDto.CartItemDto dto : request.getItems()) {
+        for (CartRequestDto.CartItemDto dto : request.getCart_items()) {
             SaleItemBase saleItem = saleItemRepo.findById(dto.getSaleItemId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found"));
 
@@ -97,7 +117,9 @@ public class CartService {
 
         // Map เป็น Response DTO
         return CartResponseDto.builder()
-                .items(cart.getItems().stream().map(ci -> CartItemResponseDto.builder()
+                .cartId(cart.getId())
+                .userId(cart.getUser().getId())
+                .carts(cart.getItems().stream().map(ci -> CartItemResponseDto.builder()
                         .saleItemId(ci.getSaleItem().getId())
                         .saleItemName(ci.getSaleItem().getModel())   // ต้องมี field name ใน SaleItemBase
                         .saleItemPrice(ci.getSaleItem().getPrice()) // ต้องมี field price ใน SaleItemBase

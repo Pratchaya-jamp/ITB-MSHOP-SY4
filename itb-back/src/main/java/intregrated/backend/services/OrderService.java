@@ -1,7 +1,6 @@
 package intregrated.backend.services;
 
 import intregrated.backend.dtos.orders.*;
-import intregrated.backend.entities.accounts.BuyerAccount;
 import intregrated.backend.entities.accounts.SellerAccount;
 import intregrated.backend.entities.accounts.UsersAccount;
 import intregrated.backend.entities.orders.Order;
@@ -29,9 +28,6 @@ public class OrderService {
     private UsersAccountRepo usersRepo;
     @Autowired
     private SellerAccountRepo sellerRepo;
-
-    @Autowired BuyerAccountRepo buyerRepo;
-
     @Autowired
     private SaleItemBaseRepo saleItemRepo;
     @Autowired
@@ -60,7 +56,7 @@ public class OrderService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seller not found"));
 
             Order order = new Order();
-            order.setBuyer(user);
+            order.setUser(user);
             order.setSeller(seller);
             order.setOrderDate(Instant.now());
             order.setPaymentDate(Instant.now());
@@ -93,6 +89,7 @@ public class OrderService {
                 orderItem.setOrder(order);
                 orderItem.setSaleItem(saleItem);
                 orderItem.setPrice(dto.getPrice());
+                orderItem.setPaymentDate(Instant.now());
                 orderItem.setQuantity(dto.getQuantity());
                 orderItem.setDescription(dto.getDescription());
                 orderItem.setCreatedOn(Instant.now());
@@ -104,7 +101,7 @@ public class OrderService {
 
             orderResponseDtos.add(OrderBuyerResponseDto.builder()
                     .id(order.getId())
-                    .buyerId(order.getBuyer().getId())
+                    .buyerId(order.getUser().getId())
                     .seller(OrderSellerDto.builder()
                             .id(order.getSeller().getId())
                             .email(sellerUser.getEmail())
@@ -139,8 +136,8 @@ public class OrderService {
 
         if ("SELLER".equalsIgnoreCase(role) && order.getSeller() != null) {
             isOwner = order.getSeller().getId().equals(sellerId);
-        } else if ("BUYER".equalsIgnoreCase(role) && order.getBuyer() != null) {
-            isOwner = order.getBuyer().getId().equals(buyerId);
+        } else if ("BUYER".equalsIgnoreCase(role) && order.getUser() != null) {
+            isOwner = order.getUser().getId().equals(buyerId);
         }
 
         if (!isOwner) {
@@ -153,7 +150,7 @@ public class OrderService {
 
         return OrderBuyerResponseDto.builder()
                 .id(order.getId())
-                .buyerId(order.getBuyer().getId())
+                .buyerId(order.getUser().getId())
                 .seller(OrderSellerDto.builder()
                         .id(order.getSeller().getId())
                         .email(sellerUser.getEmail())
@@ -178,13 +175,13 @@ public class OrderService {
     }
 
     public Page<OrderBuyerResponseDto> getAllBuyerOrders(Integer id, Integer page, Integer size, String sortField, String sortDirection) {
-        BuyerAccount buyerAccount = buyerRepo.findById(id)
+        UsersAccount usersAccount = usersRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with " + id + " not found"));
 
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortField);
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<Order> orders = orderRepo.findByBuyer_Id(buyerAccount.getId(), pageable);
+        Page<Order> orders = orderRepo.findByUser_Id(usersAccount.getId(), pageable);
 
         return orders.map(order -> {
             UsersAccount sellerUser = usersRepo.findBySellerId(order.getSeller().getId())
@@ -193,7 +190,7 @@ public class OrderService {
 
             return OrderBuyerResponseDto.builder()
                     .id(order.getId())
-                    .buyerId(order.getBuyer().getId())
+                    .buyerId(order.getUser().getId())
                     .seller(OrderSellerDto.builder()
                             .id(order.getSeller().getId())
                             .email(sellerUser.getEmail())
@@ -233,8 +230,8 @@ public class OrderService {
                         .id(order.getId())
                         .sellerId(order.getSeller().getId())
                         .buyer(OrderBuyerDto.builder()
-                                .id(order.getBuyer().getId())
-                                .username(order.getBuyer().getFullname())
+                                .id(order.getUser().getId())
+                                .username(order.getUser().getFullname())
                                 .build())
                         .orderDate(order.getOrderDate())
                         .paymentDate(order.getPaymentDate())
