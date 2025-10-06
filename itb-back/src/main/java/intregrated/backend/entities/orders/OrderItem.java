@@ -48,6 +48,11 @@ public class OrderItem {
 
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "payment_date", nullable = false)
+    private Instant paymentDate;
+
+    @NotNull
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "createdOn", nullable = false)
     private Instant createdOn;
 

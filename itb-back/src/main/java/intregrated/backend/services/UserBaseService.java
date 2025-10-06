@@ -119,48 +119,6 @@ public class UserBaseService {
                 .build();
     }
 
-//    @Transactional
-//    public void deleteUser(Integer uid) {
-//        // หา user ก่อน (เพราะ UsersAccount เป็นเจ้าของ FK)
-//        UsersAccount usersAccount = userRepo.findById(uid)
-//                .orElseThrow(() -> new ResponseStatusException(
-//                        HttpStatus.NOT_FOUND,
-//                        "user with id " + uid + " not found"
-//                ));
-//
-//        SellerAccount sellerAccount = usersAccount.getSeller(); // ดึง seller ผ่าน user
-//        if (sellerAccount == null) {
-//            // user ไม่มี seller → แค่ลบ user
-//            userRepo.delete(usersAccount);
-//            return;
-//        }
-//
-//        // โหลดรูป (บังคับ fetch)
-//        List<SellerPicture> pictures = sellerAccount.getPictures();
-//        pictures.size();
-//
-//        // ลบไฟล์จริงใน disk
-//        for (SellerPicture pic : pictures) {
-//            if (pic.getNewPictureName() != null && !pic.getNewPictureName().isBlank()) {
-//                try {
-//                    sellerFileService.deleteFile(pic.getNewPictureName());
-//                } catch (Exception e) {
-//                    System.err.println("Failed to delete file: " + pic.getNewPictureName());
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//
-//        // ตัดความสัมพันธ์ออก เพื่อให้ Hibernate จัดการ orphan ได้
-//        usersAccount.setSeller(null);
-//
-//        // ลบ user ก่อน (เพราะมันถือ FK ไปยัง seller)
-//        userRepo.delete(usersAccount);
-//
-//        // ลบ seller (Hibernate จะ cascade ลบ SellerPicture ให้เอง)
-//        sellerRepo.delete(sellerAccount);
-//    }
-
     public String resolveUserType(UsersAccount user) {
         boolean isBuyer = user.getBuyer() != null;
         boolean isSeller = user.getSeller() != null;

@@ -28,8 +28,8 @@ public class Order {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "buyer_id", nullable = false)
-    private UsersAccount buyer;
+    @JoinColumn(name = "user_id", nullable = false)
+    private UsersAccount user;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

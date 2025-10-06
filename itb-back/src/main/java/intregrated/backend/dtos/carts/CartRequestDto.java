@@ -12,7 +12,7 @@ public class CartRequestDto {
     private Integer buyerId;
     @NotNull
     @NotEmpty
-    private List<CartItemDto> items;
+    private List<CartItemDto> cart_items;
 
     @Data
     public static class CartItemDto {

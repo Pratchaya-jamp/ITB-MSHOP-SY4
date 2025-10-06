@@ -9,5 +9,7 @@ import java.util.List;
 @Data
 @Builder
 public class CartResponseDto {
-    private List<CartItemResponseDto> items;
+    private Integer cartId;
+    private Integer userId;
+    private List<CartItemResponseDto> carts;
 }

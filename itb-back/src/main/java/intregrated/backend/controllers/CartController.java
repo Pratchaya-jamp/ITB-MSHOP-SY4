@@ -41,4 +41,30 @@ public class CartController {
         CartResponseDto cart = cartService.addToCart(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(cart);
     }
+
+    @GetMapping("/{uid}")
+    public  ResponseEntity<CartResponseDto> getCartByUserId(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Integer uid
+    ) {
+        // ตรวจสอบสิทธิ์
+        if (token == null || !token.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
+        }
+
+        token = token.substring(7); // ตัด "Bearer "
+
+        if (!jwtTokenUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
+        }
+
+        Integer userId = jwtTokenUtil.getClaims(token).get("id", Integer.class);
+
+        if (!userId.equals(uid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User id in access token not matched with resource id");
+        }
+
+        CartResponseDto cart = cartService.getCartById(userId);
+        return ResponseEntity.ok(cart);
+    }
 }
