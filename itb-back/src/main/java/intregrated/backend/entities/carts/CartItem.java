@@ -4,6 +4,7 @@ import intregrated.backend.entities.accounts.SellerAccount;
 import intregrated.backend.entities.saleitems.SaleItemBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
@@ -42,6 +43,11 @@ public class CartItem {
     @ColumnDefault("1")
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
+
+    @Size(max = 65535)
+    @NotNull
+    @Column(name = "description", nullable = false, length = 65535)
+    private String description;
 
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
