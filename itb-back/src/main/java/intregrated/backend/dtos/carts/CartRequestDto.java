@@ -21,7 +21,5 @@ public class CartRequestDto {
         private Integer saleItemId;
         @NotNull
         private Integer quantity;
-        @NotBlank
-        private String description;
     }
 }

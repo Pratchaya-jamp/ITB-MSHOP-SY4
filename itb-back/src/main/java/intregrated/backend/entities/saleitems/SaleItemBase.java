@@ -75,4 +75,24 @@ public class SaleItemBase {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "sellerid", nullable = false)
     private SellerAccount seller;
+
+    @Transient
+    public String getFullDescription() {
+        String brandName = brand.getName();
+        String modelName = model;
+        String storage = storageGb != null ? storageGb + " GB" : "";
+        String colorStr = color != null ? color : "";
+
+        if (!storage.isEmpty() || !colorStr.isEmpty()) {
+            return String.format("%s %s (%s%s%s)",
+                    brandName,
+                    modelName,
+                    storage,
+                    (!storage.isEmpty() && !colorStr.isEmpty()) ? ", " : "",
+                    colorStr
+            );
+        } else {
+            return String.format("%s %s", brandName, modelName);
+        }
+    }
 }

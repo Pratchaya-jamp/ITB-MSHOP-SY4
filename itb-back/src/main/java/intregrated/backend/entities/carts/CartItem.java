@@ -44,11 +44,6 @@ public class CartItem {
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @Size(max = 65535)
-    @NotNull
-    @Column(name = "description", nullable = false, length = 65535)
-    private String description;
-
     @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "createdOn", nullable = false)
