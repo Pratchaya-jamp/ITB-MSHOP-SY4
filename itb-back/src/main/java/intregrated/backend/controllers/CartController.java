@@ -42,7 +42,7 @@ public class CartController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cart);
     }
 
-    @GetMapping("/{uid}")
+    @GetMapping("/{uid}/user")
     public  ResponseEntity<CartResponseDto> getCartByUserId(
             @RequestHeader("Authorization") String token,
             @PathVariable Integer uid
