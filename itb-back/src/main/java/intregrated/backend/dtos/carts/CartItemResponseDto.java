@@ -12,4 +12,5 @@ public class CartItemResponseDto {
     private Integer quantity;
     private Integer sellerId;
     private String sellerName;
+    private String description;
 }

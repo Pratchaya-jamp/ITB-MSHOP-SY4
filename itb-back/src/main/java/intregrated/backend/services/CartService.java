@@ -48,6 +48,7 @@ public class CartService {
                         .saleItemName(ci.getSaleItem().getModel())   // ต้องมี field name ใน SaleItemBase
                         .saleItemPrice(ci.getSaleItem().getPrice()) // ต้องมี field price ใน SaleItemBase
                         .quantity(ci.getQuantity())
+                        .description(ci.getSaleItem().getDescription())
                         .sellerId(ci.getSeller().getId())
                         .sellerName(ci.getSeller().getFullname())       // ต้องมี field name ใน SellerAccount
                         .build()
@@ -105,6 +106,7 @@ public class CartService {
                 newItem.setSaleItem(saleItem);
                 newItem.setSeller(saleItem.getSeller());
                 newItem.setQuantity(dto.getQuantity());
+                newItem.setDescription(dto.getDescription());
                 newItem.setCreatedOn(Instant.now());
                 newItem.setUpdatedOn(Instant.now());
                 cartItemRepo.save(newItem);
@@ -124,8 +126,9 @@ public class CartService {
                         .saleItemName(ci.getSaleItem().getModel())   // ต้องมี field name ใน SaleItemBase
                         .saleItemPrice(ci.getSaleItem().getPrice()) // ต้องมี field price ใน SaleItemBase
                         .quantity(ci.getQuantity())
+                        .description(ci.getDescription())
                         .sellerId(ci.getSeller().getId())
-                        .sellerName(ci.getSeller().getFullname())       // ต้องมี field name ใน SellerAccount
+                        .sellerName(ci.getSeller().getFullname()) // ต้องมี field name ใน SellerAccount
                         .build()
                 ).toList())
                 .build();
