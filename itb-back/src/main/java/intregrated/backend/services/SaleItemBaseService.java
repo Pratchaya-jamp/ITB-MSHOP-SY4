@@ -584,6 +584,7 @@ public class SaleItemBaseService {
 
         return SaleItemBaseByIdDto.builder()
                 .id(s.getId())
+                .sellerId(s.getSeller().getId())
                 .model(s.getModel())
                 .brandName(s.getBrand() != null ? s.getBrand().getName() : null)
                 .description(s.getDescription())
