@@ -38,11 +38,8 @@ public class SaleItemBaseController {
 
     @GetMapping("")
     public ResponseEntity<List<SaleItemBaseDto>> getAllSaleItemBases() {
-        List<SaleItemBase> saleItemBases = saleItemBaseService.getAllSaleItemBase();
-
-        return ResponseEntity.ok(
-                ListMapper.mapList(saleItemBases, SaleItemBaseDto.class, modelMapper)
-        );
+        List<SaleItemBaseDto> saleItemBases = saleItemBaseService.getAllSaleItemBase();
+        return ResponseEntity.ok(saleItemBases);
     }
 
     @GetMapping("/{id}")
