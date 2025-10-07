@@ -11,7 +11,9 @@ import intregrated.backend.repositories.SaleItemBaseRepo;
 import intregrated.backend.repositories.SaleItemPictureRepo;
 //import jakarta.transaction.Transactional;
 import intregrated.backend.repositories.SellerAccountRepo;
+import intregrated.backend.utils.ListMapper;
 import org.apache.commons.io.FilenameUtils;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.*;
@@ -53,13 +55,20 @@ public class SaleItemBaseService {
     @Qualifier("productFileService")
     private FileService productFileService;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
+    @Autowired
+    private ListMapper listMapper;
+
 
 
 //    @Value("${file.upload-dir}")
 //    private String uploadDir;
 
-    public List<SaleItemBase> getAllSaleItemBase() {
-        return saleItemBaseRepo.findAll();
+    public List<SaleItemBaseDto> getAllSaleItemBase() {
+        List<SaleItemBase> saleItemsBases = saleItemBaseRepo.findAll();
+        return ListMapper.mapList(saleItemsBases, SaleItemBaseDto.class, modelMapper);
     }
 
     @Transactional
@@ -78,6 +87,7 @@ public class SaleItemBaseService {
         // Map entity → DTO
         return SaleItemBaseByIdDto.builder()
                 .id(saleItem.getId())
+                .sellerId(saleItem.getSeller() != null ? saleItem.getSeller().getId() : null)
                 .model(saleItem.getModel())
                 .brandName(saleItem.getBrand() != null ? saleItem.getBrand().getName() : null)
                 .description(saleItem.getDescription())

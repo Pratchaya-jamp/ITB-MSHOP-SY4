@@ -12,6 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class SaleItemBaseByIdDto {
     private Integer id;
+    private Integer sellerId;
     private String model;
     private String brandName;
     private String description;
