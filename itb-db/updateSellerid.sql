@@ -1,6 +1,9 @@
 -- Assuming sellerid 3 and 4 exist in seller_account table.
 USE itb;
 
+-- Force Activate Account
+UPDATE users_account SET isAcitve = 1;
+
 -- Update sale_item_base by setting the appropriate sellerid for each item id
 UPDATE sale_item_base SET sellerid = 1 WHERE id = 1;
 UPDATE sale_item_base SET sellerid = 2 WHERE id = 2;

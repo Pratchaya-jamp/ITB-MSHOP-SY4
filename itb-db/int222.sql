@@ -146,10 +146,10 @@ CREATE TABLE IF NOT EXISTS sale_item_picture (
 -- 9. Cart
 CREATE TABLE IF NOT EXISTS cart (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    buyer_id INT NOT NULL,
+    user_id INT NOT NULL,
     createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_cart_buyer FOREIGN KEY (buyer_id) REFERENCES users_account(uid) ON DELETE CASCADE
+    CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users_account(uid) ON DELETE CASCADE
 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 10. Cart Item
@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS cart_item (
 -- 11. Orders
 CREATE TABLE IF NOT EXISTS orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    buyer_id INT NOT NULL,
+    user_id INT NOT NULL,
     seller_id INT NOT NULL,
     order_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     payment_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS orders (
     order_status ENUM('COMPLETED', 'CANCELED') NOT NULL DEFAULT 'COMPLETED',
     createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_orders_buyer FOREIGN KEY (buyer_id) REFERENCES users_account(uid) ON DELETE CASCADE,
+    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users_account(uid) ON DELETE CASCADE,
     CONSTRAINT fk_orders_seller FOREIGN KEY (seller_id) REFERENCES seller_account(sellerid) ON DELETE CASCADE
 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -191,6 +191,7 @@ CREATE TABLE IF NOT EXISTS order_item (
     price INT NOT NULL,
     quantity INT NOT NULL,
     description VARCHAR(255),
+    payment_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_order_item_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
@@ -222,6 +223,36 @@ INSERT INTO brand_base (name, websiteUrl, isActive, countryOfOrigin) VALUES
 ('Nothing', 'https://nothing.tech', 1, 'United Kingdom');
 
 select * from brand_base;
+
+INSERT INTO buyer_account (nickname, fullname)
+VALUES ('Somchai', 'Somchai Jaidee');
+
+INSERT INTO buyer_account (nickname, fullname)
+VALUES ('Somkiat', 'Somkiat  Luckchart');
+
+INSERT INTO seller_account (nickname, fullname, mobile, bankNumber, bankName, nationalId)
+VALUES ('Somsuan', 'Somsuan Hundee', '0834567890', '0371234567', 'Bangkok Bank', '1000111100222');
+
+INSERT INTO seller_account (nickname, fullname, mobile, bankNumber, bankName, nationalId)
+VALUES ('Somsuk', 'Somsuk  Fundee', '0845678901', '2371234567', 'Siam Commercial Bank', '1000111100333');
+
+INSERT INTO seller_account (nickname, fullname, mobile, bankNumber, bankName, nationalId)
+VALUES ('Somsak', 'Somsak Saksit', '0856789012', '0373456789', 'Bangkok Bank', '1000111100444');
+
+INSERT INTO users_account (nickname, email, password, fullname, buyerid, isActive)
+VALUES ('Somchai', 'itbkk.somchai@ad.sit.kmutt.ac.th', '$argon2i$v=19$m=64,t=2,p=8$OFpneUU4YVpGek03bEoxeA$b40GGxEcupj063omldyX6w', 'Somchai Jaidee', 1, TRUE);
+
+INSERT INTO users_account (nickname, email, password, fullname, buyerid, isActive)
+VALUES ('Somkiat', 'itbkk.somkiat@ad.sit.kmutt.ac.th', '$argon2i$v=19$m=64,t=2,p=8$OFpneUU4YVpGek03bEoxeA$b40GGxEcupj063omldyX6w', 'Somkiat  Luckchart', 2, TRUE);
+
+INSERT INTO users_account (nickname, email, password, fullname, sellerid, isActive)
+VALUES ('Somsuan', 'itbkk.somsuan@ad.sit.kmutt.ac.th', '$argon2i$v=19$m=64,t=2,p=8$OFpneUU4YVpGek03bEoxeA$b40GGxEcupj063omldyX6w', 'Somsuan Hundee', 1, TRUE);
+
+INSERT INTO users_account (nickname, email, password, fullname, sellerid, isActive)
+VALUES ('Somsuk', 'itbkk.somsuk@ad.sit.kmutt.ac.th', '$argon2i$v=19$m=64,t=2,p=8$OFpneUU4YVpGek03bEoxeA$b40GGxEcupj063omldyX6w', 'Somsuk  Fundee', 2, TRUE);
+
+INSERT INTO users_account (nickname, email, password, fullname, sellerid, isActive)
+VALUES ('Somsak', 'itbkk.somsak@ad.sit.kmutt.ac.th', '$argon2i$v=19$m=64,t=2,p=8$OFpneUU4YVpGek03bEoxeA$b40GGxEcupj063omldyX6w', 'Somsak Saksit', 3, TRUE);
 
 INSERT INTO sale_item_base (
 	id, brand_id, model, description, price, ramGb, screenSizeInch, storageGb, color, quantity
@@ -302,6 +333,71 @@ INSERT INTO sale_item_base (
 (83, 10, 'Find X5 Lite', 'Previous gen lite', 14850, '8', '6.43', '128', 'Starry Black', 8),
 (84, 10, 'A77', 'Budget friendly', 8250, '6', '6.56', '128', 'Ocean Blue', 20),
 (85, 10, 'Reno6 Pro', 'Classic premium', 16500, '12', '6.55', '256', 'Arctic Blue', 7);
+
+-- Update sale_item_base by setting the appropriate sellerid for each item id
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 1;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 2;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 3;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 4;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 5;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 6;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 7;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 8;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 9;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 10;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 16;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 17;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 18;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 19;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 20;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 21;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 22;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 23;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 24;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 25;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 31;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 32;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 33;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 34;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 35;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 36;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 37;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 38;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 39;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 40;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 46;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 47;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 48;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 49;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 50;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 51;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 52;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 53;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 54;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 55;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 61;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 62;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 63;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 64;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 65;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 66;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 67;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 68;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 69;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 70;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 76;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 77;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 78;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 79;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 80;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 81;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 82;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 83;
+UPDATE sale_item_base SET sellerid = 1 WHERE id = 84;
+UPDATE sale_item_base SET sellerid = 2 WHERE id = 85;
+
+-- Verify the update (Optional)
+SELECT id, sellerid, model, brand_id FROM sale_item_base WHERE sellerid IS NOT NULL ORDER BY id;
 
 select * from sale_item_base;
 
