@@ -16,6 +16,7 @@ import UserProfile from '@/components/UserProfile.vue'
 import UserEdit from '@/components/UserEdit.vue'
 import Cart from '@/components/Cart.vue'
 import PlaceOrder from '@/components/PlaceOrder.vue'
+import OrderDetail from '@/components/OrderDetail.vue'
 
 const routes = [
   {
@@ -106,6 +107,11 @@ const routes = [
   path: '/order',
   name: 'placeOrder',
   component: PlaceOrder,
+},
+{
+  path: '/order/:orderid',
+  name: 'orderDetail',
+  component: OrderDetail,
 },
 ]
 
