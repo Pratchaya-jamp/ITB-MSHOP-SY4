@@ -127,45 +127,50 @@ const isIncreaseDisabled = computed(() =>
 )
 
 // ฟังก์ชัน Add to Cart
-const addToCart = () => {
-    if (!isAuthenticated.value) {
-        router.push('/signin')
-        console.log('Redirecting to /signin: User is not authenticated.')
-        return
+const addToCart = async (item) => {
+  if (!isAuthenticated.value) {
+    router.push('/signin');
+    console.log('Redirecting to /signin: User is not authenticated.');
+    return;
+  }
+
+  if (!item || item.quantity <= 0) {
+    console.warn('❌ Invalid item or out of stock');
+    return;
+  }
+
+  const qtyToAdd = itemQuantityToAddToCart.value;
+  const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+
+  const existingItem = existingCart.items.find(i => i.saleItemId === item.id);
+
+  if (existingItem) {
+    const newTotalQty = existingItem.quantity + qtyToAdd;
+
+    if (newTotalQty > item.quantity) {
+      existingItem.quantity = item.quantity;
+      alert(`❗ สินค้ามีในคลัง ${item.quantity} ชิ้น — เพิ่มได้สูงสุดเท่านั้น`);
+    } else {
+      existingItem.quantity = newTotalQty;
     }
+  } else {
+    // ✅ เพิ่ม selected: false ให้สินค้าใหม่
+    const safeQty = qtyToAdd > item.quantity ? item.quantity : qtyToAdd;
+    existingCart.items.push({
+      saleItemId: item.id,
+      quantity: safeQty,
+      description: `${item.brandName} ${item.model} (${item.storageGb ? item.storageGb + 'GB' : '-'}, ${item.color || '-'})`,
+      price: item.price,
+      maxquantity: item.quantity,
+      sellerId: item.sellerId,
+    });
+  }
 
-    if (product.value && product.value.quantity > 0) {
-        const qtyToAdd = itemQuantityToAddToCart.value;
-        
-        let currentTotalCount = parseInt(localStorage.getItem(totalCartCountKey) || '0');
-        currentTotalCount += qtyToAdd; 
-        cartCount.value = currentTotalCount; 
+  // ✅ บันทึกกลับลง localStorage
+  localStorage.setItem("CartData", JSON.stringify(existingCart));
+  console.log("🛒 Cart updated in localStorage:", existingCart);
+};
 
-        localStorage.setItem(totalCartCountKey, cartCount.value.toString())
-        
-        localStorage.setItem(itemStorageKey.value, itemQuantityToAddToCart.value.toString())
-
-        window.dispatchEvent(new Event('storage'));
-
-        console.log(`Added ${qtyToAdd} of ${product.value.model} to cart. Total items: ${cartCount.value}`)
-    }
-}
-
-watch(product, (newProduct) => {
-    if (newProduct) {
-        loadCartState()
-    }
-})
-watch(itemQuantityToAddToCart, (newQty) => {
-    localStorage.setItem(itemStorageKey.value, newQty.toString())
-})
-
-// Listener สำหรับการ Sync ตะกร้าจากหน้าต่างอื่น
-const handleStorageChange = (event) => {
-    if (event.key === totalCartCountKey) {
-        loadCartState();
-    }
-}
 
 onMounted(async () => {
     decodeTokenAndSetRole()
@@ -467,7 +472,7 @@ const iconComponent = computed(() => {
                             Sold Out
                         </button>
                         
-                        <button v-else @click="addToCart"
+                        <button v-else @click="addToCart(product)"
                             class="itbms-add-to-cart-button w-full sm:w-auto font-semibold border-2 rounded-lg px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white"
                             :class="{
                                 'bg-transparent text-blue-500 border-blue-500 hover:bg-blue-600 hover:text-white': theme === 'light' || theme === 'dark'

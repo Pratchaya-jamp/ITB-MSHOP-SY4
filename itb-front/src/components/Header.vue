@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { jwtDecode } from 'jwt-decode'
+import { addItemWithAuth, addItem } from '@/libs/fetchUtilsOur'
 import Cookies from 'js-cookie'
 
 const router = useRouter()
@@ -36,17 +37,32 @@ const goToProfile = () => {
     router.push('/profile')
 }
 
-const logout = () => {
-    // 4. ลบ token ทั้งสองตัวออกจาก localStorage
-    Cookies.remove('access_token')
-    Cookies.remove('refresh_token')
-    
-    isLoggedIn.value = false
-    
-    // เด้งไปหน้า Login และรีเฟรช
-    router.push('/signin').then(() => {
-        window.location.reload();
-    });
+const logout = async () => {
+  try {
+    const response = await addItem(
+      'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/logout'
+    )
+
+    // ลบ token ทั้งสองตัวออกจาก Cookies
+
+    if (response.status === 204) {
+       setTimeout(() => {
+        // ลบ token
+        Cookies.remove('access_token', { path: '/' })
+        Cookies.remove('refresh_token', { path: '/' })
+
+        // อัปเดตสถานะ
+        isLoggedIn.value = false
+
+        // ไปหน้า Signin และรีเฟรช
+        router.push('/signin').then(() => {
+          window.location.reload()
+        })
+      }, 1000) // 10000 ms = 10 วินาที
+    }
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
 }
 
 onMounted(() => {

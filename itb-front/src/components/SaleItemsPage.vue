@@ -1,7 +1,7 @@
-<script setup>
+a<script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getItems, deleteItemById,getItemsWithAuth } from '@/libs/fetchUtilsOur';
+import { getItems, deleteItemById,getItemsWithAuth, addItemWithAuth} from '@/libs/fetchUtilsOur';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie'
@@ -29,6 +29,24 @@ const showLoginSuccess = ref(false)
 const userRole = ref('');
 const cartCount = ref(0)
 const totalCartCountKey = 'total_cart_count' 
+const isAuthenticated = ref(false)
+const itemQuantityToAddToCart = ref(1)
+
+const decodeTokenAndSetRole = () => {
+    try {
+        const token = Cookies.get('access_token')
+        if (token) {
+            const decodedToken = jwtDecode(token)
+            userRole.value = decodedToken.role
+            isAuthenticated.value = true
+        } else {
+            isAuthenticated.value = false
+        }
+    } catch (error) {
+        console.error('Failed to decode JWT token:', error)
+        userRole.value = null
+    }
+}
 
 // Price
 const displayedPrice = computed(() => {
@@ -104,35 +122,48 @@ const debouncedFetchItems = debounce(() => {
   fetchItems();
 }, 500);
 
-const addToCart = (item) => {
-    const token = Cookies.get('access_token');
-    if (!token) {
-        router.push('/signin')
-        return;
-    }
+const addToCart = async (item) => {
+  if (!isAuthenticated.value) {
+    router.push('/signin');
+    console.log('Redirecting to /signin: User is not authenticated.');
+    return;
+  }
 
-    if (item.quantity > 0) {
-        const saleItemId = item.id;
-        const itemStorageKey = `cart_item_qty_${saleItemId}`;
-        
-        let currentQty = parseInt(localStorage.getItem(itemStorageKey) || '0');
-        
-        if (currentQty < item.quantity) {
-            currentQty++;
-            
-            localStorage.setItem(itemStorageKey, currentQty.toString());
+  if (!item || item.quantity <= 0) {
+    console.warn('❌ Invalid item or out of stock');
+    return;
+  }
 
-            // 4. อัปเดตจำนวนรวมของสินค้าทั้งหมดในตะกร้า
-            let currentTotalCount = parseInt(localStorage.getItem(totalCartCountKey) || '0');
-            currentTotalCount++;
-            localStorage.setItem(totalCartCountKey, currentTotalCount.toString());
-            cartCount.value = currentTotalCount;
-            
-            console.log(`Added item ${saleItemId}. Total items: ${cartCount.value}`);
-        } else {
-            console.log(`Cannot add more: Reached max quantity for item ${saleItemId}`);
-        }
+  const qtyToAdd = itemQuantityToAddToCart.value;
+  const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+
+  const existingItem = existingCart.items.find(i => i.saleItemId === item.id);
+
+  if (existingItem) {
+    const newTotalQty = existingItem.quantity + qtyToAdd;
+
+    if (newTotalQty > item.quantity) {
+      existingItem.quantity = item.quantity;
+      alert(`❗ สินค้ามีในคลัง ${item.quantity} ชิ้น — เพิ่มได้สูงสุดเท่านั้น`);
+    } else {
+      existingItem.quantity = newTotalQty;
     }
+  } else {
+    // ✅ เพิ่ม selected: false ให้สินค้าใหม่
+    const safeQty = qtyToAdd > item.quantity ? item.quantity : qtyToAdd;
+    existingCart.items.push({
+      saleItemId: item.id,
+      quantity: safeQty,
+      description: `${item.brandName} ${item.model} (${item.storageGb ? item.storageGb + 'GB' : '-'}, ${item.color || '-'})`,
+      price: item.price,
+      maxquantity: item.quantity,
+      sellerId: item.sellerId,
+    });
+  }
+
+  // ✅ บันทึกกลับลง localStorage
+  localStorage.setItem("CartData", JSON.stringify(existingCart));
+  console.log("🛒 Cart updated in localStorage:", existingCart);
 };
 
 const loadCartCount = () => {
@@ -537,7 +568,7 @@ onMounted(() => {
   fetchbrand()
   checkUserRole()
   loadCartCount()
-
+decodeTokenAndSetRole()
   // Load theme from localStorage on component mount
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme) {
@@ -1021,7 +1052,7 @@ const removeActiveFilter = (filter) => {
             <div class="itbms-price mt-2 font-extrabold text-2xl">{{ item.price.toLocaleString() }}</div>
             <div class="itbms-price-unit text-sm font-light opacity-80">Baht</div>
             <button
-              @click.stop="addToCart(item)"
+@click.stop="() => { console.log('clicked', item); addToCart(item); }"
               :disabled="item.quantity === 0"
               class="mt-2 px-4 py-2 rounded-full font-semibold transition-colors duration-300 hover:cursor-pointer"
               :class="item.quantity === 0

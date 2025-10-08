@@ -62,9 +62,8 @@ const cardClass = computed(() => {
 
 // *** Computed Property หลักสำหรับหน้านี้: หา Order จาก ID ที่อยู่ใน Route ***
 const currentOrder = computed(() => {
-    if (!orderIdInRoute.value) return null
-    return orders.value.find(order => order.id === orderIdInRoute.value)
-})
+    return orders.value[0] || null;
+});
 
 const formatPrice = (price) => {
     if (price === undefined || price === null) return '0'
@@ -72,10 +71,13 @@ const formatPrice = (price) => {
 }
 
 const getStatusClass = (status) => {
-    if (status === 'Completed') return 'text-green-500 bg-green-500/10'
-    if (status === 'Cancelled') return 'text-red-500 bg-red-500/10'
+    if (!status) return ''
+    status = status.toUpperCase()
+    if (status === 'COMPLETED') return 'text-green-500 bg-green-500/10'
+    if (status === 'CANCELLED') return 'text-red-500 bg-red-500/10'
     return 'text-yellow-500 bg-yellow-500/10'
 }
+
 
 async function fetchItemOrderbyId() {
   const token = Cookies.get('access_token');
@@ -98,7 +100,7 @@ async function fetchItemOrderbyId() {
 
   try {
     const response = await getItemsWithAuth(
-      `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/orders/1`,
+      `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/orders/2`,
       {
         token: token,
       }
@@ -113,8 +115,7 @@ async function fetchItemOrderbyId() {
 
     const data = response.data ?? response; // รองรับทั้ง axios หรือ json ตรงๆ
     data.userType = decodedToken?.role === 'SELLER' ? 'Seller' : 'Buyer';
-
-    orders.value = data.content ?? []; // แก้จาก cartItems เป็น orders
+    orders.value = [data];
   } catch (error) {
     console.error('Error fetching user orders:', error);
   }
@@ -138,8 +139,8 @@ fetchItemOrderbyId()
                     </svg>
                     <span>Back to Order History</span>
                 </button>
-                <div v-if="currentOrder" class="itbms-order-status text-lg font-bold px-4 py-1 rounded-full" :class="getStatusClass(currentOrder.status)">
-                    {{ currentOrder.status }}
+                <div v-if="currentOrder" class="itbms-order-status text-lg font-bold px-4 py-1 rounded-full" :class="getStatusClass(currentOrder.orderStatus)">
+                    {{ currentOrder.orderStatus }}
                 </div>
             </div>
 
@@ -157,7 +158,7 @@ fetchItemOrderbyId()
                                 <p><strong class="font-medium">Order No:</strong> {{ currentOrder.id }}</p>
                                 <p><strong class="font-medium">Order Date:</strong> {{ currentOrder.orderDate }}</p>
                                 <p><strong class="font-medium">Payment Date:</strong> {{ currentOrder.paymentDate }}</p>
-                                <p><strong class="font-medium">Customer:</strong> {{ currentOrder.nickname }}</p>
+                                <p><strong class="font-medium">Customer:</strong> {{ currentOrder.seller.nickname }}</p>
                             </div>
                         </div>
 
@@ -173,14 +174,14 @@ fetchItemOrderbyId()
                 </div>
 
                 <div :class="cardClass" class="p-6 rounded-3xl">
-                    <h2 class="text-2xl font-bold mb-4 border-b pb-3" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">Items Ordered ({{ currentOrder.items.length }})</h2>
+                    <h2 class="text-2xl font-bold mb-4 border-b pb-3" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">Items Ordered ({{ currentOrder.orderItems.length }})</h2>
                     
                     <div class="divide-y" :class="theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
-                        <div v-for="item in currentOrder.items" :key="item.name" class="flex justify-between items-center py-4 itbms-item-row">
+                        <div v-for="item in currentOrder.orderItems" :key="item.no" class="flex justify-between items-center py-4 itbms-item-row">
                             <div class="flex items-center space-x-4">
                                 <img src="/phone/iPhone.png" alt="Product Image" class="w-16 h-16 object-contain rounded-lg border" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-300'"/>
                                 <div class="flex-grow">
-                                    <p class="font-medium itbms-item-name text-lg">{{ item.name }}</p>
+                                    <p class="font-medium itbms-item-name text-lg">{{ item.description }}</p>
                                     <p class="text-sm itbms-item-description" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">{{ item.description }}</p>
                                 </div>
                             </div>

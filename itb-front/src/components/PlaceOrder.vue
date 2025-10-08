@@ -1,51 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-
+import {getItemsWithAuth,} from '@/libs/fetchUtilsOur';
+import Cookies from 'js-cookie' 
+import { jwtDecode } from 'jwt-decode' 
 // --- Mock Data: จำลองข้อมูลประวัติการสั่งซื้อ (อ้างอิงจากภาพตัวอย่าง) ---
-const orders = ref([
-    {
-        id: '12345',
-        nickname: 'Somsun',
-        orderDate: 'October 1, 2025',
-        paymentDate: 'October 1, 2025',
-        status: 'Completed',
-        shippingAddress: 'Somsun Jaidee, 123/45 Moo 6, T. Bangna, A. Bangna, Bangkok 10260',
-        orderNote: 'กรุณาโทรแจ้งก่อนส่งมอบสินค้า',
-        totalPrice: 62700,
-        items: [
-            {
-                name: 'Apple iPhone 14 Pro Max',
-                description: ' (512GB, Space Black)',
-                quantity: 1,
-                price: 42900,
-            },
-            {
-                name: 'Apple iPhone 13 mini',
-                description: ' (128GB, Green)',
-                quantity: 1,
-                price: 19800,
-            },
-        ],
-    },
-    {
-        id: '12346',
-        nickname: 'Somsun',
-        orderDate: 'September 20, 2025',
-        paymentDate: 'September 20, 2025',
-        status: 'Cancelled',
-        shippingAddress: 'Somsun Jaidee, 123/45 Moo 6, T. Bangna, A. Bangna, Bangkok 10260',
-        orderNote: 'ต้องการเปลี่ยนสี',
-        totalPrice: 20000,
-        items: [
-            {
-                name: 'Xiaomi 13T',
-                description: ' (256GB, Black)',
-                quantity: 1,
-                price: 20000,
-            },
-        ],
-    },
-])
+const orders = ref([])
 
 // สถานะที่เลือกในหน้า (Completed/Cancelled)
 const selectedTab = ref('Completed')
@@ -108,8 +67,9 @@ const tabInactiveClass = computed(() => {
 
 // Orders ที่ถูกกรองตาม Tab ที่เลือก
 const filteredOrders = computed(() => {
-    return orders.value.filter(order => order.status === selectedTab.value)
-})
+  return orders.value.filter(order => order.orderStatus === selectedTab.value.toUpperCase() || order.orderStatus === selectedTab.value);
+});
+
 
 // Function สำหรับจัดรูปแบบราคา
 const formatPrice = (price) => {
@@ -122,9 +82,104 @@ const getStatusClass = (status) => {
     if (status === 'Cancelled') return 'text-red-500 bg-red-500/10'
     return 'text-yellow-500 bg-yellow-500/10'
 }
+// async function fetchItemOrder() {
+//   const token = Cookies.get('access_token');
+//   let decodedToken = null;
+
+
+//   if (token) {
+//     try {
+//       decodedToken = jwtDecode(token);
+//       userId = decodedToken.id;
+//     } catch (err) {
+//       console.error("Failed to decode token:", err);
+//       return;
+//     }
+//   } else {
+//     console.error("No access token found");
+//     router.push('/login');
+//     return;
+//   }
+
+//   try {
+//     const response = await getItemsWithAuth(
+//       `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/orders/1`,
+//       {
+//         token: token,
+//       }
+//     );
+
+//     // ตรวจสอบ response ก่อนใช้
+//     if (!response || (response.status && (response.status === 401 || response.status === 403))) {
+//       console.error('Authentication error: Unauthorized or Forbidden');
+//       router.push('/login');
+//       return;
+//     }
+//     const orders =response
+//     const data = response.data ?? response; 
+//     data.userType = decodedToken?.role === 'SELLER' ? 'Seller' : 'Buyer';
+
+//     orders.value = data.content ?? []; // แก้จาก cartItems เป็น orders
+//   } catch (error) {
+//     console.error('Error fetching user orders:', error);
+//   }
+// }
+
+async function fetchItemOrder() {
+  const token = Cookies.get('access_token');
+  let decodedToken = null;
+  let userId = null;
+    let userRole = null;
+    let sellerId =null;
+  if (token) {
+    try {
+      decodedToken = jwtDecode(token);
+      userId = decodedToken.id;
+      userRole = decodedToken.role;
+      sellerId = decodedToken.seller_id;
+    } catch (err) {
+      console.error("Failed to decode token:", err);
+      return;
+    }
+  } else {
+    console.error("No access token found");
+    router.push('/login');
+    return;
+  }
+if(token && userRole === 'SELLER'){
+ try {
+    const response = await getItemsWithAuth(
+      `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sellers/${sellerId}/orders`,
+      { token }
+    );
+
+    // ✅ ตรวจสอบว่ามีข้อมูลใน response
+    const data = response.data ?? response;
+    orders.value = data.content ?? [];
+
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+  }
+} else{
+  try {
+    const response = await getItemsWithAuth(
+      `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/${userId}/orders`,
+      { token }
+    );
+
+    // ✅ ตรวจสอบว่ามีข้อมูลใน response
+    const data = response.data ?? response;
+    orders.value = data.content ?? [];
+
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+  }
+}
+}
 
 onMounted(() => {
     applyTheme(theme.value);
+    fetchItemOrder()
 });
 </script>
 
@@ -157,8 +212,9 @@ onMounted(() => {
                     <div class="flex flex-wrap items-center justify-between pb-4 border-b" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">
                         <div class="flex items-center space-x-2 itbms-nickname mb-2 sm:mb-0">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
-                            <span class="font-semibold">{{ order.nickname }}</span>
-                        </div>
+<span v-if="order.seller" class="font-semibold">{{ order.seller.nickname }}</span>
+                            <span v-if="order.buyer" class="font-semibold">{{ order.buyer.username }}</span>
+</div>
                         <div class="flex flex-wrap text-sm gap-x-4 gap-y-1" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
                             <span class="itbms-order-id">Order No: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ order.id }}</span></span>
                             <span class="itbms-order-date">Order Date: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ order.orderDate }}</span></span>
@@ -179,20 +235,20 @@ onMounted(() => {
                         <div class="font-extrabold text-xl">
                             <span :class="theme === 'dark' ? 'text-white' : 'text-gray-950'">Total:</span> 
                             <span class="text-orange-500 itbms-total-order-price">
-                                Baht {{ formatPrice(order.totalPrice) }}
+                                Baht {{ formatPrice(order.orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)) }}
                             </span>
                         </div>
-                        <div class="itbms-order-status text-sm font-semibold px-3 py-1 rounded-full" :class="getStatusClass(order.status)">
-                            {{ order.status }}
+                        <div class="itbms-order-status text-sm font-semibold px-3 py-1 rounded-full" :class="getStatusClass(order.orderStatus)">
+                            {{ order.orderStatus }}
                         </div>
                     </div>
 
                     <div class="divide-y mt-6" :class="theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
-                        <div v-for="item in order.items" :key="item.name" class="flex justify-between items-center py-4 itbms-item-row">
+                        <div v-for="item in order.orderItems" :key="item.saleItemId" class="flex justify-between items-center py-4 itbms-item-row">
                             <div class="flex items-center space-x-4">
                                 <img src="/phone/iPhone.png" alt="Product Image" class="w-12 h-12 object-contain rounded-lg"/>
                                 <div class="flex-grow">
-                                    <p class="font-medium itbms-item-name">{{ item.name }}</p>
+                                    <p class="font-medium itbms-item-name">{{ item.description }}</p>
                                     <p class="text-xs itbms-item-description" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">{{ item.description }}</p>
                                 </div>
                             </div>

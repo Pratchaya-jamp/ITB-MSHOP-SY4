@@ -1,27 +1,34 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'  
+import { jwtDecode } from 'jwt-decode'                                                                     
+import {getItemsWithAuth, addItemWithAuth } from '@/libs/fetchUtilsOur';               
+import Cookies from 'js-cookie'   
+
 
 // --- Mock Data: จำลองข้อมูลในตะกร้าสินค้า (อ้างอิงจากภาพตัวอย่าง) ---
 const cartItems = ref([
-    {
-        id: 1,
-        selected: true,
-        image: '/sy4/phone/iPhone.png', // ใช้รูปจำลองเดียวกับ Landing Page
-        name: 'Apple iPhone 14 Pro Max',
-        description: ' (512GB, Space Black)',
-        quantity: 1,
-        pricePerUnit: 42900,
-    },
-    {
-        id: 2,
-        selected: true,
-        image: '/sy4/phone/iPhone.png', // ใช้รูปจำลองเดียวกับ Landing Page
-        name: 'Apple iPhone 13 mini',
-        description: ' (128GB, Green)',
-        quantity: 1,
-        pricePerUnit: 19800,
-    },
 ])
+
+function loadCartFromLocalStorage() {
+  const savedCart = localStorage.getItem("CartData")
+
+  if (savedCart) {
+    try {
+      const parsed = JSON.parse(savedCart)
+      // ✅ เพิ่ม selected: false ให้ทุก item
+      cartItems.value = (parsed.items || []).map(item => ({
+        ...item,
+        selected: item.selected ?? false
+      }))
+      console.log("Loaded cart from localStorage:", cartItems.value)
+    } catch (err) {
+      console.error("Invalid JSON in localStorage:", err)
+    }
+  } else {
+    console.log("No cart data found in localStorage.")
+  }
+}
+
 
 const shippingAddress = ref('123/45 Moo 6, T. Bangna, A. Bangna, Bangkok 10260')
 const orderNote = ref('')
@@ -88,7 +95,7 @@ const selectedItems = computed(() => cartItems.value.filter(item => item.selecte
 
 // ราคารวมของสินค้าที่ถูกเลือก
 const totalSelectedPrice = computed(() => {
-    return selectedItems.value.reduce((total, item) => total + (item.pricePerUnit * item.quantity), 0)
+    return selectedItems.value.reduce((total, item) => total + (item.price * item.quantity), 0)
 })
 
 // จำนวนสินค้ารวมที่ถูกเลือก
@@ -115,19 +122,140 @@ const toggleSelectAll = () => {
 }
 
 // เพิ่ม/ลดจำนวนสินค้า
-const updateQuantity = (id, delta) => {
-    const item = cartItems.value.find(i => i.id === id)
-    if (item) {
-        const newQuantity = item.quantity + delta
-        if (newQuantity >= 1) {
-            item.quantity = newQuantity
-        }
-    }
+const updateQuantity = (saleItemId, delta) => {
+  const item = cartItems.value.find(i => i.saleItemId === saleItemId)
+  if (item) {
+    const newQuantity = item.quantity + delta
+
+    // ✅ ตรวจสอบไม่ให้น้อยกว่า 1 และไม่เกิน maxQuantity
+   if (newQuantity < 1) {
+  item.quantity = 1
+} else if (item.maxquantity && newQuantity > item.maxquantity) {
+  item.quantity = item.maxquantity
+} else {
+  item.quantity = newQuantity
 }
+  }
+}
+
+// async function fetchitemcart() {
+//   const token = Cookies.get('access_token');
+//   let decodedToken = null;
+//   let userId = null;
+
+//   if (token) {
+//     try {
+//       decodedToken = jwtDecode(token);
+//       userId = decodedToken.id;
+//     } catch (err) {
+//       console.error("Failed to decode token:", err);
+//     }
+//   }
+
+//   try {
+// const response = await getItemsWithAuth(
+//   `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/carts/${userId}/user`,
+//   {
+//     token: token,
+//     params: null, // ถ้าไม่มี query params
+//   }
+// );
+//     // ตรวจสอบ response ก่อนใช้
+//     if (!response || (response.status && (response.status === 401 || response.status === 403))) {
+//       console.error('Authentication error: Unauthorized or Forbidden');
+//       router.push('/login');
+//       return;
+//     }
+
+//     const data = response.data ?? response; // รองรับทั้ง axios หรือ json ตรงๆ
+//     data.userType = decodedToken?.role === 'SELLER' ? 'Seller' : 'Buyer';
+
+//     cartItems.value = data.carts ?? []; // ถ้ามี cartItems
+//   } catch (error) {
+//      console.error('Error fetching user profile:', error);
+//   }
+// 
+
+
 
 onMounted(() => {
     applyTheme(theme.value);
+    loadCartFromLocalStorage()
 });
+
+const addorder = async () => { 
+  const token = Cookies.get('access_token');
+  if (!token) {
+    alert('Please login before placing an order.');
+    return;
+  }
+
+  let decodedToken = null;
+  let buyerId = null;
+
+  try {
+    decodedToken = jwtDecode(token);
+    buyerId = decodedToken.id;
+  } catch (err) {
+    console.error('Failed to decode token:', err);
+    alert('Invalid token. Please login again.');
+    return;
+  }
+
+  // ใช้เฉพาะสินค้าที่ถูกเลือก
+  const selected = cartItems.value.filter(item => item.selected);
+  if (selected.length === 0) {
+    alert('Please select at least one item to order.');
+    return;
+  }
+
+  // แบ่งสินค้าตาม sellerId
+  const groupedBySeller = selected.reduce((groups, item) => {
+    if (!groups[item.sellerId]) groups[item.sellerId] = [];
+    groups[item.sellerId].push(item);
+    return groups;
+  }, {});
+
+  // สร้าง payload เป็น array ของ order แยกตาม sellerId
+  const orderPayload = Object.entries(groupedBySeller).map(([sellerId, items]) => ({
+    buyerId,
+    sellerId: Number(sellerId),
+    orderDate: new Date().toISOString(),
+    orderNote: orderNote.value,
+    shippingAddress: shippingAddress.value,
+    orderStatus: 'COMPLETED',
+    orderItems: items.map((item, index) => ({
+      no: index + 1,
+      saleItemId: item.saleItemId,
+      price: item.price,
+      quantity: item.quantity,
+      description: item.description
+    }))
+  }));
+
+  try {
+    const response = await addItemWithAuth(
+      'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/orders',
+      orderPayload,  // ส่งเป็น array ตามภาพ
+      false,
+      token
+    );
+
+    if (response.status === 201 || response.status === 200) {
+      alert('✅ Order placed successfully!');
+      // ลบสินค้าที่สั่งซื้อออกจาก cart
+      cartItems.value = cartItems.value.filter(item => !item.selected);
+      localStorage.setItem("CartData", JSON.stringify({ items: cartItems.value }));
+    } else {
+      console.error('❌ Failed to place order:', response.status, response.data);
+      alert('Failed to place order. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error placing order:', error);
+    alert('An error occurred while placing the order.');
+  }
+};
+
 </script>
 
 <template>
@@ -177,15 +305,15 @@ onMounted(() => {
                         </div>
 
                         <div class="divide-y" :class="theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
-                            <div v-for="item in cartItems" :key="item.id" class="flex items-start py-6 itbms-item-row">
+                            <div v-for="item in cartItems" :key="item.saleItemId" class="flex items-start py-6 itbms-item-row">
                                 <div class="flex items-center space-x-4">
                                     <input type="checkbox" v-model="item.selected" class="form-checkbox h-5 w-5 rounded itbms-select-item" 
                                         :class="{'text-orange-500 border-gray-400 focus:ring-orange-500': theme === 'light', 'text-orange-400 bg-gray-700 border-gray-600 focus:ring-orange-400': theme === 'dark'}" />
-                                    <img :src="item.image" :alt="item.name" class="w-20 h-20 object-contain rounded-lg itbms-item-image" />
+                                    <img src="/phone/iPhone.png" :alt="item.description" class="w-20 h-20 object-contain rounded-lg itbms-item-image" />
                                 </div>
 
                                 <div class="flex-grow ml-4">
-                                    <p class="text-lg font-bold itbms-item-name">{{ item.name }}</p>
+                                    <p class="text-lg font-bold itbms-item-name">{{ item.description }}</p>
                                     <p class="text-sm" :class="theme === 'dark' ? 'text-gray-400 itbms-item-description' : 'text-gray-600 itbms-item-description'">{{ item.description }}</p>
                                     <div class="flex items-center text-sm mt-1 itbms-select-nickname">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-orange-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
@@ -194,19 +322,19 @@ onMounted(() => {
                                 </div>
                                 
                                 <div class="flex items-center justify-center space-x-1 mr-6 mt-2 lg:mt-0 itbms-item-quantity">
-                                    <button @click="updateQuantity(item.id, -1)" class="p-2 border rounded-l-full itbms-dec-qty-button" :class="qtyButtonClass">
+                                    <button @click="updateQuantity(item.saleItemId, -1)" class="p-2 border rounded-l-full itbms-dec-qty-button" :class="qtyButtonClass">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4" /></svg>
                                     </button>
                                     <input type="text" v-model.number="item.quantity" class="w-12 text-center p-2 border-t border-b itbms-item-quantity-input" readonly
                                         :class="{'bg-transparent': theme === 'dark', 'bg-white': theme === 'light', 'border-gray-600': theme === 'dark', 'border-gray-300': theme === 'light'}" />
-                                    <button @click="updateQuantity(item.id, 1)" class="p-2 border rounded-r-full itbms-inc-qty-button" :class="qtyButtonClass">
+                                    <button @click="updateQuantity(item.saleItemId, 1)" class="p-2 border rounded-r-full itbms-inc-qty-button" :class="qtyButtonClass">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
                                     </button>
                                 </div>
 
                                 <div class="text-right flex-shrink-0 mt-2 lg:mt-0">
                                     <p class="text-xl font-extrabold text-orange-500 itbms-item-total-price">
-                                        Price: {{ formatPrice(item.pricePerUnit * item.quantity) }} ฿
+                                        Price: {{ formatPrice(item.price * item.quantity) }} ฿
                                     </p>
                                 </div>
                             </div>
@@ -246,6 +374,7 @@ onMounted(() => {
                         </div>
 
                         <button 
+                            @click ="addorder"
                             :disabled="totalSelectedItems === 0"
                             class="w-full px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 hover:scale-[1.01] disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none disabled:transform-none itbms-place-order-button">
                             Place Order
