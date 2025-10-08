@@ -88,6 +88,7 @@ public class SaleItemBaseService {
         return SaleItemBaseByIdDto.builder()
                 .id(saleItem.getId())
                 .sellerId(saleItem.getSeller() != null ? saleItem.getSeller().getId() : null)
+                .sellerName(saleItem.getSeller().getFullname() != null ? saleItem.getSeller().getFullname() : null)
                 .model(saleItem.getModel())
                 .brandName(saleItem.getBrand() != null ? saleItem.getBrand().getName() : null)
                 .description(saleItem.getDescription())
@@ -585,6 +586,7 @@ public class SaleItemBaseService {
         return SaleItemBaseByIdDto.builder()
                 .id(s.getId())
                 .sellerId(s.getSeller() != null ? s.getSeller().getId() : null)
+                .sellerName(s.getSeller().getFullname() != null ? s.getSeller().getFullname() : null)
                 .model(s.getModel())
                 .brandName(s.getBrand() != null ? s.getBrand().getName() : null)
                 .description(s.getDescription())
@@ -618,7 +620,6 @@ public class SaleItemBaseService {
     private SellerWithSaleItemsDto mapToSellerDto(SaleItemBase s) {
         return SellerWithSaleItemsDto.builder()
                 .id(s.getId())
-                .sellerId(s.getSeller() != null ? s.getSeller().getId() : null)
                 .model(s.getModel())
                 .brandName(s.getBrand() != null ? s.getBrand().getName() : null)
                 .description(s.getDescription())
