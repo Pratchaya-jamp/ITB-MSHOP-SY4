@@ -8,6 +8,7 @@ import lombok.Setter;
 public class SaleItemBaseDto {
     private Integer id;
     private Integer sellerId;
+    private String sellerName;
     private String model;
     private String brandName;
     private Integer price;

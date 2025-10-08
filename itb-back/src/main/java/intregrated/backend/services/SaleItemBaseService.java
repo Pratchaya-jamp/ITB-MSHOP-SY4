@@ -68,7 +68,20 @@ public class SaleItemBaseService {
 
     public List<SaleItemBaseDto> getAllSaleItemBase() {
         List<SaleItemBase> saleItemsBases = saleItemBaseRepo.findAll();
-        return ListMapper.mapList(saleItemsBases, SaleItemBaseDto.class, modelMapper);
+
+        return saleItemsBases.stream().map(s -> {
+            SaleItemBaseDto dto = new SaleItemBaseDto();
+            dto.setId(s.getId());
+            dto.setSellerId(s.getSeller() != null ? s.getSeller().getId() : null);
+            dto.setSellerName(s.getSeller() != null ? s.getSeller().getNickname() : null);
+            dto.setModel(s.getModel());
+            dto.setBrandName(s.getBrand() != null ? s.getBrand().getName() : null);
+            dto.setPrice(s.getPrice());
+            dto.setRamGb(s.getRamGb());
+            dto.setStorageGb(s.getStorageGb());
+            dto.setColor(s.getColor());
+            return dto;
+        }).toList();
     }
 
     @Transactional
@@ -88,6 +101,7 @@ public class SaleItemBaseService {
         return SaleItemBaseByIdDto.builder()
                 .id(saleItem.getId())
                 .sellerId(saleItem.getSeller() != null ? saleItem.getSeller().getId() : null)
+                .sellerName(saleItem.getSeller() != null ? saleItem.getSeller().getNickname() : null)
                 .model(saleItem.getModel())
                 .brandName(saleItem.getBrand() != null ? saleItem.getBrand().getName() : null)
                 .description(saleItem.getDescription())
@@ -585,6 +599,7 @@ public class SaleItemBaseService {
         return SaleItemBaseByIdDto.builder()
                 .id(s.getId())
                 .sellerId(s.getSeller() != null ? s.getSeller().getId() : null)
+                .sellerName(s.getSeller() != null ? s.getSeller().getNickname() : null)
                 .model(s.getModel())
                 .brandName(s.getBrand() != null ? s.getBrand().getName() : null)
                 .description(s.getDescription())
@@ -618,7 +633,6 @@ public class SaleItemBaseService {
     private SellerWithSaleItemsDto mapToSellerDto(SaleItemBase s) {
         return SellerWithSaleItemsDto.builder()
                 .id(s.getId())
-                .sellerId(s.getSeller() != null ? s.getSeller().getId() : null)
                 .model(s.getModel())
                 .brandName(s.getBrand() != null ? s.getBrand().getName() : null)
                 .description(s.getDescription())

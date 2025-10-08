@@ -13,6 +13,7 @@ import java.util.List;
 public class SaleItemBaseByIdDto {
     private Integer id;
     private Integer sellerId;
+    private String sellerName;
     private String model;
     private String brandName;
     private String description;

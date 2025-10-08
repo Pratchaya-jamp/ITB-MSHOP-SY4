@@ -9,7 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 public class SellerWithSaleItemsDto {
     private Integer id;
-    private Integer sellerId;
     private String model;
     private String brandName;
     private String description;
