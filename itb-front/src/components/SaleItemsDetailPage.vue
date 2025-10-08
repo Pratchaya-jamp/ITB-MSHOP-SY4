@@ -35,6 +35,15 @@ const showEditFallPopup = ref(false)
 const userRole = ref(null)
 const isAuthenticated = ref(false)
 
+const goToCart = () => {
+    if (isAuthenticated.value) {
+        router.push('/cart');
+    } else {
+        router.push('/signin');
+        console.log('Redirecting to /signin: User is not authenticated to view cart.');
+    }
+}
+
 const isSeller = computed(() => userRole.value === 'SELLER')
 
 const closeSuccessPopup = () => {
@@ -354,7 +363,7 @@ const iconComponent = computed(() => {
     <div :class="themeClass" class="p-4 w-full min-h-screen font-sans transition-colors duration-500">
         <div class="flex justify-end items-center space-x-4 mb-4 max-w-6xl mx-auto">
             <div class="relative itbms-cart-icon cursor-pointer">
-                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" @click="router.push('/cart')"
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" @click="goToCart"
                     class="h-8 w-8"
                     :class="theme === 'dark' ? 'text-white' : 'text-black'"
                     viewBox="0 0 128 128"

@@ -1,4 +1,4 @@
-a<script setup>
+<script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItems, deleteItemById,getItemsWithAuth, addItemWithAuth} from '@/libs/fetchUtilsOur';
@@ -13,6 +13,7 @@ const showAddSuccessPopup = ref(false)
 const showDeleteSuccessPopup = ref(false)
 const showfailPopup = ref(false)
 const showRegisSuccess = ref(false)
+const showOrderSuccess = ref(false)
 const isGridView = computed(() => route.path !== '/sale-items/list')
 
 const showBrandFilterModal = ref(false)
@@ -187,7 +188,8 @@ const addToCart = async (item, qtyToAdd = 1) => {
       price: item.price,
       maxquantity: item.quantity,
       sellerId: item.sellerId,
-    });
+      sellernickname: item.sellerName    
+});
   }
 
   // ✅ บันทึกกลับลง localStorage
@@ -452,6 +454,15 @@ const goToEditItem = (id) => {
   router.push(`/sale-items/${id}/edit`)
 }
 
+const goToCart = () => {
+    if (isAuthenticated.value) {
+        router.push('/cart');
+    } else {
+        router.push('/signin');
+        console.log('Redirecting to /signin: User is not authenticated to view cart.');
+    }
+}
+
 // Sort
 function sortBrandAscending() {
   currentSortOrder.value = 'brandAsc'
@@ -666,6 +677,7 @@ const closeSuccessPopup = async () => {
   showfailPopup.value = false
   showRegisSuccess.value = false
   showLoginSuccess.value = false
+  showOrderSuccess.value = false
   router.replace({ path: route.path, query: {} });
   window.location.reload();
   await fetchItems();
@@ -752,6 +764,19 @@ watch(
   { immediate: true }
 )
 
+watch(
+  () => route.query.orderSuccess,
+  (orderSuccess) => {
+    if (orderSuccess === 'true') {
+      setTimeout(() => {
+        showOrderSuccess.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
+
 
 const activeFilters = computed(() => {
   const filters = []
@@ -812,7 +837,7 @@ const removeActiveFilter = (filter) => {
       <div class="itbms-icons flex flex-col items-end space-y-2">
         <div class="flex items-center space-x-4">
           <div class="relative itbms-cart-icon cursor-pointer">
-            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"  @click="router.push('/cart')"
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"  @click="goToCart"
               class="itbms-cart-icon h-8 w-8 cursor-pointer"
               :class="theme === 'dark' ? 'text-white' : 'text-black'"
               viewBox="0 0 128 128"
@@ -958,7 +983,7 @@ const removeActiveFilter = (filter) => {
                 <label v-for="range in priceRanges" :key="range.label"
                   class="flex items-center p-2 rounded-md cursor-pointer hover:bg-gray-100"
                   :class="theme === 'dark' ? 'hover:bg-gray-700' : ''">
-                  <input type="checkbox" :value="range" @change="selectPriceRange(range)"
+                  <input type="radio" :value="range" @change="selectPriceRange(range)"
                     :checked="priceLower === range.min" class="form-checkbox h-4 w-4 rounded hover:cursor-pointer"
                     :class="theme === 'dark' ? 'text-blue-500 bg-gray-900 border-gray-700' : 'text-blue-600 border-gray-300'">
                   <span class="ml-2 text-sm">{{ range.label }}</span>
@@ -1369,6 +1394,20 @@ const removeActiveFilter = (filter) => {
           :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
           <h2 class="text-xl font-semibold mb-4">Success!</h2>
           <p class="itbms-message mb-4">The sale item has been successfully deleted!</p>
+          <button @click="closeSuccessPopup"
+            class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="bounce-popup">
+      <div v-if="showOrderSuccess"
+        class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="p-6 rounded-3xl shadow-lg text-center"
+          :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+          <DotLottieVue src="/sy4/animation/Success.lottie" autoplay class="w-24 h-24 mx-auto mb-4" />
+          <h2 class="text-xl font-semibold mb-4">Success!</h2>
+          <p class="itbms-message mb-4">Your order has been placed and confirmed</p>
           <button @click="closeSuccessPopup"
             class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
         </div>

@@ -55,6 +55,9 @@ const logout = async () => {
         Cookies.remove('access_token', { path: '/' })
         Cookies.remove('refresh_token', { path: '/' })
 
+        localStorage.removeItem('total_cart_count')
+        localStorage.removeItem('CartData')
+
         // อัปเดตสถานะ
         isLoggedIn.value = false
 
