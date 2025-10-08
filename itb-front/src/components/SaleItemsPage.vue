@@ -30,7 +30,7 @@ const userRole = ref('');
 const cartCount = ref(0)
 const totalCartCountKey = 'total_cart_count' 
 const isAuthenticated = ref(false)
-const itemQuantityToAddToCart = ref(1)
+// const itemQuantityToAddToCart = ref(1)
 
 const decodeTokenAndSetRole = () => {
     try {
@@ -122,64 +122,97 @@ const debouncedFetchItems = debounce(() => {
   fetchItems();
 }, 500);
 
-const addToCart = async (item) => {
-  if (!isAuthenticated.value) {
-    router.push('/signin');
-    console.log('Redirecting to /signin: User is not authenticated.');
-    return;
-  }
+const getCartQuantityForItem = (itemId) => {
+    // ต้องแปลง itemId เป็น number หาก saleItemId ใน CartData เป็น number
+    const targetId = parseInt(itemId); 
+    const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+    const existingItem = existingCart.items.find(i => i.saleItemId === targetId); 
+    return existingItem ? existingItem.quantity : 0;
+}
 
-  if (!item || item.quantity <= 0) {
-    console.warn('❌ Invalid item or out of stock');
-    return;
-  }
-
-  const qtyToAdd = itemQuantityToAddToCart.value;
-  const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
-
-  const existingItem = existingCart.items.find(i => i.saleItemId === item.id);
-
-  if (existingItem) {
-    const newTotalQty = existingItem.quantity + qtyToAdd;
-
-    if (newTotalQty > item.quantity) {
-      existingItem.quantity = item.quantity;
-      alert(`❗ สินค้ามีในคลัง ${item.quantity} ชิ้น — เพิ่มได้สูงสุดเท่านั้น`);
-    } else {
-      existingItem.quantity = newTotalQty;
+const isItemSoldOut = (item) => {
+    if (!item || item.quantity <= 0) {
+        return true; // สินค้าหมดคลัง
     }
-  } else {
-    // ✅ เพิ่ม selected: false ให้สินค้าใหม่
-    const safeQty = qtyToAdd > item.quantity ? item.quantity : qtyToAdd;
-    existingCart.items.push({
-      saleItemId: item.id,
-      quantity: safeQty,
-      description: `${item.brandName} ${item.model} (${item.storageGb ? item.storageGb + 'GB' : '-'}, ${item.color || '-'})`,
-      price: item.price,
-      maxquantity: item.quantity,
-      sellerId: item.sellerId,
-    });
+    const qtyInCart = getCartQuantityForItem(item.id);
+    // ถ้าจำนวนรวมที่อยู่ในตะกร้าแล้วเท่ากับหรือมากกว่าจำนวนในคลัง
+    return qtyInCart >= item.quantity;
+}
+
+const getCartTotalCount = () => {
+    const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+    // รวม quantity ของสินค้าทุกชิ้นในตะกร้า
+    return existingCart.items.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
+}
+
+const addToCart = async (item, qtyToAdd = 1) => {
+  if (!isAuthenticated.value) {
+    router.push('/signin');
+    console.log('Redirecting to /signin: User is not authenticated.');
+    return;
+  }
+
+  if (isItemSoldOut(item)) {
+    console.warn('❌ Item already at max quantity in cart or out of stock.');
+    return;
   }
 
-  // ✅ บันทึกกลับลง localStorage
-  localStorage.setItem("CartData", JSON.stringify(existingCart));
-  console.log("🛒 Cart updated in localStorage:", existingCart);
+  if (!item || item.quantity <= 0) {
+    console.warn('❌ Invalid item or out of stock');
+    return;
+  }
+
+  // 🛑 Note: สำหรับ Grid View เรากำหนด qtyToAdd = 1 ใน function call
+  const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+
+  // ต้องแน่ใจว่า item.id เป็น number ก่อนเปรียบเทียบ
+  const itemId = parseInt(item.id); 
+  const existingItem = existingCart.items.find(i => i.saleItemId === itemId);
+
+  if (existingItem) {
+    const newTotalQty = existingItem.quantity + qtyToAdd;
+
+    if (newTotalQty > item.quantity) {
+      existingItem.quantity = item.quantity;
+    } else {
+      existingItem.quantity = newTotalQty;
+    }
+  } else {
+    // ✅ เพิ่ม selected: false ให้สินค้าใหม่
+    const safeQty = qtyToAdd > item.quantity ? item.quantity : qtyToAdd;
+    existingCart.items.push({
+      saleItemId: itemId,
+      quantity: safeQty,
+      description: `${item.brandName} ${item.model} (${item.storageGb ? item.storageGb + 'GB' : '-'}, ${item.color || '-'})`,
+      price: item.price,
+      maxquantity: item.quantity,
+      sellerId: item.sellerId,
+    });
+  }
+
+  // ✅ บันทึกกลับลง localStorage
+  localStorage.setItem("CartData", JSON.stringify(existingCart));
+  console.log("🛒 Cart updated in localStorage:", existingCart);
+
+  const newCartCount = getCartTotalCount(); // ใช้ฟังก์ชันที่ถูกแก้ไข
+  cartCount.value = newCartCount;
+  localStorage.setItem(totalCartCountKey, newCartCount.toString());
+  
+  // 🛑 NEW: เรียก fetchItems เพื่ออัปเดตปุ่ม Sold Out บน Grid ทันที
+  fetchItems(); 
 };
 
 const loadCartCount = () => {
-    const savedTotalCartCount = localStorage.getItem(totalCartCountKey)
-    if (savedTotalCartCount) {
-        cartCount.value = parseInt(savedTotalCartCount) || 0
-    } else {
-        cartCount.value = 0
-    }
+    const newCartCount = getCartTotalCount();
+    cartCount.value = newCartCount;
 }
 
 const handleStorageChange = (event) => {
-    // ตรวจสอบเฉพาะคีย์ที่เราสนใจเท่านั้น
-    if (event.key === totalCartCountKey) {
-        loadCartCount();
-    }
+    // ตรวจสอบเฉพาะคีย์ที่เราสนใจเท่านั้น
+    if (event.key === totalCartCountKey || event.key === 'CartData') { // ✅ เพิ่ม 'CartData'
+        loadCartCount();
+        fetchItems(); 
+    }
 }
 
 const savedSort = sessionStorage.getItem('sortOrder')
@@ -1053,14 +1086,14 @@ const removeActiveFilter = (filter) => {
             <div class="itbms-price-unit text-sm font-light opacity-80">Baht</div>
             <button
 @click.stop="() => { console.log('clicked', item); addToCart(item); }"
-              :disabled="item.quantity === 0"
+              :disabled="isItemSoldOut(item)"
               class="mt-2 px-4 py-2 rounded-full font-semibold transition-colors duration-300 hover:cursor-pointer"
-              :class="item.quantity === 0
+              :class="isItemSoldOut(item)
                 ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                 : theme === 'dark'
                   ? 'bg-orange-500 text-white hover:bg-orange-600'
                   : 'bg-orange-500 text-white hover:bg-orange-600'">
-              {{ item.quantity === 0 ? 'Sold Out' : 'Add to Cart' }}
+              {{ isItemSoldOut(item) ? 'Sold Out' : 'Add to Cart' }}
             </button>
           </div>
         </div>

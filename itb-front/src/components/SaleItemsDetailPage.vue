@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItemById, deleteItemById } from '@/libs/fetchUtilsOur'
 import { jwtDecode } from 'jwt-decode'
@@ -88,25 +88,69 @@ const itemStorageKey = computed(() => `cart_item_qty_${id}`)
 
 const totalCartCountKey = 'total_cart_count' 
 
-const loadCartState = () => {
-    const savedTotalCartCount = localStorage.getItem(totalCartCountKey)
-    if (savedTotalCartCount) {
-        cartCount.value = parseInt(savedTotalCartCount) || 0
-    }
+const getCartTotalCount = () => {
+    const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+    // รวม quantity ของสินค้าทุกชิ้นในตะกร้า
+    return existingCart.items.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
+}
 
+const getCurrentItemQtyInCart = () => {
+    // ต้องใช้ ID จาก route.params และแปลงเป็นตัวเลขเพื่อเปรียบเทียบ
+    const currentId = parseInt(route.params.id); 
+    const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+    // ✅ แก้ไขการค้นหา: ใช้ === กับตัวเลข
+    const existingItem = existingCart.items.find(i => i.saleItemId === currentId);
+    return existingItem ? existingItem.quantity : 0;
+}
+
+const loadCartState = () => {
+    cartCount.value = getCartTotalCount();
+
+    if (!product.value || product.value.quantity <= 0) {
+        itemQuantityToAddToCart.value = 0; // ถ้าสินค้าหมดคลัง
+        return;
+    }
+    
+    // จำนวนที่ถูกเพิ่มในตะกร้าไปแล้ว
+    const qtyInCart = getCurrentItemQtyInCart(); 
+    const availableStock = product.value.quantity;
+    const maxAvailableToSelect = availableStock - qtyInCart; 
+    
+    // ถ้าเต็มแล้ว ให้ quantity ที่เลือกเป็น 0
+    if (maxAvailableToSelect <= 0) {
+        itemQuantityToAddToCart.value = 0;
+        return;
+    }
     const savedQuantity = localStorage.getItem(itemStorageKey.value)
     
-    const maxAvailable = product.value?.quantity || 1;
     let initialQty = 1;
 
     if (savedQuantity) {
         const qty = parseInt(savedQuantity);
-        initialQty = (qty > maxAvailable) ? maxAvailable : (qty > 0 ? qty : 1);
+        // จำกัดไม่ให้เกินจำนวนที่ยังเหลืออยู่จริง
+        initialQty = (qty > maxAvailableToSelect) ? maxAvailableToSelect : (qty > 0 ? qty : 1);
     } else {
-        initialQty = maxAvailable > 0 ? 1 : 0; 
+        initialQty = 1; // เริ่มต้นที่ 1 ถ้ามีของเหลือ
     }
     
-    itemQuantityToAddToCart.value = initialQty;
+    // ตั้งค่าจำนวนที่เลือกใหม่
+    itemQuantityToAddToCart.value = Math.max(0, initialQty); 
+}
+
+const isMaxQuantityReached = computed(() => {
+    if (!product.value) return true;
+    
+    const availableStock = product.value.quantity;
+    const qtyInCart = getCurrentItemQtyInCart();
+    
+    // ถ้าจำนวนรวมที่อยู่ในตะกร้าแล้วเท่ากับหรือมากกว่าจำนวนในคลัง
+    return qtyInCart >= availableStock;
+});
+
+const handleStorageChange = (event) => {
+    if (event.key === 'CartData' || event.key === totalCartCountKey) {
+        loadCartState();
+    }
 }
 
 const increaseQuantity = () => {
@@ -121,10 +165,12 @@ const decreaseQuantity = () => {
     }
 }
 
-const isDecreaseDisabled = computed(() => itemQuantityToAddToCart.value <= 1)
+const isDecreaseDisabled = computed(() => itemQuantityToAddToCart.value <= 1 || isMaxQuantityReached.value)
 const isIncreaseDisabled = computed(() => 
-    !product.value || itemQuantityToAddToCart.value >= product.value.quantity || product.value.quantity <= 0
-)
+    !product.value || 
+    product.value.quantity <= 0 || 
+    (itemQuantityToAddToCart.value + getCurrentItemQtyInCart() >= product.value.quantity)
+);
 
 // ฟังก์ชัน Add to Cart
 const addToCart = async (item) => {
@@ -149,7 +195,6 @@ const addToCart = async (item) => {
 
     if (newTotalQty > item.quantity) {
       existingItem.quantity = item.quantity;
-      alert(`❗ สินค้ามีในคลัง ${item.quantity} ชิ้น — เพิ่มได้สูงสุดเท่านั้น`);
     } else {
       existingItem.quantity = newTotalQty;
     }
@@ -169,6 +214,12 @@ const addToCart = async (item) => {
   // ✅ บันทึกกลับลง localStorage
   localStorage.setItem("CartData", JSON.stringify(existingCart));
   console.log("🛒 Cart updated in localStorage:", existingCart);
+
+  const newCartCount = existingCart.items.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
+  cartCount.value = newCartCount;
+  localStorage.setItem(totalCartCountKey, newCartCount.toString());
+
+  loadCartState(); 
 };
 
 
@@ -201,8 +252,8 @@ onMounted(async () => {
             productImages.value = sortedImages
             mainImage.value = sortedImages[0]
         }
-        
-        // *Note: loadCartState() ถูกเรียกใน watch(product, ...) แล้ว
+
+        loadCartState();
 
     } catch (error) {
         console.error('Failed to fetch product:', error)
@@ -215,6 +266,10 @@ onMounted(async () => {
     
     
     window.addEventListener('storage', handleStorageChange)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('storage', handleStorageChange)
 })
 
 watch(() => mainImage.value, (newVal) => {
@@ -438,47 +493,36 @@ const iconComponent = computed(() => {
                         </button>
                     </div>
 
-                    <div v-else class="w-full flex flex-col gap-4">
-                        <div v-if="product?.quantity > 0" class="flex items-center space-x-4">
-                            
-                            <div class="itbms-quantity-control flex items-center border border-gray-300 rounded-lg p-0 h-12 flex-grow max-w-[180px] transition-colors duration-300"
-                                 :class="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-100 border-gray-300 text-gray-900'">
-                                
-                                <button @click="decreaseQuantity"
-                                    :disabled="isDecreaseDisabled"
-                                    class="itbms-decrease-qty-button text-lg font-bold w-1/3 h-full flex items-center justify-center transition-all duration-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                                    :class="{ 'text-gray-400': isDecreaseDisabled }">
-                                    <span>−</span>
+                    <div v-else class="flex flex-col w-full gap-4">
+                        <div class="flex items-center space-x-4">
+                            <div v-if="!isMaxQuantityReached && product?.quantity > 0" class="flex items-center space-x-2">
+                                <button @click="decreaseQuantity" :disabled="isDecreaseDisabled"
+                                    class="p-2 border rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                                    :class="[isDecreaseDisabled ? 'opacity-50 cursor-not-allowed' : theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100']">
+                                    <span class="text-xl leading-none">-</span>
                                 </button>
-                            
-                                <div class="itbms-quantity-input flex-grow text-center text-lg font-semibold h-full flex items-center justify-center border-l border-r"
-                                     :class="theme === 'dark' ? 'border-gray-600' : 'border-gray-300'">
-                                    {{ itemQuantityToAddToCart }}
-                                </div>
-                                
-                                <button @click="increaseQuantity"
-                                    :disabled="isIncreaseDisabled"
-                                    class="itbms-increase-qty-button text-lg font-bold w-1/3 h-full flex items-center justify-center transition-all duration-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                                    :class="{ 'text-gray-400': isIncreaseDisabled }">
-                                    <span>+</span>
+
+                                <span class="text-xl font-semibold w-8 text-center">{{ itemQuantityToAddToCart }}</span>
+
+                                <button @click="increaseQuantity" :disabled="isIncreaseDisabled"
+                                    class="p-2 border rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                                    :class="[isIncreaseDisabled ? 'opacity-50 cursor-not-allowed' : theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100']">
+                                    <span class="text-xl leading-none">+</span>
                                 </button>
                             </div>
-                            <div class="hidden sm:block sm:flex-grow"></div> 
+
+                            <button @click="addToCart(product)"
+                                :disabled="isMaxQuantityReached || product?.quantity <= 0 || itemQuantityToAddToCart <= 0"
+                                class="flex-grow py-3 px-6 rounded-full font-bold text-lg transition-colors duration-300"
+                                :class="isMaxQuantityReached || product?.quantity <= 0 || itemQuantityToAddToCart <= 0
+                                    ? 'bg-red-700 text-white cursor-not-allowed opacity-70' 
+                                    : 'bg-orange-600 text-white hover:bg-orange-700'">
+
+                                <span v-if="product?.quantity <= 0">SOLD OUT</span>
+                                <span v-else-if="isMaxQuantityReached">SOLD OUT</span>
+                                <span v-else>ADD TO CART</span>
+                            </button>
                         </div>
-                    
-                        <button v-if="product?.quantity < 1"
-                            class="itbms-sold-out-button w-full font-semibold border-2 rounded-xl px-6 py-3 shadow-md cursor-not-allowed"
-                            :class="theme === 'dark' ? 'bg-gray-700 text-gray-400 border-gray-700' : 'bg-gray-300 text-gray-600 border-gray-300'">
-                            Sold Out
-                        </button>
-                        
-                        <button v-else @click="addToCart(product)"
-                            class="itbms-add-to-cart-button w-full sm:w-auto font-semibold border-2 rounded-lg px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white"
-                            :class="{
-                                'bg-transparent text-blue-500 border-blue-500 hover:bg-blue-600 hover:text-white': theme === 'light' || theme === 'dark'
-                            }">
-                            Add to Cart
-                        </button>
                     </div>
                 </div>
             </div>

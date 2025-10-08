@@ -6,29 +6,92 @@ import Cookies from 'js-cookie'
 
 
 // --- Mock Data: จำลองข้อมูลในตะกร้าสินค้า (อ้างอิงจากภาพตัวอย่าง) ---
-const cartItems = ref([
-])
+const cartItems = ref([])
+const totalCartCountKey = 'total_cart_count'
 
-function loadCartFromLocalStorage() {
-  const savedCart = localStorage.getItem("CartData")
-
-  if (savedCart) {
-    try {
-      const parsed = JSON.parse(savedCart)
-      // ✅ เพิ่ม selected: false ให้ทุก item
-      cartItems.value = (parsed.items || []).map(item => ({
-        ...item,
-        selected: item.selected ?? false
-      }))
-      console.log("Loaded cart from localStorage:", cartItems.value)
-    } catch (err) {
-      console.error("Invalid JSON in localStorage:", err)
-    }
-  } else {
-    console.log("No cart data found in localStorage.")
-  }
+function saveCartToLocalStorage() {
+    localStorage.setItem("CartData", JSON.stringify({ items: cartItems.value }));
+    
+    // คำนวณจำนวนสินค้ารวมใหม่
+    const newCartCount = cartItems.value.reduce((sum, item) => sum + item.quantity, 0);
+    localStorage.setItem(totalCartCountKey, newCartCount.toString());
+    console.log("🛒 Cart and Total Count updated.");
 }
 
+function loadCartFromLocalStorage() {
+  const savedCart = localStorage.getItem("CartData")
+  if (savedCart) {
+    try {
+      const parsed = JSON.parse(savedCart)
+      cartItems.value = (parsed.items || []).map(item => ({
+        ...item,
+        selected: item.selected ?? false
+      }))
+      console.log("Loaded cart from localStorage:", cartItems.value)
+      // อัปเดต Total Count เมื่อโหลดหน้า
+      const newCartCount = cartItems.value.reduce((sum, item) => sum + item.quantity, 0);
+      localStorage.setItem(totalCartCountKey, newCartCount.toString());
+    } catch (err) {
+      console.error("Invalid JSON in localStorage:", err)
+    }
+  } else {
+    console.log("No cart data found in localStorage.")
+  }
+}
+
+const groupedCartItems = computed(() => {
+    // ใช้อ็อบเจ็กต์เพื่อจัดกลุ่ม { sellerId: { sellerId, sellerNickname, items: [...], sellerAllSelected: bool } }
+    const groups = cartItems.value.reduce((groups, item) => {
+        // ใช้ item.sellerNickname แทน 'Samsun'
+        const nickname = item.sellerNickname || `Seller ID: ${item.sellerId}`;
+
+        if (!groups[item.sellerId]) {
+            groups[item.sellerId] = {
+                sellerId: item.sellerId,
+                sellerNickname: nickname,
+                items: [],
+                sellerAllSelected: false // สถานะเริ่มต้น (จะถูกคำนวณซ้ำด้านล่าง)
+            };
+        }
+        groups[item.sellerId].items.push(item);
+        return groups;
+    }, {});
+
+    // คำนวณ sellerAllSelected สำหรับแต่ละกลุ่ม
+    Object.values(groups).forEach(group => {
+        // เป็น true ถ้ามีสินค้าในกลุ่ม และทุกรายการถูกเลือก
+        group.sellerAllSelected = group.items.length > 0 && group.items.every(item => item.selected);
+    });
+
+    // ส่งคืนเป็น Array เพื่อวนซ้ำใน Template
+    return Object.values(groups);
+});
+
+const deleteSelectedItems = () => {
+    const itemsToDeleteCount = selectedItems.value.length;
+
+    // ✅ ตรวจสอบและแจ้งเตือนถ้าไม่มีสินค้าที่เลือก
+    if (itemsToDeleteCount === 0) {
+        alert('Please select at least one item to delete.');
+        return;
+    }
+
+    // กรองเอาเฉพาะสินค้าที่ไม่ได้ถูกเลือกออกไป (ลบรายการที่ selected: true ออก)
+    cartItems.value = cartItems.value.filter(item => !item.selected);
+    
+    // บันทึกตะกร้าใหม่ลง localStorage และอัปเดต totalCartCount
+    saveCartToLocalStorage();
+    console.log(`${itemsToDeleteCount} item(s) deleted from cart.`);
+}
+
+const deleteItemFromCart = (saleItemId) => {
+    // กรองเอา item ที่ saleItemId ไม่ตรงกับที่ต้องการลบออกทันที
+    cartItems.value = cartItems.value.filter(item => item.saleItemId !== saleItemId);
+    
+    // บันทึกตะกร้าใหม่ลง localStorage และอัปเดต totalCartCount
+    saveCartToLocalStorage();
+    console.log(`Item ${saleItemId} deleted from cart without confirmation.`); // สำหรับ Debug
+}
 
 const shippingAddress = ref('123/45 Moo 6, T. Bangna, A. Bangna, Bangkok 10260')
 const orderNote = ref('')
@@ -117,25 +180,29 @@ const formatPrice = (price) => {
 
 // Toggle เลือก/ไม่เลือกสินค้าทั้งหมด
 const toggleSelectAll = () => {
-    const shouldSelectAll = !allSelected.value
-    cartItems.value.forEach(item => item.selected = shouldSelectAll)
+    const shouldSelectAll = !allSelected.value
+    cartItems.value.forEach(item => item.selected = shouldSelectAll)
 }
 
 // เพิ่ม/ลดจำนวนสินค้า
 const updateQuantity = (saleItemId, delta) => {
-  const item = cartItems.value.find(i => i.saleItemId === saleItemId)
-  if (item) {
-    const newQuantity = item.quantity + delta
+  const item = cartItems.value.find(i => i.saleItemId === saleItemId)
+  if (item) {
+    const newQuantity = item.quantity + delta
 
-    // ✅ ตรวจสอบไม่ให้น้อยกว่า 1 และไม่เกิน maxQuantity
-   if (newQuantity < 1) {
-  item.quantity = 1
-} else if (item.maxquantity && newQuantity > item.maxquantity) {
-  item.quantity = item.maxquantity
-} else {
-  item.quantity = newQuantity
-}
-  }
+    // ✅ เงื่อนไขที่ 1: ตรวจสอบไม่ให้น้อยกว่า 1
+   if (newQuantity < 1) {
+        item.quantity = 1 // หากพยายามลดต่ำกว่า 1 ให้คงค่าไว้ที่ 1
+    } 
+    // ✅ เงื่อนไขที่ 2: ตรวจสอบไม่ให้เกิน maxquantity (ถ้ามีค่า)
+    else if (item.maxquantity && newQuantity > item.maxquantity) {
+        item.quantity = item.maxquantity // หากพยายามเพิ่มเกิน maxquantity ให้คงค่าไว้ที่ maxquantity
+    } else {
+        item.quantity = newQuantity // ปรับเพิ่ม/ลดได้ตามปกติ
+    }
+    // บันทึกการเปลี่ยนแปลงจำนวนลง localStorage
+    saveCartToLocalStorage();
+  }
 }
 
 // async function fetchitemcart() {
@@ -245,7 +312,7 @@ const addorder = async () => {
       alert('✅ Order placed successfully!');
       // ลบสินค้าที่สั่งซื้อออกจาก cart
       cartItems.value = cartItems.value.filter(item => !item.selected);
-      localStorage.setItem("CartData", JSON.stringify({ items: cartItems.value }));
+      saveCartToLocalStorage();
     } else {
       console.error('❌ Failed to place order:', response.status, response.data);
       alert('Failed to place order. Please try again.');
@@ -271,7 +338,7 @@ const addorder = async () => {
             <div class="text-2xl font-extrabold" :class="theme === 'dark' ? 'text-white' : 'text-gray-950'">
             </div>
 
-            <div class="flex items-center space-x-4">
+            <!-- <div class="flex items-center space-x-4">
                 <div class="relative cursor-pointer">
                     <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
                         class="h-8 w-8"
@@ -287,7 +354,7 @@ const addorder = async () => {
                         {{ cartItems.length }}
                     </span>
                 </div>
-            </div>
+            </div> -->
         </div>
         
         <div :class="contentBgClass" class="px-6 md:px-20 py-12">
@@ -298,11 +365,22 @@ const addorder = async () => {
                 <div class="lg:w-2/3 space-y-6">
                     <div :class="cardClass" class="p-6 rounded-3xl">
                         <div class="flex items-center space-x-3 pb-4 border-b" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">
-                            <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" class="form-checkbox h-5 w-5 rounded itbms-select-all" 
-                                :class="{'text-orange-500 border-gray-400 focus:ring-orange-500': theme === 'light', 'text-orange-400 bg-gray-700 border-gray-600 focus:ring-orange-400': theme === 'dark'}" />
-                            <span class="font-semibold text-lg">Select All</span>
-                            <span class="text-sm" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">( {{ cartItems.length }} Items )</span>
-                        </div>
+                        <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" class="form-checkbox h-5 w-5 rounded itbms-select-all" 
+                            :class="{'text-orange-500 border-gray-400 focus:ring-orange-500': theme === 'light', 'text-orange-400 bg-gray-700 border-gray-600 focus:ring-orange-400': theme === 'dark'}" />
+                        <span class="font-semibold text-lg">Select All</span>
+                        <span class="text-sm **mr-auto**" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">( {{ cartItems.length }} Items )</span>
+
+                        <button @click="deleteSelectedItems" :disabled="totalSelectedItems === 0"
+                            class="px-4 py-1 flex items-center rounded-full text-sm font-semibold transition-colors duration-200 itbms-delete-selected-button"
+                            :class="totalSelectedItems === 0 
+                                ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                                : 'bg-red-500 hover:bg-red-600 text-white'">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete Selected
+                        </button>
+                    </div>
 
                         <div class="divide-y" :class="theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
                             <div v-for="item in cartItems" :key="item.saleItemId" class="flex items-start py-6 itbms-item-row">
@@ -322,12 +400,20 @@ const addorder = async () => {
                                 </div>
                                 
                                 <div class="flex items-center justify-center space-x-1 mr-6 mt-2 lg:mt-0 itbms-item-quantity">
-                                    <button @click="updateQuantity(item.saleItemId, -1)" class="p-2 border rounded-l-full itbms-dec-qty-button" :class="qtyButtonClass">
+                                    <button @click="updateQuantity(item.saleItemId, -1)" 
+                                            :disabled="item.quantity <= 1"
+                                            class="p-2 border rounded-l-full itbms-dec-qty-button" 
+                                            :class="[qtyButtonClass, {'opacity-50 cursor-not-allowed': item.quantity <= 1}]">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4" /></svg>
                                     </button>
+                                    
                                     <input type="text" v-model.number="item.quantity" class="w-12 text-center p-2 border-t border-b itbms-item-quantity-input" readonly
                                         :class="{'bg-transparent': theme === 'dark', 'bg-white': theme === 'light', 'border-gray-600': theme === 'dark', 'border-gray-300': theme === 'light'}" />
-                                    <button @click="updateQuantity(item.saleItemId, 1)" class="p-2 border rounded-r-full itbms-inc-qty-button" :class="qtyButtonClass">
+                                    
+                                    <button @click="updateQuantity(item.saleItemId, 1)" 
+                                            :disabled="item.maxquantity && item.quantity >= item.maxquantity"
+                                            class="p-2 border rounded-r-full itbms-inc-qty-button" 
+                                            :class="[qtyButtonClass, {'opacity-50 cursor-not-allowed': item.maxquantity && item.quantity >= item.maxquantity}]">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
                                     </button>
                                 </div>
@@ -337,6 +423,14 @@ const addorder = async () => {
                                         Price: {{ formatPrice(item.price * item.quantity) }} ฿
                                     </p>
                                 </div>
+
+                                <button @click="deleteItemFromCart(item.saleItemId)"
+                                    class="ml-4 p-2 rounded-full flex-shrink-0 transition-colors duration-200 itbms-delete-item-button"
+                                    :class="theme === 'dark' ? 'text-gray-400 hover:bg-gray-700 hover:text-red-500' : 'text-gray-600 hover:bg-gray-100 hover:text-red-600'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     </div>

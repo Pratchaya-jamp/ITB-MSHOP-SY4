@@ -67,7 +67,9 @@ const tabInactiveClass = computed(() => {
 
 // Orders ที่ถูกกรองตาม Tab ที่เลือก
 const filteredOrders = computed(() => {
-  return orders.value.filter(order => order.orderStatus === selectedTab.value.toUpperCase() || order.orderStatus === selectedTab.value);
+    const upperSelectedTab = selectedTab.value.toUpperCase(); 
+
+    return orders.value.filter(order => order.orderStatus.toUpperCase() === upperSelectedTab);
 });
 
 
@@ -76,11 +78,32 @@ const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
+const formatDate = (dateTimeString) => {
+    if (!dateTimeString) return '-'; 
+    
+    const date = new Date(dateTimeString.replace(' ', 'T')); 
+
+    const options = {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Bangkok' 
+    };
+    return new Intl.DateTimeFormat('en-GB', options).format(date);
+}
+
 // Map สถานะไปยังสี
 const getStatusClass = (status) => {
-    if (status === 'Completed') return 'text-green-500 bg-green-500/10'
-    if (status === 'Cancelled') return 'text-red-500 bg-red-500/10'
-    return 'text-yellow-500 bg-yellow-500/10'
+    const upperStatus = status.toUpperCase(); 
+
+    if (upperStatus === 'COMPLETED') return 'text-green-500 bg-green-500/10'
+    if (upperStatus === 'CANCELLED') return 'text-red-500 bg-red-500/10'
+
+    return 'text-yellow-500 bg-yellow-500/10' 
 }
 // async function fetchItemOrder() {
 //   const token = Cookies.get('access_token');
@@ -217,8 +240,8 @@ onMounted(() => {
 </div>
                         <div class="flex flex-wrap text-sm gap-x-4 gap-y-1" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
                             <span class="itbms-order-id">Order No: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ order.id }}</span></span>
-                            <span class="itbms-order-date">Order Date: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ order.orderDate }}</span></span>
-                            <span class="itbms-payment-date">Payment Date: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ order.paymentDate }}</span></span>
+                            <span class="itbms-order-date">Order Date: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ formatDate(order.orderDate) }}</span></span>
+                            <span class="itbms-payment-date">Payment Date: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ formatDate(order.paymentDate) }}</span></span>
                         </div>
                     </div>
 

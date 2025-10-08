@@ -37,6 +37,10 @@ const goToProfile = () => {
     router.push('/profile')
 }
 
+const goToOrder = () => {
+    router.push('/order')
+}
+
 const logout = async () => {
   try {
     const response = await addItem(
@@ -97,6 +101,7 @@ onMounted(() => {
                             invisible opacity-0 translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0
                             transition-all duration-300">
                     <button @click="goToProfile" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 w-full text-left">View Profile</button>
+                    <button @click="goToOrder" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 w-full text-left">Your Order</button>
                     <button @click="logout" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-700 w-full text-left">Logout</button>
                 </div>
             </div>
