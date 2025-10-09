@@ -72,6 +72,22 @@ const filteredOrders = computed(() => {
     return orders.value.filter(order => order.orderStatus.toUpperCase() === upperSelectedTab);
 });
 
+const sortedOrders = computed(() => {
+    return [...filteredOrders.value].sort((a, b) => {
+        const dateA = Date.parse(a.orderDate);
+        const dateB = Date.parse(b.orderDate);
+
+        if (!isNaN(dateA) && !isNaN(dateB)) {
+            const dateDifference = dateB - dateA;
+            if (dateDifference !== 0) {
+                return dateDifference;
+            }
+        }
+
+        return Number(b.id) - Number(a.id); 
+    });
+});
+
 
 // Function สำหรับจัดรูปแบบราคา
 const formatPrice = (price) => {
@@ -231,7 +247,7 @@ onMounted(() => {
             </div>
 
             <div class="space-y-8">
-                <div v-for="order in filteredOrders" :key="order.id" :class="cardClass" class="p-6 rounded-3xl itbms-row">
+                <div v-for="order in sortedOrders" :key="order.id" :class="cardClass" class="p-6 rounded-3xl itbms-row">
                     <div class="flex flex-wrap items-center justify-between pb-4 border-b" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">
                         <div class="flex items-center space-x-2 itbms-nickname mb-2 sm:mb-0">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
