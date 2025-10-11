@@ -30,9 +30,9 @@ onMounted(async () => {
   });
 
   try {
-    const data = await getItems('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/brands')
+    const data = await getItems(`${import.meta.env.VITE_BACKEND}/v1/brands`)
     items.value = data.sort((a, b) => a.id - b.id)
-    const saleItemsData = await getItems('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v1/sale-items')
+    const saleItemsData = await getItems(`${import.meta.env.VITE_BACKEND}/v1/sale-items`)
     saleItems.value = saleItemsData
   } catch (err) {
     console.error('Error loading items:', err)

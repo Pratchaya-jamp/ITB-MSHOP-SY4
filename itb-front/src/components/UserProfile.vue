@@ -93,7 +93,7 @@ const fetchUserProfile = async () => {
 
     try {
 const response = await getItemByIdWithAuth(
-        'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users',
+        `${import.meta.env.VITE_BACKEND}/v2/users`,
         userId,
         token
         );

@@ -142,7 +142,7 @@ const getStatusClass = (status) => {
 
 //   try {
 //     const response = await getItemsWithAuth(
-//       `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/orders/1`,
+//       `${import.meta.env.VITE_BACKEND}/v2/users/orders/1`,
 //       {
 //         token: token,
 //       }

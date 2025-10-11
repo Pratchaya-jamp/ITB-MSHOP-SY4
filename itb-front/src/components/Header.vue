@@ -44,7 +44,7 @@ const goToOrder = () => {
 const logout = async () => {
   try {
     const response = await addItem(
-      'https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/logout'
+      `${import.meta.env.VITE_BACKEND}/v2/auth/logout`
     )
 
     // ลบ token ทั้งสองตัวออกจาก Cookies

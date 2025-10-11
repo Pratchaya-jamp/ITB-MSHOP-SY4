@@ -100,7 +100,7 @@ async function fetchItemOrderbyId() {
 
   try {
     const response = await getItemsWithAuth(
-      `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/orders/2`,
+      `${import.meta.env.VITE_BACKEND}/v2/orders/2`,
       {
         token: token,
       }

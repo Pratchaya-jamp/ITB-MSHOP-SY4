@@ -242,7 +242,7 @@ onMounted(async () => {
     }
 
     try {
-        const data = await getItemById('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', id)
+        const data = await getItemById(`${import.meta.env.VITE_BACKEND}/v2/sale-items`, id)
         if (!data || data?.status === 404) {
             showNotFoundPopup.value = true
             startCountdown()
@@ -256,7 +256,7 @@ onMounted(async () => {
         if (data.saleItemImages && data.saleItemImages.length > 0) {
             const sortedImages = data.saleItemImages
                 .sort((a, b) => a.imageViewOrder - b.imageViewOrder)
-                .map(img => `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items/images/${img.fileName}`)
+                .map(img => `${import.meta.env.VITE_BACKEND}/v2/sale-items/images/${img.fileName}`)
             
             productImages.value = sortedImages
             mainImage.value = sortedImages[0]
@@ -322,7 +322,7 @@ const confirmDelete = async () => {
     showDeleteConfirmationPopup.value = false
     isDeleting.value = true
     try {
-        const statusCode = await deleteItemById('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items', id)
+        const statusCode = await deleteItemById(`${import.meta.env.VITE_BACKEND}/v2/sale-items`, id)
         if (statusCode === 204) {
             setTimeout(() => {
                 isDeleting.value = false

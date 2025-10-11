@@ -24,8 +24,12 @@ services:
       - "8443:8443"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/itb
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=mysql@sit
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - FRONTEND_URL=${FRONTEND_URL}
     depends_on:
       - db
     networks:
@@ -39,7 +43,9 @@ services:
     image: mysql:latest
     environment:
       MYSQL_DATABASE: itb
-      MYSQL_ROOT_PASSWORD: mysql@sit
+      MYSQL_ROOT_PASSWORD: ${ROOT_PASSWORD}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:

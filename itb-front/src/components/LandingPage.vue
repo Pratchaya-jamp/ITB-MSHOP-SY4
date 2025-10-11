@@ -25,7 +25,7 @@ const toggleTheme = () => {
 
 const fetchRandomSaleItems = async () => {
     try {
-        const response = await fetch('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sale-items')
+        const response = await fetch(`${import.meta.env.VITE_BACKEND}/v2/sale-items`)
         if (!response.ok) throw new Error('Failed to fetch sale items')
         const items = await response.json()
         
