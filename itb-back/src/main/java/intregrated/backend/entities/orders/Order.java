@@ -58,7 +58,6 @@ public class Order {
 
     @NotNull
     @ColumnDefault("'COMPLETED'")
-    @Lob
     @Column(name = "order_status", nullable = false)
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
@@ -73,7 +72,7 @@ public class Order {
     @Column(name = "updatedOn", nullable = false)
     private Instant updatedOn;
 
-    @OneToMany(mappedBy = "order")
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrderItem> orderItems = new LinkedHashSet<>();
 
 }
