@@ -123,87 +123,117 @@ const debouncedFetchItems = debounce(() => {
   fetchItems();
 }, 500);
 
-const getCartQuantityForItem = (itemId) => {
-    // ต้องแปลง itemId เป็น number หาก saleItemId ใน CartData เป็น number
+// ดึงจำนวนสินค้าที่อยู่ใน cart ตาม saleItemId และ userId
+const getCartQuantityForItem = (itemId, userId) => { 
+    if (!userId) return 0;
     const targetId = parseInt(itemId); 
-    const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+    const cartKey = `CartData_${userId}`;
+    const existingCart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] };
     const existingItem = existingCart.items.find(i => i.saleItemId === targetId); 
     return existingItem ? existingItem.quantity : 0;
 }
 
-const isItemSoldOut = (item) => {
-    if (!item || item.quantity <= 0) {
-        return true; // สินค้าหมดคลัง
-    }
-    const qtyInCart = getCartQuantityForItem(item.id);
+// เช็คว่าสินค้าหมดหรือยัง ตาม userId
+const isItemSoldOut = (item, userId) => {
+    if (!item || item.quantity <= 0) return true; // สินค้าหมดคลัง
+
+    const qtyInCart = getCartQuantityForItem(item.id, userId);
+
     // ถ้าจำนวนรวมที่อยู่ในตะกร้าแล้วเท่ากับหรือมากกว่าจำนวนในคลัง
     return qtyInCart >= item.quantity;
 }
 
-const getCartTotalCount = () => {
-    const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
-    // รวม quantity ของสินค้าทุกชิ้นในตะกร้า
+// รวมจำนวนสินค้าทั้งหมดใน cart ของ user
+const getCartTotalCount = (userId) => {
+    if (!userId) return 0;
+    const cartKey = `CartData_${userId}`;
+    const existingCart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] };
     return existingCart.items.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
 }
 
 const addToCart = async (item, qtyToAdd = 1) => {
-  if (!isAuthenticated.value) {
-    router.push('/signin');
-    console.log('Redirecting to /signin: User is not authenticated.');
-    return;
-  }
+  const router = useRouter();
+
+  if (!isAuthenticated.value) {
+    router.push('/signin');
+    console.log('Redirecting to /signin: User is not authenticated.');
+    return;
+  }
 
   if (isItemSoldOut(item)) {
     console.warn('❌ Item already at max quantity in cart or out of stock.');
     return;
   }
 
-  if (!item || item.quantity <= 0) {
-    console.warn('❌ Invalid item or out of stock');
-    return;
-  }
+  if (!item || item.quantity <= 0) {
+    console.warn('❌ Invalid item or out of stock');
+    return;
+  }
 
-  // 🛑 Note: สำหรับ Grid View เรากำหนด qtyToAdd = 1 ใน function call
-  const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+  // ✅ ดึง userId จาก token
+  const token = Cookies.get('access_token');
+  if (!token) {
+    console.error('No access token found');
+    router.push('/signin');
+    return;
+  }
 
-  // ต้องแน่ใจว่า item.id เป็น number ก่อนเปรียบเทียบ
-  const itemId = parseInt(item.id); 
-  const existingItem = existingCart.items.find(i => i.saleItemId === itemId);
+  let userId = null;
+  try {
+    const decoded = jwtDecode(token);
+    userId = decoded.id; // 👈 เปลี่ยนชื่อตาม field จริงใน token
+  } catch (err) {
+    console.error('Failed to decode token:', err);
+    return;
+  }
 
-  if (existingItem) {
-    const newTotalQty = existingItem.quantity + qtyToAdd;
+  if (!userId) {
+    console.error('User ID not found in token.');
+    return;
+  }
 
-    if (newTotalQty > item.quantity) {
-      existingItem.quantity = item.quantity;
-    } else {
-      existingItem.quantity = newTotalQty;
-    }
-  } else {
-    // ✅ เพิ่ม selected: false ให้สินค้าใหม่
-    const safeQty = qtyToAdd > item.quantity ? item.quantity : qtyToAdd;
-    existingCart.items.push({
-      saleItemId: itemId,
-      quantity: safeQty,
-      description: `${item.brandName} ${item.model} (${item.storageGb ? item.storageGb + 'GB' : '-'}, ${item.color || '-'})`,
-      price: item.price,
-      maxquantity: item.quantity,
-      sellerId: item.sellerId,
-      sellernickname: item.sellerName    
-});
-  }
+  // ✅ ตั้งชื่อ key ตาม userId
+  const cartKey = `CartData_${userId}`;
 
-  // ✅ บันทึกกลับลง localStorage
-  localStorage.setItem("CartData", JSON.stringify(existingCart));
-  console.log("🛒 Cart updated in localStorage:", existingCart);
+  // ✅ โหลด cart เฉพาะของ user นี้
+  const existingCart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] };
 
-  const newCartCount = getCartTotalCount(); // ใช้ฟังก์ชันที่ถูกแก้ไข
-  cartCount.value = newCartCount;
-  localStorage.setItem(totalCartCountKey, newCartCount.toString());
-  
-  // 🛑 NEW: เรียก fetchItems เพื่ออัปเดตปุ่ม Sold Out บน Grid ทันที
-  fetchItems(); 
+  const itemId = parseInt(item.id);
+  const existingItem = existingCart.items.find(i => i.saleItemId === itemId);
+
+  if (existingItem) {
+    const newTotalQty = existingItem.quantity + qtyToAdd;
+    if (newTotalQty > item.quantity) {
+      existingItem.quantity = item.quantity;
+    } else {
+      existingItem.quantity = newTotalQty;
+    }
+  } else {
+    const safeQty = qtyToAdd > item.quantity ? item.quantity : qtyToAdd;
+    existingCart.items.push({
+      saleItemId: itemId,
+      quantity: safeQty,
+      description: `${item.brandName} ${item.model} (${item.storageGb ? item.storageGb + 'GB' : '-'}, ${item.color || '-'})`,
+      price: item.price,
+      maxquantity: item.quantity,
+      sellerId: item.sellerId,
+      sellernickname: item.sellerName,
+      selected: false
+    });
+  }
+
+  // ✅ บันทึกกลับลง localStorage
+  localStorage.setItem(cartKey, JSON.stringify(existingCart));
+  console.log(`🛒 Cart updated in localStorage for user ${userId}:`, existingCart);
+
+  // ✅ อัปเดตจำนวนรวมของสินค้าใน cart
+  const newCartCount = getCartTotalCount(); // ฟังก์ชันที่คุณมีอยู่แล้ว
+  cartCount.value = newCartCount;
+  localStorage.setItem(totalCartCountKey, newCartCount.toString());
+
+  // ✅ เรียก fetchItems เพื่ออัปเดตสถานะสินค้าบน Grid ทันที (เช่นปุ่ม Sold Out)
+  fetchItems();
 };
-
 const loadCartCount = () => {
     const newCartCount = getCartTotalCount();
     cartCount.value = newCartCount;

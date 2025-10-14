@@ -181,6 +181,37 @@ const isIncreaseDisabled = computed(() =>
     (itemQuantityToAddToCart.value + getCurrentItemQtyInCart() >= product.value.quantity)
 );
 
+const isItemSoldOut = (item) => {
+ const token = Cookies.get("access_token");
+  if (!item) return true
+  let userId = null;
+  try {
+    const decoded = jwtDecode(token);
+    userId = decoded.userId; // 👈 เปลี่ยนตาม field จริงใน token
+  } catch (err) {
+    console.error("❌ Failed to decode token:", err);
+    return;
+  } 
+
+  const cartKey = `CartData_${userId}`
+const existingCart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] } 
+
+  // หา item ที่อยู่ใน cart แล้ว
+  const existingItem = existingCart.items.find(i => i.saleItemId === item.id)
+
+  // ถ้ามีใน cart แล้ว และจำนวนใน cart >= stock จริง -> ถือว่าขายหมด
+  if (existingItem && existingItem.quantity >= item.quantity) {
+    return true
+  }
+
+  // ถ้า stock จริง = 0 -> ขายหมด
+  if (item.quantity <= 0) {
+    return true
+  }
+
+  return false
+}
+
 // ฟังก์ชัน Add to Cart
 const addToCart = async (item) => {
   if (!isAuthenticated.value) {
@@ -195,21 +226,35 @@ const addToCart = async (item) => {
   }
 
   const qtyToAdd = itemQuantityToAddToCart.value;
-  const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
+
+  // ดึง userId จาก token หรือ state
+  const token = Cookies.get('access_token');
+  let userId = null;
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      userId = decoded.id;
+    } catch (err) {
+      console.error('Failed to decode token:', err);
+      return;
+    }
+  }
+
+  if (!userId) {
+    console.error('User ID not found. Cannot add to cart.');
+    return;
+  }
+
+  const cartKey = `CartData_${userId}`;
+  const existingCart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] };
 
   const existingItem = existingCart.items.find(i => i.saleItemId === item.id);
 
   if (existingItem) {
     const newTotalQty = existingItem.quantity + qtyToAdd;
-
-    if (newTotalQty > item.quantity) {
-      existingItem.quantity = item.quantity;
-    } else {
-      existingItem.quantity = newTotalQty;
-    }
+    existingItem.quantity = Math.min(newTotalQty, item.quantity);
   } else {
-    // ✅ เพิ่ม selected: false ให้สินค้าใหม่
-    const safeQty = qtyToAdd > item.quantity ? item.quantity : qtyToAdd;
+    const safeQty = Math.min(qtyToAdd, item.quantity);
     existingCart.items.push({
       saleItemId: item.id,
       quantity: safeQty,
@@ -217,20 +262,21 @@ const addToCart = async (item) => {
       price: item.price,
       maxquantity: item.quantity,
       sellerId: item.sellerId,
+      selected: false
     });
   }
 
-  // ✅ บันทึกกลับลง localStorage
-  localStorage.setItem("CartData", JSON.stringify(existingCart));
-  console.log("🛒 Cart updated in localStorage:", existingCart);
+  // ✅ บันทึกกลับลง localStorage ด้วย cartKey ของ user
+  localStorage.setItem(cartKey, JSON.stringify(existingCart));
+  console.log(`🛒 Cart for user ${userId} updated:`, existingCart);
 
+  // อัปเดตจำนวนรวมใน state และ localStorage
   const newCartCount = existingCart.items.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
-  cartCount.value = newCartCount;
-  localStorage.setItem(totalCartCountKey, newCartCount.toString());
+  cartCount.value = newCartCount;
+  localStorage.setItem(totalCartCountKey, newCartCount.toString());
 
-  loadCartState(); 
+  loadCartState(); // โหลด state ใหม่
 };
-
 
 onMounted(async () => {
     decodeTokenAndSetRole()

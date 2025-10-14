@@ -11,7 +11,24 @@ const router = useRouter()
 const totalCartCountKey = 'total_cart_count'
 
 function saveCartToLocalStorage() {
-    localStorage.setItem("CartData", JSON.stringify({ items: cartItems.value }));
+  const token = Cookies.get("access_token");
+
+  if (!token) {
+    console.warn("⚠️ No access token found. Cannot load cart.");
+    cartItems.value = [];
+    return;
+  }
+
+  let userId = null;
+  try {
+    const decoded = jwtDecode(token);
+    userId = decoded.id; // 👈 เปลี่ยนตาม field จริงใน token
+  } catch (err) {
+    console.error("❌ Failed to decode token:", err);
+    return;
+  }
+
+    localStorage.setItem(`CartData_${userId}`, JSON.stringify({ items: cartItems.value }));
     
     const newCartCount = cartItems.value.reduce((sum, item) => sum + item.quantity, 0);
     localStorage.setItem(totalCartCountKey, newCartCount.toString());
@@ -19,23 +36,46 @@ function saveCartToLocalStorage() {
 }
 
 function loadCartFromLocalStorage() {
-  const savedCart = localStorage.getItem("CartData")
+  const token = Cookies.get("access_token");
+
+  if (!token) {
+    console.warn("⚠️ No access token found. Cannot load cart.");
+    cartItems.value = [];
+    return;
+  }
+
+  let userId = null;
+  try {
+    const decoded = jwtDecode(token);
+    userId = decoded.id; // 👈 เปลี่ยนตาม field จริงใน token
+  } catch (err) {
+    console.error("❌ Failed to decode token:", err);
+    return;
+  }
+
+  const cartKey = `CartData_${userId}`;
+  const savedCart = localStorage.getItem(cartKey);
+
   if (savedCart) {
     try {
-      const parsed = JSON.parse(savedCart)
+      const parsed = JSON.parse(savedCart);
       cartItems.value = (parsed.items || []).map(item => ({
         ...item,
-        sellernickname: item.sellernickname || `Seller ID ${item.sellerId}`, 
+        sellernickname: item.sellernickname || `Seller ID ${item.sellerId}`,
         selected: item.selected ?? false
-      }))
-      console.log("Loaded cart from localStorage:", cartItems.value)
+      }));
+      
+      console.log(`✅ Loaded cart for user ${userId}:`, cartItems.value);
+
+      // ✅ อัปเดตจำนวนรวมใน localStorage
       const newCartCount = cartItems.value.reduce((sum, item) => sum + item.quantity, 0);
       localStorage.setItem(totalCartCountKey, newCartCount.toString());
     } catch (err) {
-      console.error("Invalid JSON in localStorage:", err)
+      console.error("❌ Invalid JSON in localStorage:", err);
     }
   } else {
-    console.log("No cart data found in localStorage.")
+    console.log(`🛒 No cart data found for user ${userId}.`);
+    cartItems.value = [];
   }
 }
 
