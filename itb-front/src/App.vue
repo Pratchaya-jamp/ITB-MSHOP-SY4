@@ -5,11 +5,12 @@ import Footer from './components/Footer.vue'
 import Hearder from './components/Header.vue'
 
 const route = useRoute()
-const showHeader = computed(() => route.path !== '/')
+// const showHeader = computed(() => route.path !== '/')
 </script>
 
 <template>
-    <hearder v-if="showHeader"></hearder>
+    <!-- <hearder v-if="showHeader"></hearder> -->
+     <Hearder />
     <div>
         <router-view></router-view>
     </div>
