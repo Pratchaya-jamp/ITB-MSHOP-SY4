@@ -2,7 +2,8 @@
 import { useRouter } from 'vue-router'
 import { ref, onMounted, computed } from 'vue'
 import { jwtDecode } from 'jwt-decode'
-import { addItem } from '@/libs/fetchUtilsOur'
+// เรายังคง import addItem ไว้เผื่อส่วนอื่นของแอปพลิเคชันอาจจะยังใช้ แต่ logout จะไม่ใช้แล้ว
+import { addItem } from '@/libs/fetchUtilsOur' 
 import Cookies from 'js-cookie'
 import { theme, toggleTheme, applyInitialTheme } from '@/stores/themeStore.js'
 
@@ -33,23 +34,34 @@ const goToProfile = () => router.push('/profile')
 const goToOrder = () => router.push('/order')
 
 const logout = async () => {
-    try {
-        const response = await addItem(`${import.meta.env.VITE_BACKEND}/v2/auth/logout`)
-        if (response.status === 204) {
-            setTimeout(() => {
-                Cookies.remove('access_token', { path: '/' })
-                Cookies.remove('refresh_token', { path: '/' })
-                localStorage.removeItem('total_cart_count')
-                localStorage.removeItem('CartData')
-                isLoggedIn.value = false
-                router.push('/signin').then(() => {
-                    window.location.reload()
-                })
-            }, 1000)
-        }
-    } catch (error) {
-        console.error('Logout failed:', error)
+  try {
+    const response = await addItem(
+      `${import.meta.env.VITE_BACKEND}/v2/auth/logout`
+    )
+
+    // ลบ token ทั้งสองตัวออกจาก Cookies
+
+    if (response.status === 204) {
+       setTimeout(() => {
+        // ลบ token
+        Cookies.remove('access_token', { path: '/' })
+        Cookies.remove('refresh_token', { path: '/' })
+
+        localStorage.removeItem('total_cart_count')
+        localStorage.removeItem('CartData')
+
+        // อัปเดตสถานะ
+        isLoggedIn.value = false
+
+        // ไปหน้า Signin และรีเฟรช
+        router.push('/signin').then(() => {
+          window.location.reload()
+        })
+      }, 1000) // 10000 ms = 10 วินาที
     }
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
 }
 
 const iconComponent = computed(() => {
@@ -67,22 +79,20 @@ onMounted(() => {
 <template>
   <header 
     :class="theme === 'dark' ? 'bg-gray-950' : 'bg-white'" 
-    class="sticky top-0 z-50 backdrop-blur-lg px-8 md:px-24 py-5 flex justify-between items-center border-b" 
+    class="sticky top-0 z-50 backdrop-blur-lg px-8 md:px-24 py-4 flex justify-between items-center border-b" 
     :style="theme === 'dark' ? 'border-color: rgba(255, 255, 255, 0.1)' : 'border-color: rgba(0, 0, 0, 0.1)'">
     
-    <div class="text-xl font-bold tracking-wider" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'" @click="() => router.push('/')">ITB MSHOP</div>
+    <div class="text-xl font-bold tracking-wider cursor-pointer" :class="theme === 'dark' ? 'text-white' : 'text-slate-900'" @click="() => router.push('/')">ITB MSHOP</div>
     
-    <nav class="space-x-8 hidden md:flex items-center text-sm font-medium" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">
-      <router-link to="/" class="hover:text-blue-500 transition-colors">Home</router-link>
-      <router-link to="/sale-items" class="hover:text-blue-500 transition-colors">Phones</router-link>
-      <a href="#" @click.prevent="scrollTo(services)" class="hover:text-blue-500 transition-colors">Services</a>
-      <a href="#" @click.prevent="scrollTo(contact)" class="hover:text-blue-500 transition-colors">Contact</a>
-      </nav>
+    <nav class="space-x-8 hidden md:flex items-center text-sm font-medium" :class="theme === 'dark' ? 'text-slate-300' : 'text-slate-600'">
+      <router-link to="/" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Home</router-link>
+      <router-link to="/sale-items" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Phones</router-link>
+    </nav>
     
     <div class="flex items-center space-x-4">
       
       <div v-if="!isLoggedIn" class="flex items-center space-x-4">
-        <button @click="goToLogin" class="text-sm font-medium" :class="theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'">
+        <button @click="goToLogin" class="text-sm font-medium" :class="theme === 'dark' ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-black'">
           Login
         </button>
         <button 
@@ -94,29 +104,47 @@ onMounted(() => {
       </div>
 
       <div v-else class="relative group">
-        <div class="flex items-center space-x-3 cursor-pointer">
-          <img :src="userProfile.image" alt="Profile" class="w-9 h-9 rounded-full border-2 object-cover" :class="theme === 'dark' ? 'border-white/20' : 'border-black/20'" />
+        <div class="flex items-center space-x-3 cursor-pointer p-2 rounded-full transition-colors"
+             :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/5'">
+          <img :src="userProfile.image" alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2" :class="theme === 'dark' ? 'ring-white/20' : 'ring-black/10'" />
+          <span class="text-sm font-medium hidden md:block" :class="theme === 'dark' ? 'text-slate-200' : 'text-slate-800'">
+            {{ userProfile.name }}
+          </span>
         </div>
         
-        <div class="absolute top-full right-0 mt-3 w-48 rounded-lg shadow-lg py-1 z-50 
+        <div class="absolute top-full right-0 mt-2 w-56 rounded-xl shadow-lg p-2 z-50 
                      invisible opacity-0 translate-y-2 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0
                      transition-all duration-300"
              :class="theme === 'dark' ? 'bg-gray-800 ring-1 ring-white/10' : 'bg-white ring-1 ring-black/5'">
-          <div class="px-4 py-2 border-b" :class="theme === 'dark' ? 'border-white/10' : 'border-black/10'">
-            <p class="text-sm font-medium truncate" :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ userProfile.name }}</p>
+          
+          <div class="space-y-1">
+            <button @click="goToProfile" class="w-full text-left px-3 py-2 text-sm flex items-center space-x-3 rounded-lg" :class="theme === 'dark' ? 'text-slate-300 hover:bg-indigo-500/20 hover:text-white' : 'text-slate-700 hover:bg-indigo-500/10 hover:text-indigo-600'">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+              <span>View Profile</span>
+            </button>
+            <button @click="goToOrder" class="w-full text-left px-3 py-2 text-sm flex items-center space-x-3 rounded-lg" :class="theme === 'dark' ? 'text-slate-300 hover:bg-indigo-500/20 hover:text-white' : 'text-slate-700 hover:bg-indigo-500/10 hover:text-indigo-600'">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" /><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
+              <span>Your Orders</span>
+            </button>
           </div>
-          <button @click="goToProfile" class="block w-full text-left px-4 py-2 text-sm" :class="theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'">View Profile</button>
-          <button @click="goToOrder" class="block w-full text-left px-4 py-2 text-sm" :class="theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'">Your Orders</button>
-          <button @click="logout" class="block w-full text-left px-4 py-2 text-sm text-red-500" :class="theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'">Logout</button>
+          
+          <div class="mt-2 pt-2 border-t" :class="theme === 'dark' ? 'border-white/10' : 'border-black/10'">
+            <button @click="logout" class="w-full text-left px-3 py-2 text-sm flex items-center space-x-3 rounded-lg text-red-500" :class="theme === 'dark' ? 'hover:bg-red-500/20 hover:text-red-400' : 'hover:bg-red-500/10 hover:text-red-600'">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd" /></svg>
+              <span>Logout</span>
+            </button>
+          </div>
+
         </div>
       </div>
+      
       <button @click="toggleTheme" 
         class="p-2 rounded-full transition-colors" 
         :class="theme === 'dark' ? 'text-gray-400 hover:bg-white/10' : 'text-gray-500 hover:bg-black/10'"
         v-html="iconComponent">
       </button>
 
-      </div>
+    </div>
   </header>
 </template>
 
