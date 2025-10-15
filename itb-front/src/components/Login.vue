@@ -63,7 +63,7 @@ const isFormValid = computed(() => {
 })
 
 const handleSubmit = async () => {
-  isLoading.value = true;
+  isLoading.value = true; // <-- ปุ่มเปลี่ยนเป็น "Signing In..."
   loginError.value = '';
 
   try {
@@ -90,29 +90,26 @@ const handleSubmit = async () => {
       message.value = 'Login successful!';
 
       setTimeout(() => {
-        isLoading.value = false;
         if (userRole === 'SELLER') {
           router.push({ path: '/sale-items/list', query: { loginSuccess: 'true' } });
         } else {
           router.push({ path: '/sale-items', query: { loginSuccess: 'true' } });
         }
-      }, 100);
+      }, 1000);
       
     } else if (response.status === 403) {
       emailactivate.value = true
+      isLoading.value = false;
     } else {
       loginError.value = 'Invalid email or password';
+      isLoading.value = false;
     }
   } catch (error) {
     loginError.value = 'Email or Pasword is incorrect.';
-  } finally {
-    if (!router.currentRoute.value.path.includes('sale-items')) {
-      isLoading.value = false;
-    }
+    isLoading.value = false;
   }
 };
 
-// 2. Computed property ที่ใช้ theme จาก store ในการเปลี่ยนสี
 const themeClass = computed(() => (theme.value === 'dark' ? 'dark bg-gray-900 text-slate-200' : 'bg-slate-50 text-slate-800'));
 </script>
 
@@ -154,8 +151,11 @@ const themeClass = computed(() => (theme.value === 'dark' ? 'dark bg-gray-900 te
         <div class="pt-4">
           <button type="button" @click="handleSubmit"
             class="itbms-signin-button w-full px-10 py-4 bg-indigo-600 text-white font-semibold rounded-full shadow-lg shadow-indigo-500/20 transition-all duration-300 transform hover:-translate-y-1"
-            :class="{'opacity-50 cursor-not-allowed': !isFormValid}"
-            :disabled="!isFormValid || isLoading">
+            :class="{
+              'opacity-50 cursor-not-allowed': !isFormValid,
+              'opacity-50 pointer-events-none': isLoading
+            }"
+            :disabled="!isFormValid">
             {{ isLoading ? 'Signing In...' : 'Sign In' }}
           </button>
         </div>

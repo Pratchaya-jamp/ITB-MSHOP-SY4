@@ -1,21 +1,75 @@
+<script setup>
+import { useRouter } from 'vue-router';
+// 1. Import 'theme' จาก Store ส่วนกลาง เพื่อให้หน้านี้เปลี่ยนสีตามได้
+import { theme } from '@/stores/themeStore.js'; // <-- ตรวจสอบว่า Path ไปยังไฟล์ store ถูกต้อง
+import { computed } from 'vue';
+
+const router = useRouter();
+
+// 2. Computed property ที่ใช้ theme จาก store ในการเปลี่ยนสีพื้นหลังและตัวอักษร
+const themeClass = computed(() => {
+    return theme.value === 'dark'
+        ? 'dark bg-gray-900 text-slate-200'
+        : 'bg-slate-50 text-slate-800'
+});
+</script>
+
 <template>
-    <div class="min-h-screen flex flex-col items-center justify-center bg-white text-center px-4">
-      <h1 class="text-6xl font-bold text-red-500 mb-4">404</h1>
-      <h2 class="text-2xl font-semibold text-gray-800 mb-2">Page Not Found</h2>
-      <p class="text-gray-600 mb-6">
-        Sorry, the page you are looking for doesn’t exist or has been moved.
-      </p>
-      <router-link to="/" class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
-        Go Back Home
-      </router-link>
+  <div :class="themeClass" class="relative min-h-screen font-sans flex items-center justify-center text-center p-6 overflow-hidden transition-colors duration-300">
+    <div class="absolute inset-0 w-full h-full opacity-10 pointer-events-none">
+      <div class="absolute w-96 h-96 bg-indigo-500 rounded-full blur-3xl opacity-30 top-1/4 left-1/4 animate-blob"></div>
+      <div class="absolute w-80 h-80 bg-sky-500 rounded-full blur-3xl opacity-30 bottom-1/4 right-1/4 animate-blob animation-delay-2000"></div>
     </div>
-  </template>
-  
-  <script setup>
 
-  </script>
-  
-  <style scoped>
+    <div class="relative z-10 animate-fade-in-up">
+      <h1 class="text-8xl md:text-9xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-sky-500">
+        404
+      </h1>
+      <h2 class="mt-4 text-3xl md:text-4xl font-bold tracking-tight" :class="theme === 'dark' ? 'text-white' : 'text-slate-900'">
+        Page Not Found
+      </h2>
+      <p class="mt-4 max-w-md mx-auto text-lg" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
+        Sorry, the page you are looking for doesn’t exist or has been moved. Let's get you back on track.
+      </p>
+      <div class="mt-10">
+        <button @click="() => router.push('/')" class="px-8 py-3 bg-indigo-600 text-white font-semibold rounded-full shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all duration-300 transform hover:-translate-y-1">
+          Go Back Home
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
 
-  </style>
-  
+<style scoped>
+/* Animations for a smooth entrance */
+@keyframes fade-in-up {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.98); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+.animate-fade-in-up { 
+    animation: fade-in-up 0.8s ease-out forwards; 
+}
+
+/* Background blob animations for consistency */
+@keyframes blob {
+  0% { transform: scale(1) translate(0px, 0px); }
+  33% { transform: scale(1.1) translate(30px, -50px); }
+  66% { transform: scale(0.9) translate(-20px, 20px); }
+  100% { transform: scale(1) translate(0px, 0px); }
+}
+
+.animate-blob { 
+    animation: blob 8s infinite ease-in-out; 
+}
+
+.animation-delay-2000 { 
+    animation-delay: 2s; 
+}
+</style>
