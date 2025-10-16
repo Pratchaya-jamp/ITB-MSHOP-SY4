@@ -77,7 +77,7 @@ const fetchUserProfile = async () => {
 
     if (!token) {
         console.error('Authentication error: No access token found in storage.');
-        router.push('/login'); 
+        router.push('/signin'); 
         return;
     }
 
@@ -85,7 +85,7 @@ const fetchUserProfile = async () => {
 
     if (!decodedToken || !decodedToken.id) {
         console.error('Invalid token payload: Could not find user ID.');
-        router.push('/login');
+        router.push('/signin');
         return;
     }
 
@@ -100,7 +100,7 @@ const response = await getItemByIdWithAuth(
         
         if (response.status === 401 || response.status === 403) {
             console.error('Authentication error: Unauthorized or Forbidden');
-            router.push('/login');
+            router.push('/signin');
             return;
         }
         

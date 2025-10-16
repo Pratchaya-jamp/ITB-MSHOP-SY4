@@ -1,254 +1,169 @@
 <script setup>
-import { ref, onMounted, watch, computed, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getItemById, deleteItemById } from '@/libs/fetchUtilsOur'
-import { jwtDecode } from 'jwt-decode'
-import Cookies from 'js-cookie'
+import { ref, onMounted, watch, computed, onUnmounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { getItemById, deleteItemById } from "@/libs/fetchUtilsOur";
+import { jwtDecode } from "jwt-decode";
+import Cookies from "js-cookie";
+import { theme } from "@/stores/themeStore.js";
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
-const product = ref(null)
-const id = route.params.id
+const product = ref(null);
+const id = route.params.id;
 
 const imageLoading = ref(true);
 const imageError = ref(false);
-const productImages = ref([])
+const productImages = ref([]);
+const mainImage = ref("");
 
-const mainImage = ref('')
-const showNotFoundPopup = ref(false)
-const isDeleting = ref(false)
-const showDeleteConfirmationPopup = ref(false)
-const deleteResponseMessage = ref('')
-const countdown = ref(3)
+const showNotFoundPopup = ref(false);
+const isDeleting = ref(false);
+const showDeleteConfirmationPopup = ref(false);
+const deleteResponseMessage = ref("");
+const countdown = ref(3);
+const showEditSuccessPopup = ref(false);
+const showEditFallPopup = ref(false);
+const userRole = ref(null);
+const isAuthenticated = ref(false);
+const cartCount = ref(0);
+const itemQuantityToAddToCart = ref(1);
+
+// --- ✨ 1. สร้าง State สำหรับติดตามจำนวนสินค้าชิ้นนี้ในตะกร้าโดยเฉพาะ ---
+const currentItemQtyInCart = ref(0);
+
+const themeClass = computed(() => {
+  return theme.value === "dark"
+    ? "dark bg-gray-900 text-slate-200"
+    : "bg-slate-50 text-slate-800";
+});
+
 const startCountdown = () => {
-    if (countdown.value > 0) {
-        setTimeout(() => {
-            countdown.value--
-            startCountdown()
-        }, 1000)
-    }
-}
-const showEditSuccessPopup = ref(false)
-const showEditFallPopup = ref(false)
-
-const userRole = ref(null)
-const isAuthenticated = ref(false)
-
-const goToCart = () => {
-    if (isAuthenticated.value) {
-        router.push('/cart');
-    } else {
-        router.push('/signin');
-        console.log('Redirecting to /signin: User is not authenticated to view cart.');
-    }
-}
-
-const isSeller = computed(() => userRole.value === 'SELLER')
-
-const closeSuccessPopup = () => {
-    showEditSuccessPopup.value = false
-    showEditFallPopup.value = false
-}
-
-const decodeTokenAndSetRole = () => {
-    try {
-        const token = Cookies.get('access_token')
-        if (token) {
-            const decodedToken = jwtDecode(token)
-            userRole.value = decodedToken.role
-            isAuthenticated.value = true
-        } else {
-            isAuthenticated.value = false
-        }
-    } catch (error) {
-        console.error('Failed to decode JWT token:', error)
-        userRole.value = null
-    }
-}
-
-const theme = ref(localStorage.getItem('theme') || 'dark')
-
-const applyTheme = (newTheme) => {
-    document.body.className = newTheme === 'dark' ? 'dark-theme' : ''
-    localStorage.setItem('theme', newTheme)
-    theme.value = newTheme
-}
-
-const toggleTheme = () => {
-    const newTheme = theme.value === 'dark' ? 'light' : 'dark'
-    applyTheme(newTheme)
-}
-
-const handleMainImageError = () => {
-    imageError.value = true;
-    imageLoading.value = false;
-
-    if (mainImage.value !== '/sy4/phone/iPhone.png') {
-        mainImage.value = '/sy4/phone/iPhone.png';
-        imageLoading.value = true;
-    }
+  if (countdown.value > 0) {
+    setTimeout(() => {
+      countdown.value--;
+      startCountdown();
+    }, 1000);
+  }
 };
 
-const cartCount = ref(0) 
-const itemQuantityToAddToCart = ref(1)
+const goToCart = () => {
+  isAuthenticated.value ? router.push("/cart") : router.push("/signin");
+};
+const isSeller = computed(() => userRole.value === "SELLER");
+const closeSuccessPopup = () => {
+  showEditSuccessPopup.value = false;
+  showEditFallPopup.value = false;
+};
 
-const itemStorageKey = computed(() => `cart_item_qty_${id}`)
-
-const totalCartCountKey = 'total_cart_count' 
-
-const getCartTotalCount = () => {
-    const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
-    // รวม quantity ของสินค้าทุกชิ้นในตะกร้า
-    return existingCart.items.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
-}
-
-const getCurrentItemQtyInCart = () => {
-    // ต้องใช้ ID จาก route.params และแปลงเป็นตัวเลขเพื่อเปรียบเทียบ
-    const currentId = parseInt(route.params.id); 
-    const existingCart = JSON.parse(localStorage.getItem("CartData")) || { items: [] };
-    // ✅ แก้ไขการค้นหา: ใช้ === กับตัวเลข
-    const existingItem = existingCart.items.find(i => i.saleItemId === currentId);
-    return existingItem ? existingItem.quantity : 0;
-}
-
-const loadCartState = () => {
-    cartCount.value = getCartTotalCount();
-
-    if (!product.value || product.value.quantity <= 0) {
-        itemQuantityToAddToCart.value = 0; // ถ้าสินค้าหมดคลัง
-        return;
-    }
-    
-    // จำนวนที่ถูกเพิ่มในตะกร้าไปแล้ว
-    const qtyInCart = getCurrentItemQtyInCart(); 
-    const availableStock = product.value.quantity;
-    const maxAvailableToSelect = availableStock - qtyInCart; 
-    
-    // ถ้าเต็มแล้ว ให้ quantity ที่เลือกเป็น 0
-    if (maxAvailableToSelect <= 0) {
-        itemQuantityToAddToCart.value = 0;
-        return;
-    }
-    const savedQuantity = localStorage.getItem(itemStorageKey.value)
-    
-    let initialQty = 1;
-
-    if (savedQuantity) {
-        const qty = parseInt(savedQuantity);
-        // จำกัดไม่ให้เกินจำนวนที่ยังเหลืออยู่จริง
-        initialQty = (qty > maxAvailableToSelect) ? maxAvailableToSelect : (qty > 0 ? qty : 1);
+const decodeTokenAndSetRole = () => {
+  try {
+    const token = Cookies.get("access_token");
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      userRole.value = decodedToken.role;
+      isAuthenticated.value = true;
     } else {
-        initialQty = 1; // เริ่มต้นที่ 1 ถ้ามีของเหลือ
+      isAuthenticated.value = false;
     }
-    
-    // ตั้งค่าจำนวนที่เลือกใหม่
-    itemQuantityToAddToCart.value = Math.max(0, initialQty); 
-}
+  } catch (error) {
+    console.error("Failed to decode JWT token:", error);
+    userRole.value = null;
+  }
+};
 
+const handleMainImageError = () => {
+  mainImage.value = "/sy4/phone/iPhone.png"; // Fallback image
+};
+
+const getUserIdFromToken = () => {
+  const token = Cookies.get("access_token");
+  if (!token) return null;
+  try {
+    return jwtDecode(token).id;
+  } catch (e) {
+    return null;
+  }
+};
+
+// --- ✨ 2. สร้างฟังก์ชันสำหรับอัปเดต State ที่เราสร้างขึ้น ---
+const updateCurrentItemQtyInCart = () => {
+  const userId = getUserIdFromToken();
+  if (!userId) {
+    currentItemQtyInCart.value = 0;
+    return;
+  }
+  const currentId = parseInt(id);
+  const cartKey = `CartData_${userId}`;
+  const existingCart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] };
+  const existingItem = existingCart.items.find((i) => i.saleItemId === currentId);
+  currentItemQtyInCart.value = existingItem ? existingItem.quantity : 0;
+};
+
+const loadCartCount = () => {
+  const userId = getUserIdFromToken();
+  if (!userId) {
+    cartCount.value = 0;
+    return;
+  }
+  const cartKey = `CartData_${userId}`;
+  const cart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] };
+  cartCount.value = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+};
+
+// --- ✨ 3. Computed Property ทั้งหมดจะอ่านค่าจาก State ที่เป็น Reactive ---
 const isMaxQuantityReached = computed(() => {
-    if (!product.value) return true;
-    
-    const availableStock = product.value.quantity;
-    const qtyInCart = getCurrentItemQtyInCart();
-    
-    // ถ้าจำนวนรวมที่อยู่ในตะกร้าแล้วเท่ากับหรือมากกว่าจำนวนในคลัง
-    return qtyInCart >= availableStock;
+  if (!product.value) return true;
+  return currentItemQtyInCart.value >= product.value.quantity;
 });
 
 const handleStorageChange = (event) => {
-    if (event.key === 'CartData' || event.key === totalCartCountKey) {
-        loadCartState();
-    }
-}
+  if (event.key.startsWith("CartData_")) {
+    loadCartCount();
+    updateCurrentItemQtyInCart(); // อัปเดตจำนวนของชิ้นนี้ด้วย
+  }
+};
 
 const increaseQuantity = () => {
-    if (product.value && itemQuantityToAddToCart.value < product.value.quantity) {
-        itemQuantityToAddToCart.value++
-    }
-}
-
+  if (!product.value) return;
+  const maxCanAdd = product.value.quantity - currentItemQtyInCart.value;
+  if (itemQuantityToAddToCart.value < maxCanAdd) {
+    itemQuantityToAddToCart.value++;
+  }
+};
 const decreaseQuantity = () => {
-    if (itemQuantityToAddToCart.value > 1) {
-        itemQuantityToAddToCart.value--
-    }
-}
-
-const isDecreaseDisabled = computed(() => itemQuantityToAddToCart.value <= 1 || isMaxQuantityReached.value)
-const isIncreaseDisabled = computed(() => 
-    !product.value || 
-    product.value.quantity <= 0 || 
-    (itemQuantityToAddToCart.value + getCurrentItemQtyInCart() >= product.value.quantity)
+  if (itemQuantityToAddToCart.value > 1) {
+    itemQuantityToAddToCart.value--;
+  }
+};
+const isDecreaseDisabled = computed(
+  () => itemQuantityToAddToCart.value <= 1 || isMaxQuantityReached.value
+);
+const isIncreaseDisabled = computed(
+  () =>
+    !product.value ||
+    product.value.quantity <= 0 ||
+    itemQuantityToAddToCart.value + currentItemQtyInCart.value >=
+      product.value.quantity
 );
 
-const isItemSoldOut = (item) => {
- const token = Cookies.get("access_token");
-  if (!item) return true
-  let userId = null;
-  try {
-    const decoded = jwtDecode(token);
-    userId = decoded.userId; // 👈 เปลี่ยนตาม field จริงใน token
-  } catch (err) {
-    console.error("❌ Failed to decode token:", err);
-    return;
-  } 
-
-  const cartKey = `CartData_${userId}`
-const existingCart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] } 
-
-  // หา item ที่อยู่ใน cart แล้ว
-  const existingItem = existingCart.items.find(i => i.saleItemId === item.id)
-
-  // ถ้ามีใน cart แล้ว และจำนวนใน cart >= stock จริง -> ถือว่าขายหมด
-  if (existingItem && existingItem.quantity >= item.quantity) {
-    return true
-  }
-
-  // ถ้า stock จริง = 0 -> ขายหมด
-  if (item.quantity <= 0) {
-    return true
-  }
-
-  return false
-}
-
-// ฟังก์ชัน Add to Cart
-const addToCart = async (item) => {
+const addToCart = (item) => {
   if (!isAuthenticated.value) {
-    router.push('/signin');
-    console.log('Redirecting to /signin: User is not authenticated.');
+    router.push("/signin");
     return;
   }
-
-  if (!item || item.quantity <= 0) {
-    console.warn('❌ Invalid item or out of stock');
-    return;
-  }
+  if (!item || item.quantity <= 0 || isMaxQuantityReached.value) return;
 
   const qtyToAdd = itemQuantityToAddToCart.value;
-
-  // ดึง userId จาก token หรือ state
-  const token = Cookies.get('access_token');
-  let userId = null;
-  if (token) {
-    try {
-      const decoded = jwtDecode(token);
-      userId = decoded.id;
-    } catch (err) {
-      console.error('Failed to decode token:', err);
-      return;
-    }
-  }
-
+  const userId = getUserIdFromToken();
   if (!userId) {
-    console.error('User ID not found. Cannot add to cart.');
+    router.push("/signin");
     return;
   }
 
   const cartKey = `CartData_${userId}`;
   const existingCart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] };
-
-  const existingItem = existingCart.items.find(i => i.saleItemId === item.id);
+  const existingItem = existingCart.items.find((i) => i.saleItemId === item.id);
 
   if (existingItem) {
     const newTotalQty = existingItem.quantity + qtyToAdd;
@@ -258,332 +173,189 @@ const addToCart = async (item) => {
     existingCart.items.push({
       saleItemId: item.id,
       quantity: safeQty,
-      description: `${item.brandName} ${item.model} (${item.storageGb ? item.storageGb + 'GB' : '-'}, ${item.color || '-'})`,
+      description: item.description,
+      model: item.model,
       price: item.price,
       maxquantity: item.quantity,
       sellerId: item.sellerId,
-      selected: false
+      sellernickname: item.sellerName,
+      selected: false,
     });
   }
 
-  // ✅ บันทึกกลับลง localStorage ด้วย cartKey ของ user
   localStorage.setItem(cartKey, JSON.stringify(existingCart));
-  console.log(`🛒 Cart for user ${userId} updated:`, existingCart);
 
-  // อัปเดตจำนวนรวมใน state และ localStorage
-  const newCartCount = existingCart.items.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
-  cartCount.value = newCartCount;
-  localStorage.setItem(totalCartCountKey, newCartCount.toString());
-
-  loadCartState(); // โหลด state ใหม่
+  // --- ✨ 4. สั่งให้อัปเดต State ทั้งหมดหลังจากเพิ่มของลงตะกร้า ---
+  loadCartCount();
+  updateCurrentItemQtyInCart(); // สำคัญมาก: อัปเดตจำนวนของชิ้นนี้เพื่อให้ปุ่มเปลี่ยนสถานะ
+  itemQuantityToAddToCart.value = 1;
 };
 
 onMounted(async () => {
-    decodeTokenAndSetRole()
-    
-    // โหลด theme ก่อน
-    const savedTheme = localStorage.getItem('theme')
-    if (savedTheme) {
-        applyTheme(savedTheme)
+  decodeTokenAndSetRole();
+  loadCartCount();
+
+  try {
+    const data = await getItemById(`${import.meta.env.VITE_BACKEND}/v2/sale-items`, id);
+    if (!data || data?.status === 404) {
+      showNotFoundPopup.value = true;
+      startCountdown();
+      setTimeout(() => { router.push("/sale-items"); }, 3000);
+      return;
     }
+    product.value = data;
 
-    try {
-        const data = await getItemById(`${import.meta.env.VITE_BACKEND}/v2/sale-items`, id)
-        if (!data || data?.status === 404) {
-            showNotFoundPopup.value = true
-            startCountdown()
-            setTimeout(() => {
-                router.push('/sale-items')
-            }, 3000)
-            return
-        }
+    // --- ✨ 5. โหลดจำนวนสินค้าชิ้นนี้ในตะกร้าครั้งแรก ---
+    updateCurrentItemQtyInCart(); 
 
-        product.value = data
-        if (data.saleItemImages && data.saleItemImages.length > 0) {
-            const sortedImages = data.saleItemImages
-                .sort((a, b) => a.imageViewOrder - b.imageViewOrder)
-                .map(img => `${import.meta.env.VITE_BACKEND}/v2/sale-items/images/${img.fileName}`)
-            
-            productImages.value = sortedImages
-            mainImage.value = sortedImages[0]
-        }
-
-        loadCartState();
-
-    } catch (error) {
-        console.error('Failed to fetch product:', error)
-        showNotFoundPopup.value = true
-        startCountdown()
-        setTimeout(() => {
-            router.push('/sale-items')
-        }, 3000)
+    if (data.saleItemImages && data.saleItemImages.length > 0) {
+      const sortedImages = data.saleItemImages
+        .sort((a, b) => a.imageViewOrder - b.imageViewOrder)
+        .map((img) => `${import.meta.env.VITE_BACKEND}/v2/sale-items/images/${img.fileName}`);
+      productImages.value = sortedImages;
+      mainImage.value = sortedImages[0];
+    } else {
+      mainImage.value = "/sy4/phone/iPhone.png";
     }
-    
-    
-    window.addEventListener('storage', handleStorageChange)
-})
+  } catch (error) {
+    showNotFoundPopup.value = true;
+    startCountdown();
+    setTimeout(() => { router.push("/sale-items"); }, 3000);
+  }
+  window.addEventListener("storage", handleStorageChange);
+});
 
 onUnmounted(() => {
-    window.removeEventListener('storage', handleStorageChange)
-})
+  window.removeEventListener("storage", handleStorageChange);
+});
 
-watch(() => mainImage.value, (newVal) => {
-    if (newVal) {
-        imageLoading.value = true;
-        imageError.value = false;
+watch(
+  () => route.query.editSuccess,
+  (val) => {
+    if (val === "true") {
+      setTimeout(() => { showEditSuccessPopup.value = true; }, 200);
+      router.replace({ query: {} });
     }
-})
-
+  }, { immediate: true }
+);
 watch(
-    () => route.query.editSuccess,
-    (editSuccess) => {
-        if (editSuccess === 'true') {
-            setTimeout(() => {
-                showEditSuccessPopup.value = true
-            }, 200)
-            router.replace({ path: route.path, query: {} })
-        }
-    },
-    { immediate: true }
-)
+  () => route.query.editFail,
+  (val) => {
+    if (val === "true") {
+      setTimeout(() => { showEditFallPopup.value = true; }, 200);
+      router.replace({ query: {} });
+    }
+  }, { immediate: true }
+);
 
-watch(
-    () => route.query.editFail,
-    (editFail) => {
-        if (editFail === 'true') {
-            setTimeout(() => {
-                showEditFallPopup.value = true
-            }, 200)
-            router.replace({ path: route.path, query: {} })
-        }
-    },
-    { immediate: true }
-)
-
-const deleteproduct = async () => {
-    showDeleteConfirmationPopup.value = true
-}
-
+const deleteproduct = () => { showDeleteConfirmationPopup.value = true; };
 const confirmDelete = async () => {
-    showDeleteConfirmationPopup.value = false
-    isDeleting.value = true
-    try {
-        const statusCode = await deleteItemById(`${import.meta.env.VITE_BACKEND}/v2/sale-items`, id)
-        if (statusCode === 204) {
-            setTimeout(() => {
-                isDeleting.value = false
-                router.push({ path: '/sale-items', query: { deleteSuccess: 'true' } })
-            }, 1000)
-        } else if (statusCode === 404) {
-            isDeleting.value = false
-            showNotFoundPopup.value = true
-            startCountdown()
-            setTimeout(() => {
-                router.push('/sale-items')
-            }, 3000)
-        }
-    } catch (error) {
-        console.error('delete Fall:', error)
-        deleteResponseMessage.value = 'เกิดข้อผิดพลาดในการลบสินค้า'
-        isDeleting.value = false
+  showDeleteConfirmationPopup.value = false;
+  isDeleting.value = true;
+  try {
+    const statusCode = await deleteItemById(`${import.meta.env.VITE_BACKEND}/v2/sale-items`, id);
+    if (statusCode === 204) {
+      setTimeout(() => {
+        isDeleting.value = false;
+        router.push({ path: "/sale-items", query: { deleteSuccess: "true" } });
+      }, 1000);
+    } else {
+      isDeleting.value = false;
     }
-}
-
-const cancelDeleteItem = () => {
-    showDeleteConfirmationPopup.value = false
-}
-
-const themeClass = computed(() => {
-    return theme.value === 'dark'
-        ? 'bg-gray-950 text-white'
-        : 'bg-white text-gray-950'
-})
-
-const iconComponent = computed(() => {
-    return theme.value === 'dark'
-        ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>` // sun icon
-        : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>` // moon icon
-})
+  } catch (error) {
+    isDeleting.value = false;
+  }
+};
+const cancelDeleteItem = () => { showDeleteConfirmationPopup.value = false; };
 </script>
-<template>
-    <div :class="themeClass" class="p-4 w-full min-h-screen font-sans transition-colors duration-500">
-        <div class="flex justify-end items-center space-x-4 mb-4 max-w-6xl mx-auto">
-            <div class="relative itbms-cart-icon cursor-pointer">
-                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" @click="goToCart"
-                    class="h-8 w-8"
-                    :class="theme === 'dark' ? 'text-white' : 'text-black'"
-                    viewBox="0 0 128 128"
-                    fill="currentColor">
-                    <g>
-                        <path
-                            d="M125.1 43.6h-20.4V17.5H84.4v-2.9H46.5v2.9H26.2v26.2H2.9C1.3 43.7 0 45 0 46.6v8.7c0 1.6 1.3 2.9 2.9 2.9h122.2c1.6 0 2.9-1.3 2.9-2.9v-8.7c0-1.7-1.3-3-2.9-3zm-26.2 0H32V23.3h14.5v2.9h37.8v-2.9h14.5v20.3zm-78.5 64c0 3.2 2.6 5.8 5.8 5.8h72.7c3.2 0 5.8-2.6 5.8-5.8l14.5-46.5H8.7l11.7 46.5zm61.1-36.3c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3zm-23.3 0c0-5 8.7-5 8.7 0v29.1c0 5-8.7 5-8.7 0V71.3z" />
-                    </g>
-                </svg>
-            
-                <span v-if="cartCount > 0"
-                    class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold animate-bounce">
-                    {{ cartCount > 99 ? '99+' : cartCount }}
-                </span>
-            </div>
-        </div>
 
-        <nav class="text-sm mb-6 max-w-6xl mx-auto transition-colors duration-500"
-            :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-500'">
-            <router-link to="/sale-items" class="itbms-home-button hover:underline cursor-pointer">
-                Home
+<template>
+  <div :class="themeClass" class="min-h-screen font-sans">
+    <div class="container mx-auto px-6 py-8">
+      <div class="flex justify-between items-center mb-8">
+        <nav class="text-sm" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
+            <router-link to="/sale-items" class="itbms-home-button hover:text-indigo-500 dark:hover:text-indigo-400 transition">
+              All Phones
             </router-link>
-            <span class="mx-2 text-gray-400">/</span>
-            <span class="itbms-row font-medium transition-colors duration-500"
-                :class="theme === 'dark' ? 'text-gray-200' : 'text-gray-800'">
-                {{ product?.model || '-' }}
+            <span v-if="product" class="mx-2">/</span>
+            <span v-if="product" class="itbms-row font-medium" :class="theme === 'dark' ? 'text-slate-200' : 'text-slate-800'">
+              {{ product?.brandName || 'Brand' }}
+            </span>
+            <span v-if="product" class="mx-2">/</span>
+            <span v-if="product" class="itbms-row font-medium" :class="theme === 'dark' ? 'text-slate-200' : 'text-slate-800'">
+              {{ product?.model || 'Model' }}
             </span>
         </nav>
+        <div class="relative itbms-cart-icon cursor-pointer p-2 rounded-full" :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/5'" @click="goToCart">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            <span v-if="cartCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                {{ cartCount > 99 ? "99+" : cartCount }}
+            </span>
+        </div>
+      </div>
 
-        <div class="ltbms-product-detail grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto transition-colors duration-500"
-            :class="theme === 'dark' ? 'bg-gray-900' : 'bg-white'">
-            <div class="flex flex-col">
-                <div class="relative w-full aspect-[4/3] overflow-hidden rounded-xl shadow-lg mb-4 bg-gray-100">
-                    <img :src="mainImage"
-                        :alt="product?.model ? `${product?.brandName} ${product?.model}` : 'Product image'"
-                        class="w-full h-full object-contain transition-transform duration-500 hover:scale-105"
-                        @load="imageLoading = false" @error="handleMainImageError" />
-                </div>
-
-                <div v-if="productImages.length > 0"
-                    class="flex gap-3 px-4 justify-start overflow-x-auto pb-4 scrollbar-thin">
-
-                    <div v-for="(img, index) in productImages" :key="`thumbnail-${index}`"
-                        class="relative flex-shrink-0" @click="mainImage = img; mainImageError = false">
-
-                        <img :src="img"
-                            :alt="`${product?.brandName || ''} ${product?.model || ''} - ภาพที่ ${index + 1}`"
-                            class="w-20 h-20 object-cover rounded-lg cursor-pointer border-2 shadow-sm transition-all duration-300"
-                            :class="{
-                                'border-blue-500 scale-105': img === mainImage,
-                                'border-transparent hover:border-gray-300': img !== mainImage
-                            }" />
-                    </div>
-                </div>
+      <div v-if="product" class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+        <div>
+            <div class="relative w-full aspect-square rounded-2xl overflow-hidden shadow-lg mb-4" :class="theme === 'dark' ? 'bg-gray-800/50' : 'bg-slate-100'">
+                <img :src="mainImage" @error="handleMainImageError" :alt="product.model" class="w-full h-full object-contain transition-all duration-300" />
             </div>
-            
-            <div class="itbms-row space-y-5 text-base transition-colors duration-500">
-                <h1 class="text-3xl lg:text-4xl font-bold mb-2">
-                    {{ product?.model || 'Product Name' }}
-                </h1>
-
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="itbms-brand text-xl font-medium">
-                        <span :class="{ 'text-gray-400': !product?.brandName }">
-                            {{ product?.brandName || 'Unknown Brand' }}
-                        </span>
-                    </div>
-                    <div class="text-gray-400">•</div>
-                    <div class="itbms-color text-lg font-medium">
-                        <span :class="{ 'text-gray-400': !product?.color }">
-                            {{ product?.color || 'Color' }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="itbms-price text-4xl font-extrabold text-blue-500 mb-4">
-                    <span :class="{ 'text-gray-400': product?.price === null || product?.price === undefined }">
-                        {{ product?.price !== null && product?.price !== undefined ? product?.price.toLocaleString() :
-                            '-' }}
-                    </span>
-                    <span class="text-xl font-normal ml-1">฿</span>
-                </div>
-
-                <p class="itbms-description text-lg transition-colors duration-500"
-                    :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">
-                    {{ product?.description || 'No description available for this product.' }}
-                </p>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="itbms-ramGb">
-                        <strong class="font-semibold block text-gray-500 mb-1">RAM</strong>
-                        <span class="text-xl font-semibold" :class="{ 'text-gray-400': !product?.ramGb }">
-                            {{ product?.ramGb || '-' }}
-                            <span class="text-base font-normal">GB</span>
-                        </span>
-                    </div>
-                    <div class="itbms-storageGb">
-                        <strong class="font-semibold block text-gray-500 mb-1">Storage</strong>
-                        <span class="text-xl font-semibold" :class="{ 'text-gray-400': !product?.storageGb }">
-                            {{ product?.storageGb || '-' }}
-                            <span class="text-base font-normal">GB</span>
-                        </span>
-                    </div>
-                    <div class="itbms-screenSizeInch">
-                        <strong class="font-semibold block text-gray-500 mb-1">Screen Size</strong>
-                        <span class="text-xl font-semibold" :class="{ 'text-gray-400': !product?.screenSizeInch }">
-                            {{ product?.screenSizeInch || '-' }}
-                            <span class="text-base font-normal">Inches</span>
-                        </span>
-                    </div>
-                    <div class="itbms-quantity">
-                        <strong class="font-semibold block text-gray-500 mb-1">Available</strong>
-                        <span class="text-xl font-semibold"
-                            :class="{ 'text-green-500': product?.quantity > 0, 'text-red-500': product?.quantity <= 0 }">
-                            {{ product?.quantity !== null && product?.quantity !== undefined ? product?.quantity : '-'
-                            }}
-                            <span class="text-base font-normal">Units</span>
-                        </span>
-                    </div>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-4 pt-4">
-                    <div v-if="isSeller" class="flex flex-col sm:flex-row gap-4 pt-4 w-full">
-                        <button @click="router.push(`/sale-items/${product.id}/edit`)"
-                            class="itbms-edit-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
-                            :class="theme === 'dark'
-                                ? 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600'
-                                : 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600'">
-                            Edit Product
-                        </button>
-                        <button @click="deleteproduct"
-                            class="itbms-delete-button w-full font-semibold border-2 rounded-xl px-6 py-3 transition-all duration-300 transform active:scale-95 shadow-md hover:cursor-pointer"
-                            :class="theme === 'dark'
-                                ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
-                                : 'bg-red-500 text-white border-red-500 hover:bg-red-600'">
-                            Delete Product
-                        </button>
-                    </div>
-
-                    <div v-else class="flex flex-col w-full gap-4">
-                        <div class="flex items-center space-x-4">
-                            <div v-if="!isMaxQuantityReached && product?.quantity > 0" class="flex items-center space-x-2">
-                                <button @click="decreaseQuantity" :disabled="isDecreaseDisabled"
-                                    class="p-2 border rounded-full w-8 h-8 flex items-center justify-center transition-colors"
-                                    :class="[isDecreaseDisabled ? 'opacity-50 cursor-not-allowed' : theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100']">
-                                    <span class="text-xl leading-none">-</span>
-                                </button>
-
-                                <span class="text-xl font-semibold w-8 text-center">{{ itemQuantityToAddToCart }}</span>
-
-                                <button @click="increaseQuantity" :disabled="isIncreaseDisabled"
-                                    class="p-2 border rounded-full w-8 h-8 flex items-center justify-center transition-colors"
-                                    :class="[isIncreaseDisabled ? 'opacity-50 cursor-not-allowed' : theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100']">
-                                    <span class="text-xl leading-none">+</span>
-                                </button>
-                            </div>
-
-                            <button @click="addToCart(product)"
-                                :disabled="isMaxQuantityReached || product?.quantity <= 0 || itemQuantityToAddToCart <= 0"
-                                class="flex-grow py-3 px-6 rounded-full font-bold text-lg transition-colors duration-300"
-                                :class="isMaxQuantityReached || product?.quantity <= 0 || itemQuantityToAddToCart <= 0
-                                    ? 'bg-red-700 text-white cursor-not-allowed opacity-70' 
-                                    : 'bg-orange-600 text-white hover:bg-orange-700'">
-
-                                <span v-if="product?.quantity <= 0">SOLD OUT</span>
-                                <span v-else-if="isMaxQuantityReached">SOLD OUT</span>
-                                <span v-else>ADD TO CART</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <div v-if="productImages.length > 1" class="flex space-x-3">
+                <img v-for="(img, index) in productImages" :key="index" :src="img" :alt="`Thumbnail ${index + 1}`" @click="mainImage = img"
+                    class="w-20 h-20 object-contain rounded-lg cursor-pointer ring-2 transition-all duration-200"
+                    :class="mainImage === img ? 'ring-indigo-500' : (theme === 'dark' ? 'ring-transparent hover:ring-indigo-500/50' : 'ring-transparent hover:ring-indigo-500/50 bg-slate-100')" />
             </div>
         </div>
 
-        <transition name="bounce-popup">
+        <div class="itbms-row flex flex-col">
+            <div class="flex-grow">
+                <p class="font-bold text-indigo-500 dark:text-indigo-400 mb-2">{{ product.brandName }}</p>
+                <h1 class="text-3xl lg:text-4xl font-extrabold tracking-tight mb-4 text-slate-900 dark:text-white">{{ product.model }}</h1>
+                <div class="text-4xl font-extrabold mb-6" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">{{ product.price.toLocaleString() }} <span class="text-2xl font-semibold">฿</span></div>
+                <p class="text-base mb-8" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-600'">{{ product.description }}</p>
+                <div class="grid grid-cols-2 gap-6 py-6 border-y" :class="theme === 'dark' ? 'border-white/10' : 'border-slate-200'">
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" /></svg>
+                        <div><strong class="font-semibold block text-sm" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">Storage</strong><span class="font-semibold">{{ product.storageGb || "-" }} GB</span></div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        <div><strong class="font-semibold block text-sm" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">RAM</strong><span class="font-semibold">{{ product.ramGb || "-" }} GB</span></div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        <div><strong class="font-semibold block text-sm" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">Screen</strong><span class="font-semibold">{{ product.screenSizeInch || "-" }} "</span></div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="product.quantity > 0 ? 'text-green-500' : 'text-red-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                        <div><strong class="font-semibold block text-sm" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">Stock</strong><span class="font-semibold" :class="{ 'text-green-500': product.quantity > 0, 'text-red-500': product.quantity <= 0 }">{{ product.quantity > 0 ? `${product.quantity} Available` : "Out of Stock" }}</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-auto pt-8">
+                <div v-if="isSeller" class="flex gap-4">
+                    <button @click="router.push(`/sale-items/${product.id}/edit`)" class="itbms-edit-button w-full flex items-center justify-center gap-2 font-semibold bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full px-6 py-4 transition-colors duration-300 hover:bg-yellow-500/20">Edit</button>
+                    <button @click="deleteproduct" class="itbms-delete-button w-full flex items-center justify-center gap-2 font-semibold bg-red-500/10 text-red-600 dark:text-red-400 rounded-full px-6 py-4 transition-colors duration-300 hover:bg-red-500/20">Delete</button>
+                </div>
+                <div v-else class="flex flex-col sm:flex-row gap-4 items-center">
+                    <div v-if="!isMaxQuantityReached && product.quantity > 0" class="flex items-center justify-center space-x-4">
+                        <button @click="decreaseQuantity" :disabled="isDecreaseDisabled" class="p-2 border rounded-full w-12 h-12 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" :class="theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'"><span class="text-2xl leading-none">-</span></button>
+                        <span class="text-xl font-semibold w-10 text-center">{{ itemQuantityToAddToCart }}</span>
+                        <button @click="increaseQuantity" :disabled="isIncreaseDisabled" class="p-2 border rounded-full w-12 h-12 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" :class="theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'"><span class="text-xl leading-none">+</span></button>
+                    </div>
+                    <button @click="addToCart(product)" :disabled="isMaxQuantityReached || product.quantity <= 0 || itemQuantityToAddToCart <= 0" class="flex-grow w-full py-4 px-6 rounded-full font-bold text-lg transition-all duration-300 transform hover:-translate-y-1 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed disabled:transform-none dark:disabled:bg-gray-600 dark:disabled:text-gray-400" :class="'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-700'">
+                        <span v-if="product.quantity <= 0">Out of Stock</span>
+                        <span v-else-if="isMaxQuantityReached">Max in Cart</span>
+                        <span v-else>Add to Cart</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+      </div>
+      
+      <div v-else-if="!showNotFoundPopup" class="text-center py-20 text-slate-500"><p>Loading product details...</p></div>
+    </div>
+    
+    <transition name="bounce-popup">
             <div v-if="showDeleteConfirmationPopup"
                 class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
                 <div class="rounded-2xl p-8 shadow-xl text-center transition-colors duration-500"
@@ -656,69 +428,41 @@ const iconComponent = computed(() => {
                 </div>
             </div>
         </transition>
-
-        <button @click="toggleTheme"
-            class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-md shadow-lg transition-all duration-300 z-50 hover:shadow-2xl hover:cursor-pointer"
-            :class="theme === 'dark' ? 'bg-gray-700/80 text-white' : 'bg-gray-200/80 text-black'" v-html="iconComponent">
-        </button>
-    </div>
+  </div>
 </template>
 
 <style scoped>
+/* Scoped styles can be added here if needed */
 .itbms-bg {
     background-color: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(4px);
 }
-
 .bounce-popup-enter-active,
 .bounce-popup-leave-active {
     transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
 .bounce-popup-enter-from {
     transform: scale(0.8);
     opacity: 0;
 }
-
 .bounce-popup-leave-to {
     transform: scale(1.2);
     opacity: 0;
 }
-
 .fade-background-enter-active,
 .fade-background-leave-active {
     transition: opacity 0.3s ease;
 }
-
 .fade-background-enter-from,
 .fade-background-leave-to {
     opacity: 0;
 }
-
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
-
 .animate-spin {
     animation: spin 1s linear infinite;
-}
-
-.ltbms-product-detail {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.bg-gray-900 .ltbms-product-detail {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.overflow-x-auto::-webkit-scrollbar {
-    display: none;
-}
-
-.overflow-x-auto {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
 }
 </style>
