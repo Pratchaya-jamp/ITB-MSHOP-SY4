@@ -9,6 +9,7 @@ import intregrated.backend.entities.accounts.BuyerAccount;
 import intregrated.backend.entities.accounts.SellerAccount;
 import intregrated.backend.entities.accounts.UsersAccount;
 import intregrated.backend.repositories.UsersAccountRepo;
+import intregrated.backend.utils.UserTypeResolver;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,7 +37,7 @@ public class UserBaseService {
                         .fullname(user.getFullname())
                         .mobile(user.getSeller() != null ? user.getSeller().getMobile() : null)
                         .isActive(user.getIsActive())
-                        .userType(resolveUserType(user))
+                        .userType(UserTypeResolver.resolveUserType(user))
                         .build()
                 ).toList();
     }
@@ -49,16 +50,16 @@ public class UserBaseService {
                 )
         );
 
-        if (resolveUserType(user).equals("BUYER")) {
+        if (UserTypeResolver.resolveUserType(user).equals("BUYER")) {
             return BuyerResponseDto.builder()
                     .id(user.getId())
                     .nickname(user.getNickname())
                     .email(user.getEmail())
                     .fullname(user.getFullname())
                     .isActive(user.getIsActive())
-                    .userType(resolveUserType(user))
+                    .userType(UserTypeResolver.resolveUserType(user))
                     .build();
-        } else if (resolveUserType(user).equals("SELLER")) {
+        } else if (UserTypeResolver.resolveUserType(user).equals("SELLER")) {
             return SellerResponseDto.builder()
                     .id(user.getId())
                     .nickname(user.getNickname())
@@ -68,7 +69,7 @@ public class UserBaseService {
                     .bankName(user.getSeller().getBankName())
                     .bankNumber(user.getSeller().getBankNumber())
                     .isActive(user.getIsActive())
-                    .userType(resolveUserType(user))
+                    .userType(UserTypeResolver.resolveUserType(user))
                     .build();
         } else {
             return SellerResponseDto.builder()
@@ -80,7 +81,7 @@ public class UserBaseService {
                     .bankName(user.getSeller().getBankName())
                     .bankNumber(user.getSeller().getBankNumber())
                     .isActive(user.getIsActive())
-                    .userType(resolveUserType(user))
+                    .userType(UserTypeResolver.resolveUserType(user))
                     .build();
         }
     }
@@ -114,23 +115,8 @@ public class UserBaseService {
                 .fullname(saved.getFullname())
                 .nickname(saved.getNickname())
                 .email(saved.getEmail())
-                .userType(resolveUserType(saved))
+                .userType(UserTypeResolver.resolveUserType(saved))
                 .isActive(saved.getIsActive())
                 .build();
-    }
-
-    public String resolveUserType(UsersAccount user) {
-        boolean isBuyer = user.getBuyer() != null;
-        boolean isSeller = user.getSeller() != null;
-
-        if (isBuyer && isSeller) {
-            return "USER, SELLER";
-        } else if (isSeller) {
-            return "SELLER";
-        } else if (isBuyer) {
-            return "BUYER";
-        } else {
-            return "USER";
-        }
     }
 }

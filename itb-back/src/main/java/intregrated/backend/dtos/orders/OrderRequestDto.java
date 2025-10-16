@@ -23,7 +23,6 @@ public class OrderRequestDto {
     @NotBlank
     private String shippingAddress;
 
-    @NotBlank
     private String orderNote;
 
     @NotNull

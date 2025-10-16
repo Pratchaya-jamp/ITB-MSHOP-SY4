@@ -41,7 +41,6 @@ public class SellerSaleItemController {
         }
 
         Integer sellerIdFromToken = jwtTokenUtil.getClaims(token).get("seller_id", Integer.class);
-//        Integer userIdFromToken = jwtTokenUtil.getClaims(token).get("id", Integer.class);
         String role = jwtTokenUtil.getClaims(token).get("role", String.class);
 
         if (!"SELLER".equals(role)) {
@@ -51,10 +50,6 @@ public class SellerSaleItemController {
         if (!sellerIdFromToken.equals(sellerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Request seller id not matched with id in access token");
         }
-
-//        if (!userIdFromToken.equals(sellerId)) {
-//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Request seller id not matched with id in access token");
-//        }
 
         // ดึงข้อมูล saleItems ของ seller
         Page<SellerWithSaleItemsDto> pagedResult =

@@ -91,22 +91,4 @@ public class JwtTokenUtil {
     public Claims getClaims(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
-
-    // เมธอดเสริมสำหรับ debug
-    public void debugToken(String token) {
-        try {
-            Claims claims = getClaims(token);
-            System.out.println("=== JWT TOKEN DEBUG ===");
-            System.out.println("Issuer: " + claims.getIssuer());
-            System.out.println("Subject: " + claims.getSubject());
-            System.out.println("Issued At: " + claims.getIssuedAt());
-            System.out.println("Expiration: " + claims.getExpiration());
-            System.out.println("User ID: " + claims.get("id"));
-            System.out.println("Email: " + claims.get("email"));
-            System.out.println("Is Expired: " + claims.getExpiration().before(new Date()));
-            System.out.println("=======================");
-        } catch (Exception e) {
-            System.err.println("Cannot debug token: " + e.getMessage());
-        }
-    }
 }
