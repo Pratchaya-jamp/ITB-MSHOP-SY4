@@ -29,6 +29,11 @@ const isAuthenticated = ref(false);
 const cartCount = ref(0);
 const itemQuantityToAddToCart = ref(1);
 
+const showNotification = ref(false);
+const notificationMessage = ref("");
+const notificationSuccess = ref(false);
+let notificationTimeout = null;
+
 // --- ✨ 1. สร้าง State สำหรับติดตามจำนวนสินค้าชิ้นนี้ในตะกร้าโดยเฉพาะ ---
 const currentItemQtyInCart = ref(0);
 
@@ -37,6 +42,18 @@ const themeClass = computed(() => {
     ? "dark bg-gray-900 text-slate-200"
     : "bg-slate-50 text-slate-800";
 });
+
+const triggerNotification = (message, isSuccess) => {
+  if (notificationTimeout) {
+    clearTimeout(notificationTimeout);
+  }
+  notificationMessage.value = message;
+  notificationSuccess.value = isSuccess;
+  showNotification.value = true;
+  notificationTimeout = setTimeout(() => {
+    showNotification.value = false;
+  }, 1500);
+};
 
 const startCountdown = () => {
   if (countdown.value > 0) {
@@ -152,7 +169,14 @@ const addToCart = (item) => {
     router.push("/signin");
     return;
   }
-  if (!item || item.quantity <= 0 || isMaxQuantityReached.value) return;
+  if (isMaxQuantityReached.value) {
+    triggerNotification("Item is out of stock or max quantity in cart.", false);
+    return;
+  }
+  if (!item || item.quantity <= 0) {
+    triggerNotification("This item cannot be added.", false);
+    return;
+  }
 
   const qtyToAdd = itemQuantityToAddToCart.value;
   const userId = getUserIdFromToken();
@@ -184,6 +208,7 @@ const addToCart = (item) => {
   }
 
   localStorage.setItem(cartKey, JSON.stringify(existingCart));
+  triggerNotification("Item added to cart!", true)
 
   // --- ✨ 4. สั่งให้อัปเดต State ทั้งหมดหลังจากเพิ่มของลงตะกร้า ---
   loadCartCount();
@@ -271,6 +296,17 @@ const cancelDeleteItem = () => { showDeleteConfirmationPopup.value = false; };
 
 <template>
   <div :class="themeClass" class="min-h-screen font-sans">
+
+    <transition name="slide-down">
+        <div v-if="showNotification" 
+             class="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 p-4 rounded-lg shadow-lg"
+             :class="notificationSuccess ? 'bg-green-500 text-white' : 'bg-red-500 text-white'">
+            <svg v-if="notificationSuccess" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span class="font-semibold">{{ notificationMessage }}</span>
+        </div>
+    </transition>
+    
     <div class="container mx-auto px-6 py-8">
       <div class="flex justify-between items-center mb-8">
         <nav class="text-sm" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
@@ -432,6 +468,17 @@ const cancelDeleteItem = () => { showDeleteConfirmationPopup.value = false; };
 </template>
 
 <style scoped>
+/* ✨ CSS สำหรับ Slide Down Notification ✨ */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+  transform: translateY(-150%);
+  opacity: 0;
+}
+
 /* Scoped styles can be added here if needed */
 .itbms-bg {
     background-color: rgba(0, 0, 0, 0.3);

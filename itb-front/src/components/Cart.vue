@@ -12,6 +12,21 @@ const cartItems = ref([])
 const router = useRouter()
 const totalCartCountKey = 'total_cart_count'
 
+const showNotification = ref(false);
+const notificationMessage = ref("");
+let notificationTimeout = null;
+
+const triggerNotification = (message) => {
+    if (notificationTimeout) {
+        clearTimeout(notificationTimeout);
+    }
+    notificationMessage.value = message;
+    showNotification.value = true;
+    notificationTimeout = setTimeout(() => {
+        showNotification.value = false;
+    }, 1500); // Popup จะหายไปใน 3 วินาที
+};
+
 function saveCartToLocalStorage() {
     const token = Cookies.get("access_token");
     if (!token) { return; }
@@ -74,14 +89,28 @@ const groupedCartItems = computed(() => {
 });
 
 const deleteSelectedItems = () => {
-    if (selectedItems.value.length === 0) { return; }
+    const itemsToDelete = selectedItems.value;
+    if (itemsToDelete.length === 0) { return; }
+
+    const itemCount = itemsToDelete.length;
+    const quantityCount = itemsToDelete.reduce((sum, item) => sum + item.quantity, 0);
+
     cartItems.value = cartItems.value.filter(item => !item.selected);
     saveCartToLocalStorage();
+
+    triggerNotification(`Removed ${itemCount} item(s) (${quantityCount} total units).`);
 }
 
 const deleteItemFromCart = (saleItemId) => {
+    const itemToDelete = cartItems.value.find(item => item.saleItemId === saleItemId);
+    if (!itemToDelete) return;
+
+    const quantityCount = itemToDelete.quantity;
+
     cartItems.value = cartItems.value.filter(item => item.saleItemId !== saleItemId);
     saveCartToLocalStorage();
+
+    triggerNotification(`Removed 1 item (${quantityCount} total units).`);
 }
 
 const shippingAddress = ref('')
@@ -206,6 +235,19 @@ const addorder = async () => {
 
 <template>
     <div :class="themeClass" class="min-h-screen font-sans transition-colors duration-300">
+
+        <transition name="slide-down">
+            <div v-if="showNotification"
+                class="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 p-4 rounded-lg shadow-lg bg-red-500 text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span class="font-semibold">{{ notificationMessage }}</span>
+            </div>
+        </transition>
+
         <div class="container mx-auto px-6 py-12">
             <h1 class="text-4xl font-extrabold tracking-tight mb-10"
                 :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">Shopping Cart</h1>
@@ -311,7 +353,8 @@ const addorder = async () => {
                                         class="w-full p-3 rounded-lg text-sm resize-none focus:ring-2 focus:ring-indigo-500 border-0 outline-none transition itbms-shipping-address disabled:opacity-50 disabled:cursor-not-allowed"
                                         :class="theme === 'dark'
                                             ? 'bg-gray-700/50 placeholder-slate-400'
-                                            : 'bg-slate-100 placeholder-slate-500'" placeholder="Address, Street, City, Postal Code..."></textarea>
+                                            : 'bg-slate-100 placeholder-slate-500'"
+                                        placeholder="Address, Street, City, Postal Code..."></textarea>
                                 </div>
                                 <div>
                                     <label class="block mb-2 text-sm font-semibold">Order Note</label>
@@ -397,6 +440,17 @@ const addorder = async () => {
 </template>
 
 <style scoped>
+.slide-down-enter-active,
+.slide-down-leave-active {
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+    transform: translateY(-150%);
+    opacity: 0;
+}
+
 /* Custom styles for checkbox to match the new theme */
 .form-checkbox {
     appearance: none;
