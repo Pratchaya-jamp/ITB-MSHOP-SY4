@@ -28,6 +28,38 @@ const themeClass = computed(() => {
         : 'bg-white text-gray-950'
 })
 
+const typingTexts = [
+  "Explore our curated collection of the latest smartphones.",
+  "Trusted brands, amazing prices.",
+  "Lightning-fast delivery just for you."
+]
+
+const displayText = ref("")
+let typingIndex = 0
+let charIndex = 0
+let isDeleting = false
+
+const typeEffect = () => {
+  const currentText = typingTexts[typingIndex]
+  if (!isDeleting) {
+    displayText.value = currentText.substring(0, charIndex + 1)
+    charIndex++
+    if (charIndex === currentText.length) {
+      isDeleting = true
+      setTimeout(typeEffect, 1500) // พักก่อนลบ
+      return
+    }
+  } else {
+    displayText.value = currentText.substring(0, charIndex - 1)
+    charIndex--
+    if (charIndex === 0) {
+      isDeleting = false
+      typingIndex = (typingIndex + 1) % typingTexts.length
+    }
+  }
+  setTimeout(typeEffect, isDeleting ? 50 : 80)
+}
+
 // const applyTheme = (newTheme) => {
 //   document.body.className = newTheme === 'dark' ? 'dark-theme' : ''
 //   localStorage.setItem('theme', newTheme)
@@ -75,6 +107,7 @@ const startSliding = () => {
 
 onMounted(() => {
     fetchRandomSaleItems();
+    typeEffect()
 });
 
 onUnmounted(() => {
@@ -132,8 +165,11 @@ const goToSignUp = () => {
             Discover Your Next
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Smartphone</span>
           </h1>
-          <p class="max-w-2xl mx-auto mt-6 text-lg md:text-xl" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">
-            Explore our curated collection of the latest smartphones. Trusted brands, amazing prices, and lightning-fast delivery.
+          <p
+            class="max-w-2xl mx-auto mt-6 text-lg md:text-xl h-[2.5rem] typing-text"
+            :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'"
+          >
+            {{ displayText }}<span class="cursor">|</span>
           </p>
           <div class="flex flex-col sm:flex-row items-center justify-center mt-10 space-y-4 sm:space-y-0 sm:space-x-6">
             <button @click="navigateToSaleItems" class="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
@@ -146,7 +182,7 @@ const goToSignUp = () => {
         </div>
         <div class="relative z-10 mt-20 animate-fade-in-down">
           <div class="relative" :class="theme === 'dark' ? 'shadow-[0px_0px_80px_rgba(173,216,230,0.1)]' : 'shadow-[0px_0px_80px_rgba(0,0,0,0.1)]' " style="border-radius: 30px;">
-            <img src="/phone/Thumbnail.png" alt="Smartphone Showcase" class="w-80 md:w-[450px] rounded-[30px] transition-transform duration-500">
+            <img src="/phone/Thumbnail.png" alt="Smartphone Showcase" class="w-80 md:w-[450px] rounded-[30px] transition-transform duration-500 animate-float-slow">
           </div>
         </div>
       </section>
@@ -222,6 +258,40 @@ const goToSignUp = () => {
 </template>
 
 <style scoped>
+/* === Typing Text Animation === */
+.cursor {
+  display: inline-block;
+  width: 1ch;
+  animation: blink 0.8s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* === Floating Image Animation === */
+@keyframes float-slow {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 4s ease-in-out infinite;
+}
+
+/* Optional – smooth typing text fade-in */
+.typing-text {
+  transition: all 0.3s ease;
+}
 /* @keyframes และอื่นๆ เหมือนเดิม */
 @keyframes fade-in-up {
   from {
