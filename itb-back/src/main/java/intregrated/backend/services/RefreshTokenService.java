@@ -26,19 +26,11 @@ public class RefreshTokenService {
         return refreshTokenRepo.save(refreshToken);
     }
 
-    public Optional<RefreshToken> findByToken(String token) {
-        return refreshTokenRepo.findByToken(token);
-    }
-
     public void revokeToken(String token) {
         refreshTokenRepo.findByToken(token).ifPresent(rt -> {
             rt.setRevoked(true);
             rt.setUpdatedOn(Instant.now());
             refreshTokenRepo.save(rt);
         });
-    }
-
-    public boolean isValid(RefreshToken token) {
-        return !token.getRevoked() && token.getExpiryDate().isAfter(Instant.now());
     }
 }

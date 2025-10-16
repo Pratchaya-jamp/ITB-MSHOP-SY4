@@ -8,6 +8,7 @@ import intregrated.backend.entities.orders.OrderItem;
 import intregrated.backend.entities.orders.OrderStatus;
 import intregrated.backend.entities.saleitems.SaleItemBase;
 import intregrated.backend.repositories.*;
+import intregrated.backend.utils.UserTypeResolver;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,8 +33,6 @@ public class OrderService {
     private SaleItemBaseRepo saleItemRepo;
     @Autowired
     private OrderRepo orderRepo;
-    @Autowired
-    private OrderItemRepo orderItemRepo;
 
     @Transactional
     public List<OrderBuyerResponseDto> placeOrder(List<OrderRequestDto> requests, Integer userId) {
@@ -128,7 +127,7 @@ public class OrderService {
                             .id(order.getSeller().getId())
                             .email(sellerUser.getEmail())
                             .fullName(order.getSeller().getFullname())
-                            .userType(resolveUserType(sellerUser))
+                            .userType(UserTypeResolver.resolveUserType(sellerUser))
                             .nickname(order.getSeller().getNickname())
                             .build())
                     .orderDate(order.getOrderDate())
@@ -177,7 +176,7 @@ public class OrderService {
                         .id(order.getSeller().getId())
                         .email(sellerUser.getEmail())
                         .fullName(order.getSeller().getFullname())
-                        .userType(resolveUserType(sellerUser))
+                        .userType(UserTypeResolver.resolveUserType(sellerUser))
                         .nickname(order.getSeller().getNickname())
                         .build())
                 .orderDate(order.getOrderDate())
@@ -218,7 +217,7 @@ public class OrderService {
                             .id(order.getSeller().getId())
                             .email(sellerUser.getEmail())
                             .fullName(order.getSeller().getFullname())
-                            .userType(resolveUserType(sellerUser))
+                            .userType(UserTypeResolver.resolveUserType(sellerUser))
                             .nickname(order.getSeller().getNickname())
                             .build())
                     .orderDate(order.getOrderDate())
@@ -272,20 +271,5 @@ public class OrderService {
                         .orderStatus(order.getOrderStatus())
                         .build()
         );
-    }
-
-    public String resolveUserType(UsersAccount user) {
-        boolean isBuyer = user.getBuyer() != null;
-        boolean isSeller = user.getSeller() != null;
-
-        if (isBuyer && isSeller) {
-            return "USER, SELLER";
-        } else if (isSeller) {
-            return "SELLER";
-        } else if (isBuyer) {
-            return "BUYER";
-        } else {
-            return "USER";
-        }
     }
 }

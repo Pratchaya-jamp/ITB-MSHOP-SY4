@@ -55,16 +55,6 @@ public class SaleItemBaseService {
     @Qualifier("productFileService")
     private FileService productFileService;
 
-    @Autowired
-    private ModelMapper modelMapper;
-
-    @Autowired
-    private ListMapper listMapper;
-
-
-
-//    @Value("${file.upload-dir}")
-//    private String uploadDir;
 
     public List<SaleItemBaseDto> getAllSaleItemBase() {
         List<SaleItemBase> saleItemsBases = saleItemBaseRepo.findAll();
@@ -511,15 +501,6 @@ public class SaleItemBaseService {
     // --- inner plan records ---
     private record MovePlan(String src, String dest) {}
     private record CreatePlan(MultipartFile file, String finalName, String oldNameToReplace) {}
-
-//    public void deleteSaleItem(Integer id) {
-//        if (!saleItemBaseRepo.existsById(id)) {
-//            throw new ResponseStatusException(
-//                    HttpStatus.NOT_FOUND,
-//                    "SaleItem with id " + id + " not found");
-//        }
-//        saleItemBaseRepo.deleteById(id);
-//    }
 
     @Transactional
     public void deleteSaleItem(Integer id) {

@@ -13,6 +13,7 @@ import intregrated.backend.repositories.SellerAccountRepo;
 import intregrated.backend.repositories.SellerPictureRepo;
 import intregrated.backend.repositories.UsersAccountRepo;
 import intregrated.backend.utils.JwtTokenUtil;
+import intregrated.backend.utils.UserTypeResolver;
 import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import org.apache.commons.io.FilenameUtils;
@@ -86,24 +87,10 @@ public class EmailRegisterService {
 
             user = userRepo.saveAndFlush(user);
 
-            // Debug: ตรวจสอบ user ที่สร้างขึ้น
-            System.out.println("Created user with ID: " + user.getId() + ", Email: " + user.getEmail());
-
             try {
                 String token = jwtTokenUtil.generateVerificationToken(user);
-                System.out.println("Generated token: " + token);
-
-                // Debug token
-                jwtTokenUtil.debugToken(token);
-
-                // ทดสอบ validate ทันที
-                boolean isValid = jwtTokenUtil.validateToken(token);
-                System.out.println("Token validation result: " + isValid);
-
                 sendVerificationEmail(user, token);
             } catch (Exception e) {
-                System.err.println("Error generating token: " + e.getMessage());
-                e.printStackTrace();
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate verification token");
             }
 
@@ -140,9 +127,6 @@ public class EmailRegisterService {
     public UserRegisterResponseDto verifyEmailToken(String jwtToken) {
         System.out.println("Verifying token: " + jwtToken);
 
-        // Debug token ก่อนการ validate
-        jwtTokenUtil.debugToken(jwtToken);
-
         if (!jwtTokenUtil.validateToken(jwtToken)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired verification token");
         }
@@ -150,16 +134,12 @@ public class EmailRegisterService {
         Claims claims;
         try {
             claims = jwtTokenUtil.getClaims(jwtToken);
-            System.out.println("Successfully extracted claims from token");
         } catch (Exception e) {
-            System.err.println("Failed to extract claims: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token");
         }
 
         Integer userId = claims.get("id", Integer.class);
         String email = claims.get("email", String.class);
-
-        System.out.println("Token claims - User ID: " + userId + ", Email: " + email);
 
         if (userId == null || email == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token payload");
@@ -180,8 +160,6 @@ public class EmailRegisterService {
         user.setUpdatedOn(Instant.now());
         userRepo.saveAndFlush(user);
 
-        System.out.println("User verified successfully: " + user.getEmail());
-
         String mobile = null;
         if (user.getSeller() != null) {
             mobile = user.getSeller().getMobile();
@@ -194,7 +172,7 @@ public class EmailRegisterService {
                 .fullname(user.getFullname())
                 .mobile(mobile)
                 .isActive(user.getIsActive())
-                .userType(resolveUserType(user))
+                .userType(UserTypeResolver.resolveUserType(user))
                 .build();
     }
 
@@ -295,20 +273,5 @@ public class EmailRegisterService {
                 .build();
 
         return resp;
-    }
-
-    public String resolveUserType(UsersAccount user) {
-        boolean isBuyer = user.getBuyer() != null;
-        boolean isSeller = user.getSeller() != null;
-
-        if (isBuyer && isSeller) {
-            return "USER, SELLER";
-        } else if (isSeller) {
-            return "SELLER";
-        } else if (isBuyer) {
-            return "BUYER";
-        } else {
-            return "USER";
-        }
     }
 }
