@@ -42,12 +42,8 @@ public class OrderController {
 
         token = token.substring(7); // ตัด "Bearer "
 
-        if (!jwtTokenUtil.validateToken(token)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
-        }
-
         Page<OrderBuyerResponseDto> orderPage =
-                orderService.getAllBuyerOrders(id, page, size, sortField, sortDirection);
+                orderService.getAllBuyerOrders(token, id, page, size, sortField, sortDirection);
 
         PageResponseDto<OrderBuyerResponseDto> response = PageResponseDto.<OrderBuyerResponseDto>builder()
                 .content(orderPage.getContent())
@@ -83,20 +79,8 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
         }
 
-        // ดึง claims
-        Claims claims = jwtTokenUtil.getClaims(token);
-        Integer sellerId = claims.get("seller_id", Integer.class);
-
-        if (sellerId == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a Seller");
-        }
-
-        if (!sellerId.equals(sid)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User id in access token not matched with resource id");
-        }
-
         Page<OrderSellerResponseDto> orderPage =
-                orderService.getAllSellerOrders(sid, page, size, sortField, sortDirection);
+                orderService.getAllSellerOrders(token, sid, page, size, sortField, sortDirection);
 
         PageResponseDto<OrderSellerResponseDto> response = PageResponseDto.<OrderSellerResponseDto>builder()
                 .content(orderPage.getContent())
@@ -128,13 +112,7 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
         }
 
-        // ดึง claims
-        Claims claims = jwtTokenUtil.getClaims(token);
-        String role = claims.get("role", String.class);
-        Integer buyerId = claims.get("buyer_id", Integer.class);
-        Integer sellerId = claims.get("seller_id", Integer.class);
-
-        OrderBuyerResponseDto orderResponseDto = orderService.getOrderById(role, buyerId, sellerId, orderId);
+        OrderBuyerResponseDto orderResponseDto = orderService.getOrderById(token, orderId);
         return ResponseEntity.ok(orderResponseDto);
     }
 
@@ -154,9 +132,7 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
         }
 
-        Integer userId = jwtTokenUtil.getClaims(token).get("id", Integer.class);
-
-        List<OrderBuyerResponseDto> orderResponseDto = orderService.placeOrder(orderRequestDto, userId);
+        List<OrderBuyerResponseDto> orderResponseDto = orderService.placeOrder(orderRequestDto, token);
         return ResponseEntity.ok(orderResponseDto);
     }
 }

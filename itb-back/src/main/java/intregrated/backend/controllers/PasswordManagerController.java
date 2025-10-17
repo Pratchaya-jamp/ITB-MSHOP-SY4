@@ -1,6 +1,7 @@
 package intregrated.backend.controllers;
 
-import intregrated.backend.dtos.password.NewPasswordRequest;
+import intregrated.backend.dtos.password.NewChangePasswordRequest;
+import intregrated.backend.dtos.password.NewForgotPasswordRequest;
 import intregrated.backend.dtos.registers.UserRegisterResponseDto;
 import intregrated.backend.services.PasswordManageService;
 import intregrated.backend.utils.JwtTokenUtil;
@@ -22,22 +23,22 @@ public class PasswordManagerController {
     @Autowired
     private PasswordManageService  passwordManageService;
 
-    @PostMapping("/change-password")
-    public ResponseEntity<String> requestChangePassword(@RequestParam("email") String email) {
+    @PostMapping("/send-email")
+    public ResponseEntity<Void> requestChangePassword(@RequestParam("email") String email) {
         passwordManageService.handleChangePasswordRequest(email);
-        return ResponseEntity.ok("Password reset email sent successfully to " + email);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/verify-password")
     public ResponseEntity<UserRegisterResponseDto> verifyChangePasswordToken(@RequestParam("token") String jwtToken) {
         UserRegisterResponseDto response = passwordManageService.verifyEmailToken(jwtToken);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(
+    @PutMapping("/reset-password-forgot")
+    public ResponseEntity<Void> resetForgotPassword(
             @RequestHeader("Authorization") String token,
-            @Valid @RequestBody NewPasswordRequest req
+            @Valid @RequestBody NewForgotPasswordRequest req
     ) {
         // ตรวจสอบสิทธิ์
         if (token == null || !token.startsWith("Bearer ")) {
@@ -50,8 +51,36 @@ public class PasswordManagerController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
         }
 
-        passwordManageService.resetPassword(
+        passwordManageService.resetForgotPassword(
                 token,
+                req.getNewPassword(),
+                req.getConfirmPassword()
+        );
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PutMapping("user/{uid}/reset-password-change")
+    public ResponseEntity<Void> resetChangePassword(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Integer uid,
+            @Valid @RequestBody NewChangePasswordRequest req
+    ) {
+        // ตรวจสอบสิทธิ์
+        if (token == null || !token.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
+        }
+
+        token = token.substring(7); // ตัด "Bearer "
+
+        if (!jwtTokenUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
+        }
+
+        passwordManageService.resetChangePassword(
+                token,
+                uid,
+                req.getOldPassword(),
                 req.getNewPassword(),
                 req.getConfirmPassword()
         );

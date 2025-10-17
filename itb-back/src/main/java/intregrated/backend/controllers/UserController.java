@@ -33,44 +33,20 @@ public class UserController {
     }
 
     @GetMapping("/users/{id}")
-    private ResponseEntity<UserResponseDto> getUserById(
+    public ResponseEntity<UserResponseDto> getUserById(
             @PathVariable Integer id,
             @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
-        // ไม่มี token → 401 Unauthorized
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header");
         }
 
-        String token = authHeader.substring(7); // ตัด "Bearer " ออก
+        String token = authHeader.substring(7);
 
-        // ตรวจสอบ token
-        if (!jwtTokenUtil.validateToken(token)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
-        }
-
-        // ดึง claims จาก token
-        Claims claims = jwtTokenUtil.getClaims(token);
-        Integer tokenUserId = claims.get("id", Integer.class);
-
-        // ถ้า id ใน path ไม่ตรงกับ id ใน token → 403 Forbidden
-        if (!id.equals(tokenUserId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Request userId not matched with token userId");
-        }
-
-        // ดึง user จาก database
-        UserResponseDto user = userBaseService.getUserById(id);
-
-        if (user == null) {
-            throw new  ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found");
-        }
-
-        if (!Boolean.TRUE.equals(user.getIsActive())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not active");
-        }
-
+        UserResponseDto user = userBaseService.getUserById(id, token);
         return ResponseEntity.ok(user);
     }
+
 
     @PutMapping("/users/{id}")
     private ResponseEntity<UserResponseDto> updateUser(
@@ -86,32 +62,7 @@ public class UserController {
 
         String token = authHeader.substring(7); // ตัด "Bearer " ออก
 
-        // ตรวจสอบ token
-        if (!jwtTokenUtil.validateToken(token)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
-        }
-
-        // ดึง claims จาก token
-        Claims claims = jwtTokenUtil.getClaims(token);
-        Integer tokenUserId = claims.get("id", Integer.class);
-
-        // ถ้า id ใน path ไม่ตรงกับ id ใน token → 403 Forbidden
-        if (!id.equals(tokenUserId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Request userId not matched with token userId");
-        }
-
-        // ดึง user จาก database
-        UserResponseDto user = userBaseService.getUserById(id);
-
-        if (user == null) {
-            throw new  ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found");
-        }
-
-        if (!Boolean.TRUE.equals(user.getIsActive())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not active");
-        }
-
-        UserResponseDto userUpdated = userBaseService.editUser(id, userUpdateRequest);
+        UserResponseDto userUpdated = userBaseService.editUser(id, userUpdateRequest, token);
 
         return ResponseEntity.ok(userUpdated);
     }

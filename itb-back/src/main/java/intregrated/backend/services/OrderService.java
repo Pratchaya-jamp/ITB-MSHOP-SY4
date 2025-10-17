@@ -8,7 +8,9 @@ import intregrated.backend.entities.orders.OrderItem;
 import intregrated.backend.entities.orders.OrderStatus;
 import intregrated.backend.entities.saleitems.SaleItemBase;
 import intregrated.backend.repositories.*;
+import intregrated.backend.utils.JwtTokenUtil;
 import intregrated.backend.utils.UserTypeResolver;
+import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -33,9 +35,17 @@ public class OrderService {
     private SaleItemBaseRepo saleItemRepo;
     @Autowired
     private OrderRepo orderRepo;
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
 
     @Transactional
-    public List<OrderBuyerResponseDto> placeOrder(List<OrderRequestDto> requests, Integer userId) {
+    public List<OrderBuyerResponseDto> placeOrder(List<OrderRequestDto> requests, String token) {
+
+        if (!jwtTokenUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired verification token");
+        }
+
+        Integer userId = jwtTokenUtil.getClaims(token).get("id", Integer.class);
 
         if (userId == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token does not contain userId");
@@ -149,7 +159,17 @@ public class OrderService {
         return orderResponseDtos;
     }
 
-    public OrderBuyerResponseDto getOrderById(String role, Integer buyerId, Integer sellerId, Long orderId) {
+    public OrderBuyerResponseDto getOrderById(String token, Long orderId) {
+
+        if (!jwtTokenUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired verification token");
+        }
+
+        Claims claims = jwtTokenUtil.getClaims(token);
+        String role = claims.get("role", String.class);
+        Integer buyerId = claims.get("buyer_id", Integer.class);
+        Integer sellerId = claims.get("seller_id", Integer.class);
+
         Order order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order id with " + orderId + " does not exist"));
 
@@ -196,7 +216,11 @@ public class OrderService {
                 .build();
     }
 
-    public Page<OrderBuyerResponseDto> getAllBuyerOrders(Integer id, Integer page, Integer size, String sortField, String sortDirection) {
+    public Page<OrderBuyerResponseDto> getAllBuyerOrders(String token, Integer id, Integer page, Integer size, String sortField, String sortDirection) {
+        if (!jwtTokenUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
+        }
+
         UsersAccount usersAccount = usersRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with " + id + " not found"));
 
@@ -238,7 +262,22 @@ public class OrderService {
         });
     }
 
-    public Page<OrderSellerResponseDto> getAllSellerOrders(Integer sid, Integer page, Integer size, String sortField, String sortDirection) {
+    public Page<OrderSellerResponseDto> getAllSellerOrders(String token, Integer sid, Integer page, Integer size, String sortField, String sortDirection) {
+        if (!jwtTokenUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired verification token");
+        }
+
+        Claims claims = jwtTokenUtil.getClaims(token);
+        Integer sidFromToken = claims.get("seller_id", Integer.class);
+
+        if (sidFromToken == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a Seller");
+        }
+
+        if (!sidFromToken.equals(sid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User id in access token not matched with resource id");
+        }
+
         SellerAccount sellerAccount = sellerRepo.findById(sid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with " + sid + " not found"));
 

@@ -36,24 +36,9 @@ public class SellerSaleItemController {
 
         token = token.substring(7); // ตัด "Bearer "
 
-        if (!jwtTokenUtil.validateToken(token)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
-        }
-
-        Integer sellerIdFromToken = jwtTokenUtil.getClaims(token).get("seller_id", Integer.class);
-        String role = jwtTokenUtil.getClaims(token).get("role", String.class);
-
-        if (!"SELLER".equals(role)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only seller can access this resource");
-        }
-
-        if (!sellerIdFromToken.equals(sellerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Request seller id not matched with id in access token");
-        }
-
         // ดึงข้อมูล saleItems ของ seller
         Page<SellerWithSaleItemsDto> pagedResult =
-                saleItemBaseService.getPagedSaleItemsBySeller(sellerId, page, size, sortField, sortDirection);
+                saleItemBaseService.getPagedSaleItemsBySeller(token, sellerId, page, size, sortField, sortDirection);
 
         return PageResponseDto.<SellerWithSaleItemsDto>builder()
                 .content(pagedResult.getContent())
