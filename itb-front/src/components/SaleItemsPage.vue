@@ -324,7 +324,6 @@ watch(selectedBrands, (newVal) => {
 });
 watch(currentSortOrder, (val) => {
   sessionStorage.setItem("sortOrder", val);
-  currentPage.value = 0;
   fetchItems();
 });
 watch(priceLower, (val) =>
@@ -876,18 +875,58 @@ const removeActiveFilter = (filter) => {
             <p>Click "+ Add Item" to start selling.</p>
           </div>
         </div>
-        <div v-if="totalPages > 1" class="flex justify-center mt-10">
+        <div v-if="totalPages > 1" class="flex justify-center mt-10"> 
           <div class="flex items-center gap-2 rounded-full p-1 text-sm font-semibold"
             :class="theme === 'dark' ? 'bg-gray-800' : 'bg-slate-200'">
-            <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 0"
+
+            <!-- ปุ่มไปหน้าแรก -->
+            <button 
+              @click="goToPage(0)" 
+              :disabled="currentPage === 0"
               class="px-3 py-1 rounded-full disabled:opacity-50"
-              :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/10'">&lt; Prev</button>
-            <button v-for="page in visiblePages" :key="page" @click="goToPage(page - 1)" class="px-3 py-1 rounded-full"
-              :class="currentPage === page - 1 ? 'bg-indigo-600 text-white' : (theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/10')">{{
-              page }}</button>
-            <button @click="goToPage(currentPage + 1)" :disabled="currentPage >= totalPages - 1"
+              :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/10'">
+              &lt;&lt; First
+            </button>
+          
+            <!-- ปุ่มก่อนหน้า -->
+            <button 
+              @click="goToPage(currentPage - 1)" 
+              :disabled="currentPage === 0"
               class="px-3 py-1 rounded-full disabled:opacity-50"
-              :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/10'">Next &gt;</button>
+              :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/10'">
+              &lt; Prev
+            </button>
+          
+            <!-- ตัวเลขหน้า -->
+            <button 
+              v-for="page in visiblePages" 
+              :key="page" 
+              @click="goToPage(page - 1)" 
+              class="px-3 py-1 rounded-full"
+              :class="currentPage === page - 1 
+                ? 'bg-indigo-600 text-white' 
+                : (theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/10')">
+              {{ page }}
+            </button>
+          
+            <!-- ปุ่มถัดไป -->
+            <button 
+              @click="goToPage(currentPage + 1)" 
+              :disabled="currentPage >= totalPages - 1"
+              class="px-3 py-1 rounded-full disabled:opacity-50"
+              :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/10'">
+              Next &gt;
+            </button>
+          
+            <!-- ปุ่มไปหน้าสุดท้าย -->
+            <button 
+              @click="goToPage(totalPages - 1)" 
+              :disabled="currentPage >= totalPages - 1"
+              class="px-3 py-1 rounded-full disabled:opacity-50"
+              :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/10'">
+              Last &gt;&gt;
+            </button>
+          
           </div>
         </div>
       </div>
