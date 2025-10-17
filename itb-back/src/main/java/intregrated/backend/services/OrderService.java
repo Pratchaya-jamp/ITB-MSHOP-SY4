@@ -8,6 +8,7 @@ import intregrated.backend.entities.orders.OrderItem;
 import intregrated.backend.entities.orders.OrderStatus;
 import intregrated.backend.entities.saleitems.SaleItemBase;
 import intregrated.backend.repositories.*;
+import intregrated.backend.utils.UserTypeResolver;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,8 +33,6 @@ public class OrderService {
     private SaleItemBaseRepo saleItemRepo;
     @Autowired
     private OrderRepo orderRepo;
-    @Autowired
-    private OrderItemRepo orderItemRepo;
 
     @Transactional
     public List<OrderBuyerResponseDto> placeOrder(List<OrderRequestDto> requests, Integer userId) {
@@ -61,20 +60,19 @@ public class OrderService {
             order.setOrderDate(Instant.now());
             order.setPaymentDate(Instant.now());
             order.setShippingAddress(request.getShippingAddress());
-            order.setOrderNote(request.getOrderNote());
+            order.setOrderNote(request.getOrderNote() != null ? request.getOrderNote() : null);
             order.setCreatedOn(Instant.now());
             order.setUpdatedOn(Instant.now());
             order.setOrderStatus(OrderStatus.COMPLETED);
 
             orderRepo.save(order);
 
+            boolean hasInsufficientStock = false;
+            List<SaleItemBase> saleItemsToUpdated = new ArrayList<>();
+
             for (OrderItemDto dto : request.getOrderItems()) {
                 SaleItemBase saleItem = saleItemRepo.findById(dto.getSaleItemId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sale item not found"));
-
-                if (saleItem.getQuantity() < dto.getQuantity()) {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Quantity Not Enough");
-                }
 
                 // ห้ามซื้อสินค้าของตัวเอง
                 if (saleItem.getSeller() != null && user.getSeller() != null &&
@@ -82,8 +80,30 @@ public class OrderService {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot buy your own product");
                 }
 
-                saleItem.setQuantity(saleItem.getQuantity() - dto.getQuantity());
-                saleItemRepo.save(saleItem);
+                if (saleItem.getQuantity() < dto.getQuantity()) {
+                    hasInsufficientStock = true;
+                }
+
+                saleItemsToUpdated.add(saleItem);
+            }
+
+            // If insufficient stock, cancel the whole order for this seller
+            if (hasInsufficientStock) {
+                order.setOrderStatus(OrderStatus.CANCELED);
+            } else {
+                // Deduct stock only if order is valid
+                for (int i = 0; i < request.getOrderItems().size(); i++) {
+                    OrderItemDto dto = request.getOrderItems().get(i);
+                    SaleItemBase saleItem = saleItemsToUpdated.get(i);
+
+                    saleItem.setQuantity(saleItem.getQuantity() - dto.getQuantity());
+                    saleItemRepo.save(saleItem);
+                }
+            }
+
+            for (int i = 0; i < request.getOrderItems().size(); i++) {
+                OrderItemDto dto = request.getOrderItems().get(i);
+                SaleItemBase saleItem = saleItemsToUpdated.get(i);
 
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(order);
@@ -95,9 +115,10 @@ public class OrderService {
                 orderItem.setCreatedOn(Instant.now());
                 orderItem.setUpdatedOn(Instant.now());
 
-                orderItemRepo.save(orderItem);
                 order.getOrderItems().add(orderItem);
             }
+
+            orderRepo.save(order);
 
             orderResponseDtos.add(OrderBuyerResponseDto.builder()
                     .id(order.getId())
@@ -106,13 +127,13 @@ public class OrderService {
                             .id(order.getSeller().getId())
                             .email(sellerUser.getEmail())
                             .fullName(order.getSeller().getFullname())
-                            .userType(resolveUserType(sellerUser))
+                            .userType(UserTypeResolver.resolveUserType(sellerUser))
                             .nickname(order.getSeller().getNickname())
                             .build())
                     .orderDate(order.getOrderDate())
                     .paymentDate(order.getPaymentDate())
                     .shippingAddress(order.getShippingAddress())
-                    .orderNote(order.getOrderNote())
+                    .orderNote(order.getOrderNote() != null ? order.getOrderNote() : null)
                     .orderItems(order.getOrderItems().stream()
                             .map(oi -> OrderItemDto.builder()
                                     .no(oi.getId())
@@ -155,12 +176,13 @@ public class OrderService {
                         .id(order.getSeller().getId())
                         .email(sellerUser.getEmail())
                         .fullName(order.getSeller().getFullname())
-                        .userType(resolveUserType(sellerUser))
+                        .userType(UserTypeResolver.resolveUserType(sellerUser))
                         .nickname(order.getSeller().getNickname())
                         .build())
                 .orderDate(order.getOrderDate())
+                .paymentDate(order.getPaymentDate())
                 .shippingAddress(order.getShippingAddress())
-                .orderNote(order.getOrderNote())
+                .orderNote(order.getOrderNote() !=  null ? order.getOrderNote() : null)
                 .orderItems(order.getOrderItems().stream()
                         .map(oi -> OrderItemDto.builder()
                                 .no(oi.getId())
@@ -195,13 +217,13 @@ public class OrderService {
                             .id(order.getSeller().getId())
                             .email(sellerUser.getEmail())
                             .fullName(order.getSeller().getFullname())
-                            .userType(resolveUserType(sellerUser))
+                            .userType(UserTypeResolver.resolveUserType(sellerUser))
                             .nickname(order.getSeller().getNickname())
                             .build())
                     .orderDate(order.getOrderDate())
                     .paymentDate(order.getPaymentDate())
                     .shippingAddress(order.getShippingAddress())
-                    .orderNote(order.getOrderNote())
+                    .orderNote(order.getOrderNote() != null ? order.getOrderNote() : null)
                     .orderItems(order.getOrderItems().stream()
                             .map(oi -> OrderItemDto.builder()
                                     .no(oi.getId())
@@ -233,7 +255,7 @@ public class OrderService {
                                 .id(order.getUser().getId())
                                 .username(order.getUser().getFullname())
                                 .build())
-                        .orderDate(order.getOrderDate())
+                        .orderDate(order.getOrderDate() != null ? order.getOrderDate() : null)
                         .paymentDate(order.getPaymentDate())
                         .shippingAddress(order.getShippingAddress())
                         .orderNote(order.getOrderNote())
@@ -249,20 +271,5 @@ public class OrderService {
                         .orderStatus(order.getOrderStatus())
                         .build()
         );
-    }
-
-    public String resolveUserType(UsersAccount user) {
-        boolean isBuyer = user.getBuyer() != null;
-        boolean isSeller = user.getSeller() != null;
-
-        if (isBuyer && isSeller) {
-            return "USER, SELLER";
-        } else if (isSeller) {
-            return "SELLER";
-        } else if (isBuyer) {
-            return "BUYER";
-        } else {
-            return "USER";
-        }
     }
 }

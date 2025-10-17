@@ -29,15 +29,6 @@ public class FileService {
         }
     }
 
-    public boolean isFileTypeAllowed(String ext) {
-        for (String type : allowFileTypes) {
-            if (type.equalsIgnoreCase(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public Resource loadFileAsResource(String fileName) throws IOException {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
