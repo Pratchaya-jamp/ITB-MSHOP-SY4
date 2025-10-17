@@ -49,7 +49,8 @@ const routes = [
   {
     path: '/brands',
     name: 'ListingPage',
-    component: ListingPage
+    component: ListingPage,
+    meta: { requiresSeller: true }
   },
   {
     path: '/sale-items/add',
@@ -67,11 +68,13 @@ const routes = [
   path: '/brands/add',
   name: 'BrandAdd',
   component: BrandAdd,
+  meta: { requiresSeller: true }
 },
 {
   path: '/brands/:id/edit',
   name: 'BrandEdit',
   component: BrandAdd,
+  meta: { requiresSeller: true }
 },
 {
   path: '/signin',
@@ -102,16 +105,19 @@ const routes = [
   path: '/cart',
   name: 'cart',
   component: Cart,
+  meta: { requiresAuth: true }
 },
 {
   path: '/order',
   name: 'placeOrder',
   component: PlaceOrder,
+  meta: { requiresAuth: true }
 },
 {
   path: '/order/:orderid',
   name: 'orderDetail',
   component: OrderDetail,
+  meta: { requiresAuth: true }
 },
 ]
 
@@ -122,6 +128,18 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = Cookies.get('access_token');
+
+  if ((to.name === 'signin' || to.name === 'register') && token) {
+    console.log('User is already logged in. Redirecting to Home...');
+    next({ name: 'Home' });
+    return;
+  }
+
+  if (to.meta.requiresAuth && !token) {
+    console.log('Access to ' + to.path + ' requires login. Redirecting...');
+    next('/signin')
+    return
+  }
 
   if (to.meta.requiresSeller) {
     if (token) {

@@ -1,320 +1,276 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import {getItemsWithAuth,} from '@/libs/fetchUtilsOur';
-import Cookies from 'js-cookie' 
-import { jwtDecode } from 'jwt-decode' 
-// --- Mock Data: จำลองข้อมูลประวัติการสั่งซื้อ (อ้างอิงจากภาพตัวอย่าง) ---
-const orders = ref([])
+import { ref, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
+import { getItemsWithAuth } from "@/libs/fetchUtilsOur";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { theme } from "@/stores/themeStore.js";
 
-// สถานะที่เลือกในหน้า (Completed/Cancelled)
-const selectedTab = ref('Completed')
+const router = useRouter();
+const orders = ref([]);
+const selectedTab = ref("Completed");
 
-const theme = ref(localStorage.getItem('theme') || 'dark')
-
-const applyTheme = (newTheme) => {
-    document.body.className = newTheme === 'dark' ? 'dark-theme' : ''
-    localStorage.setItem('theme', newTheme)
-    theme.value = newTheme
-}
-
-const toggleTheme = () => {
-    const newTheme = theme.value === 'dark' ? 'light' : 'dark'
-    applyTheme(newTheme)
-}
-
-// --- Computed Properties (ใช้ร่วมกับ Theme) ---
-
-// คลาสสำหรับ Theme หลัก
 const themeClass = computed(() => {
     return theme.value === 'dark'
         ? 'bg-gray-950 text-white'
         : 'bg-white text-gray-950'
 })
 
-const iconComponent = computed(() => {
-    return theme.value === 'dark'
-        ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>`
-        : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>`
-})
+// --- ✨ FIX: รวม Filter และ Sort เข้าไว้ด้วยกันใน Computed เดียว ---
+const sortedFilteredOrders = computed(() => {
+    // 0. ตรวจสอบก่อนว่า orders.value เป็น Array จริงๆ เพื่อป้องกัน Error
+    if (!Array.isArray(orders.value)) {
+        return [];
+    }
 
-// คลาสสำหรับพื้นหลังส่วนเนื้อหาหลัก
-const contentBgClass = computed(() => {
-    return theme.value === 'dark'
-        ? 'bg-gray-900' // มืดกว่านิดหน่อย
-        : 'bg-gray-100' // สว่างกว่านิดหน่อย
-})
+    const upperSelectedTab = selectedTab.value.toUpperCase();
 
-// คลาสสำหรับ Card/Box ต่างๆ
-const cardClass = computed(() => {
-    return theme.value === 'dark'
-        ? 'bg-gray-800 shadow-xl border border-gray-700'
-        : 'bg-white shadow-xl border border-gray-300'
-})
+    return orders.value
+        .filter((order) => order.orderStatus.toUpperCase() === upperSelectedTab) // 1. กรองตาม Tab ที่เลือกก่อน
+        .sort((a, b) => { // 2. จากนั้นนำผลลัพธ์ที่กรองแล้วมาเรียงลำดับ
+            // Level 1: เปรียบเทียบ orderDate ก่อน (ใหม่ไปเก่า)
+            const dateDifference = new Date(b.orderDate) - new Date(a.orderDate);
 
-// คลาสสำหรับ Tab Active
-const tabActiveClass = computed(() => {
-    return theme.value === 'dark'
-        ? 'border-orange-500 text-orange-500 font-bold'
-        : 'border-orange-500 text-orange-500 font-bold'
-})
-
-// คลาสสำหรับ Tab Inactive
-const tabInactiveClass = computed(() => {
-    return theme.value === 'dark'
-        ? 'text-gray-400 border-transparent hover:text-white'
-        : 'text-gray-500 border-transparent hover:text-gray-800'
-})
-
-// Orders ที่ถูกกรองตาม Tab ที่เลือก
-const filteredOrders = computed(() => {
-    const upperSelectedTab = selectedTab.value.toUpperCase(); 
-
-    return orders.value.filter(order => order.orderStatus.toUpperCase() === upperSelectedTab);
-});
-
-const sortedOrders = computed(() => {
-    return [...filteredOrders.value].sort((a, b) => {
-        const dateA = Date.parse(a.orderDate);
-        const dateB = Date.parse(b.orderDate);
-
-        if (!isNaN(dateA) && !isNaN(dateB)) {
-            const dateDifference = dateB - dateA;
+            // ถ้าวันที่ไม่เท่ากัน ให้ใช้ผลต่างของวันที่เป็นตัวตัดสิน
             if (dateDifference !== 0) {
                 return dateDifference;
             }
-        }
 
-        return Number(b.id) - Number(a.id); 
-    });
+            // Level 2: ถ้าวันที่เท่ากัน ให้เปรียบเทียบด้วย id (ใหม่ไปเก่า)
+            return b.id - a.id;
+        });
 });
 
 
-// Function สำหรับจัดรูปแบบราคา
 const formatPrice = (price) => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-}
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
 
 const formatDate = (dateTimeString) => {
-    if (!dateTimeString) return '-'; 
-    
-    const date = new Date(dateTimeString.replace(' ', 'T')); 
-
+    if (!dateTimeString) return "-";
+    const date = new Date(dateTimeString.replace(" ", "T"));
     const options = {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Bangkok' 
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
     };
-    return new Intl.DateTimeFormat('en-GB', options).format(date);
-}
+    return new Intl.DateTimeFormat("en-GB", options).format(date);
+};
 
-// Map สถานะไปยังสี
 const getStatusClass = (status) => {
-    const upperStatus = status.toUpperCase(); 
-
-    if (upperStatus === 'COMPLETED') return 'text-green-500 bg-green-500/10'
-    if (upperStatus === 'CANCELLED') return 'text-red-500 bg-red-500/10'
-
-    return 'text-yellow-500 bg-yellow-500/10' 
-}
-// async function fetchItemOrder() {
-//   const token = Cookies.get('access_token');
-//   let decodedToken = null;
-
-
-//   if (token) {
-//     try {
-//       decodedToken = jwtDecode(token);
-//       userId = decodedToken.id;
-//     } catch (err) {
-//       console.error("Failed to decode token:", err);
-//       return;
-//     }
-//   } else {
-//     console.error("No access token found");
-//     router.push('/login');
-//     return;
-//   }
-
-//   try {
-//     const response = await getItemsWithAuth(
-//       `${import.meta.env.VITE_BACKEND}/v2/users/orders/1`,
-//       {
-//         token: token,
-//       }
-//     );
-
-//     // ตรวจสอบ response ก่อนใช้
-//     if (!response || (response.status && (response.status === 401 || response.status === 403))) {
-//       console.error('Authentication error: Unauthorized or Forbidden');
-//       router.push('/login');
-//       return;
-//     }
-//     const orders =response
-//     const data = response.data ?? response; 
-//     data.userType = decodedToken?.role === 'SELLER' ? 'Seller' : 'Buyer';
-
-//     orders.value = data.content ?? []; // แก้จาก cartItems เป็น orders
-//   } catch (error) {
-//     console.error('Error fetching user orders:', error);
-//   }
-// }
+    const upperStatus = status.toUpperCase();
+    if (upperStatus === "COMPLETED") return "text-green-500 bg-green-500/10";
+    if (upperStatus === "CANCELLED" || upperStatus === "CANCELED") return "text-red-500 bg-red-500/10";
+    return "text-yellow-500 bg-yellow-500/10";
+};
 
 async function fetchItemOrder() {
-  const token = Cookies.get('access_token');
-  let decodedToken = null;
-  let userId = null;
-    let userRole = null;
-    let sellerId =null;
-  if (token) {
-    try {
-      decodedToken = jwtDecode(token);
-      userId = decodedToken.id;
-      userRole = decodedToken.role;
-      sellerId = decodedToken.seller_id;
-    } catch (err) {
-      console.error("Failed to decode token:", err);
-      return;
+    const token = Cookies.get("access_token");
+    if (!token) {
+        router.push("/signin");
+        return;
     }
-  } else {
-    console.error("No access token found");
-    router.push('/login');
-    return;
-  }
-if(token && userRole === 'SELLER'){
- try {
-    const response = await getItemsWithAuth(
-      `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/sellers/${sellerId}/orders`,
-      { token }
-    );
 
-    // ✅ ตรวจสอบว่ามีข้อมูลใน response
-    const data = response.data ?? response;
-    orders.value = data.content ?? [];
+    let userId, userRole, sellerId;
+    try {
+        const decodedToken = jwtDecode(token);
+        userId = decodedToken.id;
+        userRole = decodedToken.role;
+        sellerId = decodedToken.seller_id;
+    } catch (err) {
+        console.error("Failed to decode token:", err);
+        router.push("/signin");
+        return;
+    }
 
-  } catch (error) {
-    console.error('Error fetching user orders:', error);
-  }
-} else{
-  try {
-    const response = await getItemsWithAuth(
-      `https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/users/${userId}/orders`,
-      { token }
-    );
+    const endpoint =
+        userRole === "SELLER"
+            ? `${import.meta.env.VITE_BACKEND}/v2/sellers/${sellerId}/orders`
+            : `${import.meta.env.VITE_BACKEND}/v2/users/${userId}/orders`;
 
-    // ✅ ตรวจสอบว่ามีข้อมูลใน response
-    const data = response.data ?? response;
-    orders.value = data.content ?? [];
-
-  } catch (error) {
-    console.error('Error fetching user orders:', error);
-  }
-}
+    try {
+        const response = await getItemsWithAuth(endpoint, { token });
+        orders.value = response?.content ?? [];
+    } catch (error) {
+        console.error("Error fetching user orders:", error);
+        orders.value = [];
+    }
 }
 
 onMounted(() => {
-    applyTheme(theme.value);
-    fetchItemOrder()
+    fetchItemOrder();
 });
 </script>
 
 <template>
-    <div :class="themeClass" class="p-4 w-full min-h-screen font-sans transition-colors duration-500">
-        
-        
-        <div :class="contentBgClass" class="px-6 md:px-20 py-12">
-            <h1 class="text-4xl font-extrabold mb-8">Your Orders</h1>
-            
-            <div class="flex border-b mb-6" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-300'">
-                <button 
-                    @click="selectedTab = 'Completed'" 
-                    class="pb-2 px-4 transition-all duration-200"
-                    :class="selectedTab === 'Completed' ? tabActiveClass : tabInactiveClass"
-                >
+    <div :class="themeClass" class="min-h-screen font-sans">
+        <div class="container mx-auto px-6 py-12">
+            <h1 class="text-4xl font-extrabold tracking-tight mb-10" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">
+                Your Orders
+            </h1>
+
+            <div class="flex border-b mb-8" :class="theme === 'dark' ? 'border-white/10' : 'border-slate-200'">
+                <button @click="selectedTab = 'Completed'"
+                    class="pb-3 px-4 font-semibold transition-all duration-200 border-b-2" :class="selectedTab === 'Completed'
+                            ? 'border-indigo-500 text-indigo-500 dark:text-indigo-400'
+                            : 'border-transparent text-slate-500 hover:border-slate-400 dark:text-slate-400 dark:hover:border-slate-500'
+                        ">
                     Completed
                 </button>
-                <button 
-                    @click="selectedTab = 'Cancelled'" 
-                    class="pb-2 px-4 transition-all duration-200"
-                    :class="selectedTab === 'Cancelled' ? tabActiveClass : tabInactiveClass"
-                >
+                <button @click="selectedTab = 'Canceled'"
+                    class="pb-3 px-4 font-semibold transition-all duration-200 border-b-2" :class="selectedTab === 'Canceled'
+                            ? 'border-indigo-500 text-indigo-500 dark:text-indigo-400'
+                            : 'border-transparent text-slate-500 hover:border-slate-400 dark:text-slate-400 dark:hover:border-slate-500'
+                        ">
                     Cancelled
                 </button>
             </div>
 
             <div class="space-y-8">
-                <div v-for="order in sortedOrders" :key="order.id" :class="cardClass" class="p-6 rounded-3xl itbms-row">
-                    <div class="flex flex-wrap items-center justify-between pb-4 border-b" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">
-                        <div class="flex items-center space-x-2 itbms-nickname mb-2 sm:mb-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
-<span v-if="order.seller" class="font-semibold">{{ order.seller.nickname }}</span>
-                            <span v-if="order.buyer" class="font-semibold">{{ order.buyer.username }}</span>
-</div>
-                        <div class="flex flex-wrap text-sm gap-x-4 gap-y-1" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-                            <span class="itbms-order-id">Order No: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ order.id }}</span></span>
-                            <span class="itbms-order-date">Order Date: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ formatDate(order.orderDate) }}</span></span>
-                            <span class="itbms-payment-date">Payment Date: <span :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">{{ formatDate(order.paymentDate) }}</span></span>
+                <div v-for="order in sortedFilteredOrders" :key="order.id" class="p-6 rounded-2xl animate-fade-in-up"
+                    :class="theme === 'dark' ? 'bg-gray-800/50' : 'bg-white shadow-sm'">
+                    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b"
+                        :class="theme === 'dark' ? 'border-white/10' : 'border-slate-200'">
+                        <div class="flex items-center font-bold text-lg itbms-select-nickname">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5 mr-2 text-indigo-500 dark:text-indigo-400" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <span v-if="order.seller" class="itbms-nickname">{{
+                                order.seller.nickname
+                                }}</span>
+                            <span v-if="order.buyer" class="itbms-nickname">{{
+                                order.buyer.nickname
+                                }}</span>
+                        </div>
+                        <div class="text-sm" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
+                            Order
+                            <span class="font-semibold"
+                                :class="theme === 'dark' ? 'text-slate-200' : 'text-slate-700'">#{{ order.id }}</span>
+                            <span class="mx-2">·</span>
+                            <span>{{ formatDate(order.orderDate) }}</span>
                         </div>
                     </div>
 
-                    <div class="mt-4 mb-4 text-sm space-y-2" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-                        <p class="itbms-shipping-address">
-                            <span class="font-semibold" :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">Shipped To:</span> {{ order.shippingAddress }}
-                        </p>
-                        <p class="itbms-order-note">
-                            <span class="font-semibold" :class="theme === 'dark' ? 'text-white' : 'text-gray-900'">Note:</span> {{ order.orderNote || 'No additional instructions.' }}
-                        </p>
-                    </div>
-
-                    <div class="flex justify-between items-center pt-4 border-t" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">
-                        <div class="font-extrabold text-xl">
-                            <span :class="theme === 'dark' ? 'text-white' : 'text-gray-950'">Total:</span> 
-                            <span class="text-orange-500 itbms-total-order-price">
-                                Baht {{ formatPrice(order.orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)) }}
-                            </span>
-                        </div>
-                        <div class="itbms-order-status text-sm font-semibold px-3 py-1 rounded-full" :class="getStatusClass(order.orderStatus)">
-                            {{ order.orderStatus }}
-                        </div>
-                    </div>
-
-                    <div class="divide-y mt-6" :class="theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
-                        <div v-for="item in order.orderItems" :key="item.saleItemId" class="flex justify-between items-center py-4 itbms-item-row">
-                            <div class="flex items-center space-x-4">
-                                <img src="/phone/iPhone.png" alt="Product Image" class="w-12 h-12 object-contain rounded-lg"/>
-                                <div class="flex-grow">
-                                    <p class="font-medium itbms-item-name">{{ item.description }}</p>
-                                    <p class="text-xs itbms-item-description" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">{{ item.description }}</p>
-                                </div>
+                    <div class="divide-y" :class="theme === 'dark' ? 'divide-white/10' : 'divide-slate-200'">
+                        <div v-for="item in order.orderItems" :key="item.id"
+                            class="flex items-center gap-4 py-4 itbms-item-row">
+                            <img src="/phone/iPhone.png" alt="Product Image"
+                                class="w-16 h-16 object-contain rounded-lg flex-shrink-0"
+                                :class="theme === 'dark' ? 'bg-gray-700/50' : 'bg-slate-100'" />
+                            <div class="flex-grow">
+                                <p class="font-bold itbms-item-name">{{ item.model }}</p>
+                                <p class="text-sm itbms-item-description"
+                                    :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
+                                    {{ item.description }}
+                                </p>
                             </div>
+                            <div class="text-right flex-shrink-0">
+                                <p
+                                    class="font-semibold text-lg text-indigo-600 dark:text-indigo-400 itbms-item-total-price">
+                                    {{ formatPrice(item.price * item.quantity) }} ฿
+                                </p>
+                                <p class="text-sm itbms-item-quantity"
+                                    :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
+                                    Qty: {{ item.quantity }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-                            <div class="flex space-x-4 text-right items-center text-sm">
-                                <span class="itbms-item-quantity" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">Qty {{ item.quantity }}</span>
-                                <span class="font-bold text-lg text-orange-500 itbms-item-total-price">
-                                    {{ formatPrice(item.price) }} ฿
+                    <div class="flex flex-wrap items-end justify-between gap-4 pt-4 border-t"
+                        :class="theme === 'dark' ? 'border-white/10' : 'border-slate-200'">
+                        <div>
+                            <p class="text-sm font-semibold"
+                                :class="theme === 'dark' ? 'text-slate-300' : 'text-slate-600'">
+                                Ship To:
+                            </p>
+                            <p class="text-sm itbms-shipping-address"
+                                :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
+                                {{ order.shippingAddress }}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <span class="font-semibold">Total:</span>
+                                <span
+                                    class="font-bold text-xl ml-2 text-indigo-600 dark:text-indigo-400 itbms-total-order-price">
+                                    {{
+                                        formatPrice(
+                                            order.orderItems.reduce(
+                                                (sum, item) => sum + item.price * item.quantity,
+                                                0
+                                    )
+                                    )
+                                    }}
+                                    ฿
                                 </span>
                             </div>
+                            <div class="itbms-order-status text-sm font-bold px-3 py-1 rounded-full"
+                                :class="getStatusClass(order.orderStatus)">
+                                {{ order.orderStatus }}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div v-if="filteredOrders.length === 0" class="text-center py-10" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-                    <p class="text-xl">No {{ selectedTab.toLowerCase() }} orders found.</p>
+                <div v-if="sortedFilteredOrders.length === 0"
+                    class="text-center py-20 text-slate-500 dark:text-slate-400">
+                    <p class="text-xl font-semibold">
+                        No {{ selectedTab.toLowerCase() }} orders found.
+                    </p>
                 </div>
             </div>
-
         </div>
-        <button @click="toggleTheme" class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-sm shadow-lg transition-all duration-300 z-50" :class="theme === 'dark' ? 'bg-gray-700/80 hover:bg-gray-600/80 text-white' : 'bg-gray-200/80 hover:bg-gray-300/80 text-black'" v-html="iconComponent">
-        </button>
-        
     </div>
 </template>
 
 <style scoped>
-/* เนื่องจากเราใช้ Utility Class จาก TailwindCSS เกือบทั้งหมด 
-   จึงมีเพียง CSS ที่จำเป็นสำหรับการแสดงผลเท่านั้น */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.itbms-row {
+    opacity: 0;
+    animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.form-checkbox {
+    appearance: none;
+    background-color: transparent;
+    border-radius: 0.375rem;
+    border-width: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.dark .form-checkbox {
+    border-color: #4b5563;
+}
+
+.light .form-checkbox {
+    border-color: #cbd5e1;
+}
+
+.form-checkbox:checked {
+    background-color: #6366f1;
+    border-color: #6366f1;
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+
+.form-checkbox:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #818cf8;
+}
 </style>
