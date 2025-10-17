@@ -1,14 +1,15 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { computed, ref, onMounted } from 'vue'
 import { getItemByIdWithAuth } from '@/libs/fetchUtilsOur';
 import Cookies from 'js-cookie'
 
 const router = useRouter()
+const route = useRoute()
 const theme = ref(localStorage.getItem('theme') || 'dark')
 const userPicture = ref({ image: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
 const userProfile = ref(null) 
-const updateSucess = ref(true)
+const showUpdateSuccess = ref(true)
 
 const themeClass = computed(() => {
     return theme.value === 'dark'
@@ -115,6 +116,26 @@ const response = await getItemByIdWithAuth(
         console.error('Error fetching user profile:', error);
     }
 };
+
+const closeSuccessPopup = async () => {
+  showUpdateSuccess.value = false
+  router.replace({ path: route.path, query: {} });
+  window.location.reload();
+  await fetchItems();
+}
+
+watch(
+  () => route.query.updateSuccess,
+  (updateSuccess) => {
+    if (updateSuccess === 'true') {
+      setTimeout(() => {
+        showUpdateSuccess.value = true
+      }, 200)
+      router.replace({ path: route.path, query: {} })
+    }
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
     fetchUserProfile();
@@ -236,18 +257,19 @@ const maskedBankNumber = computed(() => {
             </div>
         </div>
 
-        <!-- <transition name="bounce-popup">
-      <div v-if="updateSucess"
+        <transition name="bounce-popup">
+      <div v-if="showUpdateSuccess"
         class="itbms-bg fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div class="p-6 rounded-3xl shadow-lg text-center"
           :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-950'">
+          <DotLottieVue src="/sy4/animation/Success.lottie" autoplay class="w-24 h-24 mx-auto mb-4" />
           <h2 class="text-xl font-semibold mb-4">Success!</h2>
           <p class="itbms-message mb-4">Profile data is updated successfully!</p>
           <button @click="closeSuccessPopup"
             class="bg-green-500 text-white border-2 border-green-500 rounded-full px-6 py-2 transition-colors duration-300 hover:bg-transparent hover:text-green-500 font-semibold hover:cursor-pointer">Done</button>
         </div>
       </div>
-    </transition> -->
+    </transition>
         <button @click="toggleTheme" class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-sm shadow-lg transition-all duration-300 z-50" :class="theme === 'dark' ? 'bg-gray-700/80 hover:bg-gray-600/80 text-white' : 'bg-gray-200/80 hover:bg-gray-300/80 text-black'" v-html="iconComponent">
     </button>
     </div>
