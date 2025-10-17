@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 // สร้างตัวแปร theme แบบ reactive และอ่านค่าเริ่มต้นจาก localStorage
-export const theme = ref(localStorage.getItem('theme') || 'dark')
+export const theme = ref(localStorage.getItem('theme') || 'light')
 
 // สร้างฟังก์ชันสำหรับเปลี่ยน theme
 export function toggleTheme() {
