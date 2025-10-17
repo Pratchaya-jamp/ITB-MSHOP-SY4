@@ -17,6 +17,7 @@ import UserEdit from '@/components/UserEdit.vue'
 import Cart from '@/components/Cart.vue'
 import PlaceOrder from '@/components/PlaceOrder.vue'
 import OrderDetail from '@/components/OrderDetail.vue'
+import ResetPassword from '@/components/ResetPassword.vue'
 
 const routes = [
   {
@@ -118,6 +119,11 @@ const routes = [
   name: 'orderDetail',
   component: OrderDetail,
   meta: { requiresAuth: true }
+},
+{
+  path: '/reset-password',
+  name: 'resetPassword',
+  component: ResetPassword
 },
 ]
 
