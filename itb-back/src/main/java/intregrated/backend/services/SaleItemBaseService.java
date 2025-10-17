@@ -11,6 +11,7 @@ import intregrated.backend.repositories.SaleItemBaseRepo;
 import intregrated.backend.repositories.SaleItemPictureRepo;
 //import jakarta.transaction.Transactional;
 import intregrated.backend.repositories.SellerAccountRepo;
+import intregrated.backend.utils.JwtTokenUtil;
 import intregrated.backend.utils.ListMapper;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
@@ -54,6 +55,9 @@ public class SaleItemBaseService {
     @Autowired
     @Qualifier("productFileService")
     private FileService productFileService;
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
 
 
     public List<SaleItemBaseDto> getAllSaleItemBase() {
@@ -111,7 +115,15 @@ public class SaleItemBaseService {
 
 
     @Transactional
-    public SaleItemBaseByIdDto createSaleItem(NewSaleItemDto newSaleItem, MultipartFile[] pictures, Integer sellerId) {
+    public SaleItemBaseByIdDto createSaleItem(NewSaleItemDto newSaleItem, MultipartFile[] pictures, String token) {
+
+        Integer sellerId = jwtTokenUtil.getClaims(token).get("seller_id", Integer.class);
+        String role = jwtTokenUtil.getClaims(token).get("role", String.class);
+
+        if (!"SELLER".equalsIgnoreCase(role)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only sellers can create sale items");
+        }
+
         // --- ตรวจสอบ brand ---
         BrandBase brand;
         if (newSaleItem.getBrand() != null) {
@@ -597,12 +609,29 @@ public class SaleItemBaseService {
     }
 
     public Page<SellerWithSaleItemsDto> getPagedSaleItemsBySeller(
+            String token,
             Integer sellerId,
             Integer page,
             Integer size,
             String sortField,
             String sortDirection
     ) {
+
+        if (!jwtTokenUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
+        }
+
+        Integer sellerIdFromToken = jwtTokenUtil.getClaims(token).get("seller_id", Integer.class);
+        String role = jwtTokenUtil.getClaims(token).get("role", String.class);
+
+        if (!"SELLER".equals(role)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only seller can access this resource");
+        }
+
+        if (!sellerIdFromToken.equals(sellerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Request seller id not matched with id in access token");
+        }
+
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortField);
         Pageable pageable = PageRequest.of(page, size, sort);
 

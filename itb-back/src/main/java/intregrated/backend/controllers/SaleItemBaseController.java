@@ -30,12 +30,6 @@ public class SaleItemBaseController {
     @Autowired
     SaleItemBaseService saleItemBaseService;
 
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
-
-    @Autowired
-    private ModelMapper modelMapper;
-
     @GetMapping("")
     public ResponseEntity<List<SaleItemBaseDto>> getAllSaleItemBases() {
         List<SaleItemBaseDto> saleItemBases = saleItemBaseService.getAllSaleItemBase();
@@ -139,14 +133,8 @@ public class SaleItemBaseController {
             @RequestPart(value = "pictures", required = false) MultipartFile[] pictures
     ) {
         String token = authHeader.replace("Bearer ", "");
-        Integer sellerId = jwtTokenUtil.getClaims(token).get("seller_id", Integer.class);
-        String role = jwtTokenUtil.getClaims(token).get("role", String.class);
 
-        if (!"SELLER".equalsIgnoreCase(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only sellers can create sale items");
-        }
-
-        SaleItemBaseByIdDto created = saleItemBaseService.createSaleItem(newSaleItem, pictures, sellerId);
+        SaleItemBaseByIdDto created = saleItemBaseService.createSaleItem(newSaleItem, pictures, token);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
