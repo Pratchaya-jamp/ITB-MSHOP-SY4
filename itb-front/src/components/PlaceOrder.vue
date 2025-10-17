@@ -11,10 +11,10 @@ const orders = ref([]);
 const selectedTab = ref("Completed");
 
 const themeClass = computed(() => {
-    return theme.value === "dark"
-        ? "dark bg-gray-900 text-slate-200"
-        : "bg-slate-50 text-slate-800";
-});
+    return theme.value === 'dark'
+        ? 'bg-gray-950 text-white'
+        : 'bg-white text-gray-950'
+})
 
 // --- ✨ FIX: รวม Filter และ Sort เข้าไว้ด้วยกันใน Computed เดียว ---
 const sortedFilteredOrders = computed(() => {

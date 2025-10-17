@@ -38,10 +38,10 @@ let notificationTimeout = null;
 const currentItemQtyInCart = ref(0);
 
 const themeClass = computed(() => {
-  return theme.value === "dark"
-    ? "dark bg-gray-900 text-slate-200"
-    : "bg-slate-50 text-slate-800";
-});
+    return theme.value === 'dark'
+        ? 'bg-gray-950 text-white'
+        : 'bg-white text-gray-950'
+})
 
 const triggerNotification = (message, isSuccess) => {
   if (notificationTimeout) {
@@ -71,6 +71,7 @@ const isSeller = computed(() => userRole.value === "SELLER");
 const closeSuccessPopup = () => {
   showEditSuccessPopup.value = false;
   showEditFallPopup.value = false;
+  window.location.reload();
 };
 
 const decodeTokenAndSetRole = () => {
@@ -313,13 +314,9 @@ const cancelDeleteItem = () => { showDeleteConfirmationPopup.value = false; };
             <router-link to="/sale-items" class="itbms-home-button hover:text-indigo-500 dark:hover:text-indigo-400 transition">
               All Phones
             </router-link>
-            <span v-if="product" class="mx-2">/</span>
+            <span v-if="product" class="mx-2"> > </span>
             <span v-if="product" class="itbms-row font-medium" :class="theme === 'dark' ? 'text-slate-200' : 'text-slate-800'">
-              {{ product?.brandName || 'Brand' }}
-            </span>
-            <span v-if="product" class="mx-2">/</span>
-            <span v-if="product" class="itbms-row font-medium" :class="theme === 'dark' ? 'text-slate-200' : 'text-slate-800'">
-              {{ product?.model || 'Model' }}
+              {{ product?.brandName || 'Brand' }} {{ product?.model || 'Model' }}
             </span>
         </nav>
         <div class="relative itbms-cart-icon cursor-pointer p-2 rounded-full" :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/5'" @click="goToCart">
@@ -345,7 +342,7 @@ const cancelDeleteItem = () => { showDeleteConfirmationPopup.value = false; };
         <div class="itbms-row flex flex-col">
             <div class="flex-grow">
                 <p class="font-bold text-indigo-500 dark:text-indigo-400 mb-2">{{ product.brandName }}</p>
-                <h1 class="text-3xl lg:text-4xl font-extrabold tracking-tight mb-4 text-slate-900 dark:text-white">{{ product.model }}</h1>
+                <h1 class="text-3xl lg:text-4xl font-extrabold tracking-tight mb-4" :class="theme === 'dark' ? 'text-white-300' : 'text-black-600'">{{ product.model }}</h1>
                 <div class="text-4xl font-extrabold mb-6" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">{{ product.price.toLocaleString() }} <span class="text-2xl font-semibold">฿</span></div>
                 <p class="text-base mb-8" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-600'">{{ product.description }}</p>
                 <div class="grid grid-cols-2 gap-6 py-6 border-y" :class="theme === 'dark' ? 'border-white/10' : 'border-slate-200'">

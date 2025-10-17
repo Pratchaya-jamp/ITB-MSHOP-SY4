@@ -1,239 +1,248 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import {getItemsWithAuth,} from '@/libs/fetchUtilsOur';
+import { getItemsWithAuth } from '@/libs/fetchUtilsOur';
 import Cookies from 'js-cookie' 
 import { jwtDecode } from 'jwt-decode' 
+import { theme } from '@/stores/themeStore.js'
+import { useRouter } from 'vue-router';
 
-// *** 💡 การจำลอง: สมมติว่านี่คือค่า orderid ที่ถูกดึงมาจาก /order/:orderid ***
-// สามารถเปลี่ยนค่าเพื่อดูรายละเอียดของออเดอร์ต่างๆ ได้ (เช่น '12345' หรือ '12346')
-const orderIdInRoute = ref('12345') 
-// ถ้าเป็น null หรือ '12347' จะแสดงหน้า "Order Not Found"
+const router = useRouter();
+const orderIdInRoute = ref('2') 
 
-// --- Mock Data: จำลองข้อมูลประวัติการสั่งซื้อ (อ้างอิงจากภาพตัวอย่าง) ---
 const orders = ref([])
 
-// --- Theme & Utility Logic (คงเดิม) ---
-const theme = ref(localStorage.getItem('theme') || 'dark')
-
-const applyTheme = (newTheme) => {
-    document.body.className = newTheme === 'dark' ? 'dark-theme' : ''
-    localStorage.setItem('theme', newTheme)
-    theme.value = newTheme
-}
-
-const toggleTheme = () => {
-    const newTheme = theme.value === 'dark' ? 'light' : 'dark'
-    applyTheme(newTheme)
-}
-
-// Function สำหรับกลับไปหน้า Order List (จำลองการกลับไปที่ /orders)
-const backToOrderList = () => {
-    // ในแอปจริง: router.push('/orders')
-    // ในการจำลอง: เราสามารถรีเซ็ต ID เพื่อจำลองการ "กลับหน้า"
-    orderIdInRoute.value = null; 
-    alert("Simulated: Navigated back to /orders list!");
-}
-
 // --- Computed Properties ---
-
 const themeClass = computed(() => {
     return theme.value === 'dark'
         ? 'bg-gray-950 text-white'
         : 'bg-white text-gray-950'
 })
 
-const iconComponent = computed(() => {
-    return theme.value === 'dark'
-        ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>`
-        : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>`
-})
-
-const contentBgClass = computed(() => {
-    return theme.value === 'dark'
-        ? 'bg-gray-900' // มืดกว่านิดหน่อย
-        : 'bg-gray-100' // สว่างกว่านิดหน่อย
-})
-
-const cardClass = computed(() => {
-    return theme.value === 'dark'
-        ? 'bg-gray-800 shadow-xl border border-gray-700'
-        : 'bg-white shadow-xl border border-gray-300'
-})
-
-// *** Computed Property หลักสำหรับหน้านี้: หา Order จาก ID ที่อยู่ใน Route ***
 const currentOrder = computed(() => {
-    return orders.value[0] || null;
+    return orders.value.find(order => order.id.toString() === orderIdInRoute.value) || null;
 });
+
+// (+) START: เพิ่ม Computed Property สำหรับ Progress Bar
+const progressWidth = computed(() => {
+    if (!currentOrder.value) return '0%';
+    const steps = ['PLACED', 'PAID', 'COMPLETED'];
+    const currentStepIndex = steps.indexOf(currentOrder.value.orderStatus?.toUpperCase());
+
+    if (currentStepIndex === 0) return '0%';    // ที่ Placed, progress = 0%
+    if (currentStepIndex === 1) return '50%';   // ที่ Paid, progress = 50%
+    if (currentStepIndex >= 2) return '100%'; // ที่ Completed, progress = 100%
+    return '0%';
+});
+// (+) END: เพิ่ม Computed Property
 
 const formatPrice = (price) => {
     if (price === undefined || price === null) return '0'
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
-const getStatusClass = (status) => {
-    if (!status) return ''
-    status = status.toUpperCase()
-    if (status === 'COMPLETED') return 'text-green-500 bg-green-500/10'
-    if (status === 'CANCELLED') return 'text-red-500 bg-red-500/10'
-    return 'text-yellow-500 bg-yellow-500/10'
-}
+const getStepStatus = (stepName, orderStatus) => {
+    const steps = ['PLACED', 'PAID', 'COMPLETED'];
+    const currentStepIndex = steps.indexOf(orderStatus?.toUpperCase());
+    const thisStepIndex = steps.indexOf(stepName);
 
+    if (thisStepIndex < currentStepIndex) return 'completed';
+    if (thisStepIndex === currentStepIndex) return 'active';
+    return 'upcoming';
+};
 
-async function fetchItemOrderbyId() {
-  const token = Cookies.get('access_token');
-  let decodedToken = null;
-  let userId = null;
+// // --- API Fetching ---
+// async function fetchItemOrderbyId() {
+//   const token = Cookies.get('access_token');
+//   if (!token) {
+//     router.push('/signin');
+//     return;
+//   }
 
-  if (token) {
-    try {
-      decodedToken = jwtDecode(token);
-      userId = decodedToken.id;
-    } catch (err) {
-      console.error("Failed to decode token:", err);
-      return;
-    }
-  } else {
-    console.error("No access token found");
-    router.push('/login');
-    return;
-  }
-
-  try {
-    const response = await getItemsWithAuth(
-      `${import.meta.env.VITE_BACKEND}/v2/orders/2`,
-      {
-        token: token,
-      }
-    );
-
-    // ตรวจสอบ response ก่อนใช้
-    if (!response || (response.status && (response.status === 401 || response.status === 403))) {
-      console.error('Authentication error: Unauthorized or Forbidden');
-      router.push('/login');
-      return;
-    }
-
-    const data = response.data ?? response; // รองรับทั้ง axios หรือ json ตรงๆ
-    data.userType = decodedToken?.role === 'SELLER' ? 'Seller' : 'Buyer';
-    orders.value = [data];
-  } catch (error) {
-    console.error('Error fetching user orders:', error);
-  }
-}
+//   try {
+//     const response = await getItemsWithAuth(
+//       `${import.meta.env.VITE_BACKEND}/v2/orders/${orderIdInRoute.value}`,
+//       { token: token }
+//     );
+//     if (!response || (response.status && (response.status === 401 || response.status === 403))) {
+//         router.push('/signin');
+//         return;
+//     }
+//     const data = response.data ?? response;
+//     orders.value = [data];
+//   } catch (error) {
+//     console.error('Error fetching order details:', error);
+//     orders.value = [];
+//   }
+// }
 
 onMounted(() => {
-    applyTheme(theme.value);
-fetchItemOrderbyId()
+    // fetchItemOrderbyId()
+    orders.value = [
+    {
+      id: 2,
+      orderStatus: 'PAID', // ลองเปลี่ยนเป็น 'PLACED' / 'COMPLETED' เพื่อดู progress bar
+      shippingAddress: 'Tanaj L., 123/45 Rama II Road, Bangkok, Thailand 10150',
+      subTotal: 45900,
+      totalPrice: 48900,
+      orderItems: [
+        {
+          no: 1,
+          description: 'Apple iPhone 15 Pro Max 256GB - Natural Titanium',
+          price: 45900,
+          quantity: 1
+        },
+        {
+          no: 2,
+          description: 'MagSafe Charger',
+          price: 3000,
+          quantity: 1
+        }
+      ]
+    },
+    {
+      id: 3,
+      orderStatus: 'COMPLETED',
+      shippingAddress: 'Kittipong S., 88 Sukhumvit Soi 33, Bangkok 10110',
+      subTotal: 29900,
+      totalPrice: 29900,
+      orderItems: [
+        {
+          no: 1,
+          description: 'Samsung Galaxy S24 Ultra 256GB',
+          price: 29900,
+          quantity: 1
+        }
+      ]
+    }
+  ]
 });
 </script>
 
 <template>
-    <div :class="themeClass" class="p-4 w-full min-h-screen font-sans transition-colors duration-500">
-        
-        <div :class="contentBgClass" class="px-6 md:px-20 py-12">
-            
-            <div class="mb-8 flex items-center justify-between">
-                <button @click="backToOrderList" class="flex items-center space-x-2 text-lg font-semibold transition-colors duration-200" :class="theme === 'dark' ? 'text-orange-400 hover:text-orange-300' : 'text-orange-600 hover:text-orange-500'">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    <span>Back to Order History</span>
-                </button>
-                <div v-if="currentOrder" class="itbms-order-status text-lg font-bold px-4 py-1 rounded-full" :class="getStatusClass(currentOrder.orderStatus)">
-                    {{ currentOrder.orderStatus }}
-                </div>
-            </div>
-
-            <h1 class="text-4xl font-extrabold mb-8" v-if="currentOrder">Order Details #{{ currentOrder.id }}</h1>
-            
-            <div v-if="currentOrder" class="space-y-8">
-                
-                <div :class="cardClass" class="p-6 rounded-3xl">
-                    <h2 class="text-2xl font-bold mb-4 border-b pb-3" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">Order & Shipping Info</h2>
-                    
-                    <div class="grid md:grid-cols-2 gap-6 text-base">
-                        <div>
-                            <p class="font-semibold mb-2 text-lg">Order Summary</p>
-                            <div class="space-y-1" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">
-                                <p><strong class="font-medium">Order No:</strong> {{ currentOrder.id }}</p>
-                                <p><strong class="font-medium">Order Date:</strong> {{ currentOrder.orderDate }}</p>
-                                <p><strong class="font-medium">Payment Date:</strong> {{ currentOrder.paymentDate }}</p>
-                                <p><strong class="font-medium">Customer:</strong> {{ currentOrder.seller.nickname }}</p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p class="font-semibold mb-2 text-lg">Shipping Details</p>
-                            <div class="space-y-1" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">
-                                <p><strong class="font-medium">Address:</strong> {{ currentOrder.shippingAddress }}</p>
-                                <p><strong class="font-medium">Note:</strong> <span class="italic">{{ currentOrder.orderNote || 'No additional instructions.' }}</span></p>
-                                <p><strong class="font-medium">Payment Method:</strong> <span class="font-medium">Credit Card (Mock)</span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div :class="cardClass" class="p-6 rounded-3xl">
-                    <h2 class="text-2xl font-bold mb-4 border-b pb-3" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">Items Ordered ({{ currentOrder.orderItems.length }})</h2>
-                    
-                    <div class="divide-y" :class="theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
-                        <div v-for="item in currentOrder.orderItems" :key="item.no" class="flex justify-between items-center py-4 itbms-item-row">
-                            <div class="flex items-center space-x-4">
-                                <img src="/phone/iPhone.png" alt="Product Image" class="w-16 h-16 object-contain rounded-lg border" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-300'"/>
-                                <div class="flex-grow">
-                                    <p class="font-medium itbms-item-name text-lg">{{ item.description }}</p>
-                                    <p class="text-sm itbms-item-description" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">{{ item.description }}</p>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col space-y-1 text-right items-end">
-                                <span class="font-bold text-xl text-orange-500 itbms-item-total-price">
-                                    {{ formatPrice(item.price * item.quantity) }} ฿
-                                </span>
-                                <span class="itbms-item-quantity text-sm" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-                                    {{ formatPrice(item.price) }} ฿ x {{ item.quantity }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div :class="cardClass" class="p-6 rounded-3xl md:w-1/2 md:ml-auto">
-                    <h2 class="text-2xl font-bold mb-4 border-b pb-3" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">Payment Summary</h2>
-                    
-                    <div class="space-y-3">
-                        <div class="flex justify-between text-lg" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">
-                            <span class="font-medium">Subtotal:</span>
-                            <span>{{ formatPrice(currentOrder.subTotal) }} ฿</span>
-                        </div>
-                        <!-- <div class="flex justify-between text-lg" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">
-                            <span class="font-medium">Shipping Fee:</span>
-                            <span>{{ formatPrice(currentOrder.shippingFee) }} ฿</span>
-                        </div> -->
-                        <div class="flex justify-between pt-4 border-t" :class="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">
-                            <span class="text-2xl font-extrabold">Total:</span>
-                            <span class="text-2xl font-extrabold text-orange-500">
-                                {{ formatPrice(currentOrder.totalPrice) }} ฿
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div v-else class="text-center py-20" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-                <p class="text-3xl font-bold mb-4">😔 Order Not Found</p>
-                <p class="text-xl">The order ID '{{ orderIdInRoute }}' could not be found.</p>
-                <p class="mt-4">Please check the order number or go back to your order history.</p>
-            </div>
-
+  <div :class="themeClass" class="min-h-screen font-sans transition-colors duration-500">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      
+      <div v-if="currentOrder" class="animate-fade-in-up">
+        <div class="mb-8 text-center">
+            <p :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">Order #{{ currentOrder.id }}</p>
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                Thank you for your order!
+            </h1>
         </div>
-        
-        <button @click="toggleTheme" class="fixed bottom-6 right-6 p-4 rounded-full backdrop-blur-sm shadow-lg transition-all duration-300 z-50" :class="theme === 'dark' ? 'bg-gray-700/80 hover:bg-gray-600/80 text-white' : 'bg-gray-200/80 hover:bg-gray-300/80 text-black'" v-html="iconComponent">
+
+        <div class="mb-12 max-w-xl mx-auto">
+            <div class="flex items-start">
+                <div class="text-center w-20">
+                    <div class="w-10 h-10 mx-auto rounded-full flex items-center justify-center transition-all duration-500 border-4"
+                         :class="{
+                            'bg-blue-500 border-blue-500': getStepStatus('PLACED', currentOrder.orderStatus) === 'completed' || getStepStatus('PLACED', currentOrder.orderStatus) === 'active',
+                            'bg-gray-800 border-gray-800': theme === 'dark' && getStepStatus('PLACED', currentOrder.orderStatus) === 'upcoming',
+                            'bg-gray-200 border-gray-200': theme !== 'dark' && getStepStatus('PLACED', currentOrder.orderStatus) === 'upcoming'
+                         }">
+                         <svg v-if="getStepStatus('PLACED', currentOrder.orderStatus) === 'completed' || getStepStatus('PLACED', currentOrder.orderStatus) === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    <p class="mt-2 text-xs font-semibold">Placed</p>
+                </div>
+
+                <div class="flex-1 h-1 mt-5 rounded-full transition-colors duration-500" 
+                     :class="getStepStatus('PLACED', currentOrder.orderStatus) === 'completed' ? 'bg-blue-500' : (theme === 'dark' ? 'bg-white/10' : 'bg-black/5')">
+                </div>
+
+                <div class="text-center w-20">
+                    <div class="w-10 h-10 mx-auto rounded-full flex items-center justify-center transition-all duration-500 border-4"
+                         :class="{
+                            'bg-blue-500 border-blue-500': getStepStatus('PAID', currentOrder.orderStatus) === 'completed' || getStepStatus('PAID', currentOrder.orderStatus) === 'active',
+                            'bg-gray-800 border-gray-800': theme === 'dark' && getStepStatus('PAID', currentOrder.orderStatus) === 'upcoming',
+                            'bg-gray-200 border-gray-200': theme !== 'dark' && getStepStatus('PAID', currentOrder.orderStatus) === 'upcoming'
+                         }">
+                         <svg v-if="getStepStatus('PAID', currentOrder.orderStatus) === 'completed' || getStepStatus('PAID', currentOrder.orderStatus) === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    <p class="mt-2 text-xs font-semibold" :class="getStepStatus('PAID', currentOrder.orderStatus) === 'upcoming' ? 'text-gray-500' : ''">Paid</p>
+                </div>
+
+                <div class="flex-1 h-1 mt-5 rounded-full transition-colors duration-500" 
+                     :class="getStepStatus('PAID', currentOrder.orderStatus) === 'completed' ? 'bg-blue-500' : (theme === 'dark' ? 'bg-white/10' : 'bg-black/5')">
+                </div>
+
+                <div class="text-center w-20">
+                    <div class="w-10 h-10 mx-auto rounded-full flex items-center justify-center transition-all duration-500 border-4"
+                         :class="{
+                            'bg-gradient-to-br from-blue-500 to-purple-600 border-purple-500/50 shadow-lg': getStepStatus('COMPLETED', currentOrder.orderStatus) === 'active',
+                            'bg-blue-500 border-blue-500': getStepStatus('COMPLETED', currentOrder.orderStatus) === 'completed',
+                            'bg-gray-800 border-gray-800': theme === 'dark' && getStepStatus('COMPLETED', currentOrder.orderStatus) === 'upcoming',
+                            'bg-gray-200 border-gray-200': theme !== 'dark' && getStepStatus('COMPLETED', currentOrder.orderStatus) === 'upcoming'
+                         }">
+                         <svg v-if="getStepStatus('COMPLETED', currentOrder.orderStatus) === 'completed'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                         <span v-else class="font-bold text-white">3</span>
+                    </div>
+                    <p class="mt-2 text-xs font-semibold" :class="getStepStatus('COMPLETED', currentOrder.orderStatus) === 'upcoming' ? 'text-gray-500' : ''">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-8 rounded-3xl space-y-8" :class="theme === 'dark' ? 'bg-gray-950/70 backdrop-blur-xl border border-white/10' : 'bg-white/70 backdrop-blur-xl border border-black/10'">
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="space-y-2">
+                    <h2 class="text-lg font-semibold flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h8a1 1 0 001-1z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16 16h2a2 2 0 002-2V6a2 2 0 00-2-2h-1" /></svg>Shipping Address</h2>
+                    <p class="text-sm leading-relaxed" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">{{ currentOrder.shippingAddress }}</p>
+                </div>
+                 <div class="space-y-2">
+                    <h2 class="text-lg font-semibold flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>Payment Summary</h2>
+                    <div class="text-sm" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+                        <p><strong>Subtotal:</strong> {{ formatPrice(currentOrder.subTotal) }} ฿</p>
+                        <p><strong>Total Paid:</strong> <span class="font-bold text-base" :class="theme === 'dark' ? 'text-white' : 'text-black'">{{ formatPrice(currentOrder.totalPrice) }} ฿</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t pt-8" :class="theme === 'dark' ? 'border-white/10' : 'border-black/10'">
+                <h2 class="text-lg font-semibold mb-4">Items in this Order ({{ currentOrder.orderItems.length }})</h2>
+                <div class="space-y-4">
+                    <div v-for="item in currentOrder.orderItems" :key="item.no" class="flex items-center gap-4 p-4 rounded-2xl" :class="theme === 'dark' ? 'bg-white/5' : 'bg-black/5'">
+                        <img src="/phone/iPhone.png" alt="Product" class="w-16 h-16 object-contain rounded-lg flex-shrink-0">
+                        <div class="flex-grow">
+                            <p class="font-semibold">{{ item.description }}</p>
+                            <p class="text-sm" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">{{ item.description }}</p>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                            <p class="font-bold">{{ formatPrice(item.price * item.quantity) }} ฿</p>
+                            <p class="text-xs" :class="theme === 'dark' ? 'text-gray-500' : 'text-gray-400'">{{ item.quantity }} x {{ formatPrice(item.price) }} ฿</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <div v-else class="text-center py-20 animate-fade-in-up">
+        <h1 class="text-3xl font-bold mb-2">Order Not Found</h1>
+        <p :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">We couldn't find an order with the specified ID.</p>
+        <button @click="router.push('/orders')" class="mt-6 px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-full shadow-lg transition-all transform hover:scale-105">
+            Back to Order History
         </button>
-        
-    </div>
+      </div>
+
+    </main>
+  </div>
 </template>
 
 <style scoped>
-/* No additional CSS needed beyond Tailwind utilities */
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+}
+@keyframes blob {
+    0% { transform: scale(1) translate(0px, 0px); }
+    33% { transform: scale(1.1) translate(30px, -50px); }
+    66% { transform: scale(0.9) translate(-20px, 20px); }
+    100% { transform: scale(1) translate(0px, 0px); }
+}
+.animate-blob {
+    animation: blob 7s infinite ease-in-out;
+}
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
 </style>

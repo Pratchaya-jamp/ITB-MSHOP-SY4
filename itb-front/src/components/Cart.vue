@@ -120,9 +120,9 @@ const isLoading = ref(false)
 
 const themeClass = computed(() => {
     return theme.value === 'dark'
-        ? 'dark bg-gray-900 text-slate-200'
-        : 'bg-slate-50 text-slate-800'
-});
+        ? 'bg-gray-950 text-white'
+        : 'bg-white text-gray-950'
+})
 
 const selectedItems = computed(() => cartItems.value.filter(item => item.selected))
 const totalSelectedPrice = computed(() => selectedItems.value.reduce((total, item) => total + (item.price * item.quantity), 0))
@@ -396,7 +396,7 @@ const addorder = async () => {
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <h2 class="mt-6 text-2xl font-bold text-slate-900 dark:text-white">Your cart is empty</h2>
+                <h2 class="mt-6 text-2xl font-bold" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">Your cart is empty</h2>
                 <p class="mt-2 text-slate-500 dark:text-slate-400">Looks like you haven't added anything to your cart
                     yet.</p>
                 <button @click="() => router.push('/sale-items')"

@@ -41,6 +41,10 @@ const userRole = ref("");
 const cartCount = ref(0);
 const isAuthenticated = ref(false);
 
+const goToManageBrands = () => {
+  router.push('/brands');
+};
+
 // --- ฟังก์ชันสำหรับแสดง Slide Popup ---
 const triggerNotification = (message, isSuccess) => {
   if (notificationTimeout) {
@@ -134,12 +138,8 @@ const getCartQuantityForItem = (itemId) => {
   }
   const targetId = parseInt(itemId);
   const cartKey = `CartData_${userId}`;
-  const existingCart = JSON.parse(localStorage.getItem(cartKey)) || {
-    items: [],
-  };
-  const existingItem = existingCart.items.find(
-    (i) => i.saleItemId === targetId
-  );
+  const existingCart = JSON.parse(localStorage.getItem(cartKey)) || { items: [] };
+  const existingItem = existingCart.items.find((i) => i.saleItemId === targetId);
   return existingItem ? existingItem.quantity : 0;
 };
 
@@ -236,10 +236,10 @@ const availableBrands = computed(() =>
 );
 
 const themeClass = computed(() => {
-  return theme.value === "dark"
-    ? "bg-gray-900 text-slate-200"
-    : "bg-slate-50 text-slate-800";
-});
+    return theme.value === 'dark'
+        ? 'bg-gray-950 text-white'
+        : 'bg-white text-gray-950'
+})
 
 async function fetchItems() {
   const token = Cookies.get("access_token");
@@ -627,6 +627,18 @@ const removeActiveFilter = (filter) => {
           </div>
 
           <div class="border-t pt-4" :class="theme === 'dark' ? 'border-white/10' : 'border-slate-200'">
+            <h3 class="font-semibold mb-3 px-2">Items per Page</h3>
+            <div class="px-2">
+                <select v-model.number="pageSize" class="w-full p-2 rounded-lg text-sm border-0 outline-none focus:ring-2 focus:ring-indigo-500" 
+                        :class="theme === 'dark' ? 'bg-gray-700/50' : 'bg-slate-100'">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+          </div>
+
+          <div class="border-t pt-4" :class="theme === 'dark' ? 'border-white/10' : 'border-slate-200'">
             <h3 class="font-semibold mb-2 px-2">Filters</h3>
             <div>
               <button @click="openFilterSection = openFilterSection === 'brand' ? null : 'brand'"
@@ -742,6 +754,10 @@ const removeActiveFilter = (filter) => {
           </div>
 
           <div class="flex items-center gap-4">
+            <button v-if="userRole === 'SELLER'" @click="goToManageBrands" 
+                    class="itbms-manage-brands-button bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 rounded-full px-5 py-2 text-sm font-semibold transition hover:bg-indigo-200 dark:hover:bg-indigo-500/30 whitespace-nowrap">
+              Manage Brands
+            </button>
             <button v-if="userRole === 'SELLER'" @click="addSaleItemButton"
               class="itbms-sale-item-add bg-indigo-600 text-white rounded-full px-5 py-2 text-sm font-semibold transition hover:bg-indigo-700 whitespace-nowrap">+
               Add Item</button>
@@ -779,6 +795,11 @@ const removeActiveFilter = (filter) => {
               :class="theme === 'dark' ? 'bg-gray-800/50 hover:bg-gray-800' : 'bg-white shadow-sm hover:shadow-lg'"
               :style="{ animationDelay: (index % pageSize * 50) + 'ms' }" @click="goToPhoneDetails(item.id)">
               <img :src="'/sy4/phone/iPhone.png'" alt="phone" class="w-full h-40 object-contain mb-4" />
+              <div
+                v-if="item.quantity <= 0"
+                class="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg">
+                <span class="text-white font-semibold text-lg">Out of Stock</span>
+              </div>
               <div class="flex-grow">
                 <div class="itbms-brand font-bold text-sm text-indigo-500 dark:text-indigo-400">{{ item.brandName }}
                 </div>
@@ -789,10 +810,24 @@ const removeActiveFilter = (filter) => {
               <div class="mt-4">
                 <div class="itbms-price font-extrabold text-xl">{{ item.price.toLocaleString() }} <span
                     class="text-sm font-normal">THB</span></div>
-                <button @click.stop="addToCart(item)" :disabled="isItemSoldOut(item)"
+                <button
+                  @click.stop="addToCart(item)"
+                  :disabled="isItemSoldOut(item)"
                   class="mt-2 w-full px-4 py-2 text-sm rounded-full font-semibold transition-colors duration-300 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-gray-600 dark:disabled:text-gray-400"
-                  :class="theme === 'dark' ? 'bg-indigo-500 text-white hover:bg-indigo-600' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'">{{
-                    isItemSoldOut(item) ? "In Cart" : "Add to Cart" }}</button>
+                  :class="
+                    theme === 'dark'
+                      ? 'bg-indigo-500 text-white hover:bg-indigo-600'
+                      : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                  "
+                >
+                  {{
+                    item.quantity <= 0
+                      ? "Out of Stock"
+                      : isItemSoldOut(item)
+                      ? "In Cart"
+                      : "Add to Cart"
+                  }}
+                </button>
               </div>
             </div>
           </div>

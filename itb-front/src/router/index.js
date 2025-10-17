@@ -129,6 +129,12 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = Cookies.get('access_token');
 
+  if ((to.name === 'signin' || to.name === 'register') && token) {
+    console.log('User is already logged in. Redirecting to Home...');
+    next({ name: 'Home' });
+    return;
+  }
+
   if (to.meta.requiresAuth && !token) {
     console.log('Access to ' + to.path + ' requires login. Redirecting...');
     next('/signin')

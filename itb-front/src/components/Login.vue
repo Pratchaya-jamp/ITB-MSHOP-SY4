@@ -110,7 +110,11 @@ const handleSubmit = async () => {
   }
 };
 
-const themeClass = computed(() => (theme.value === 'dark' ? 'dark bg-gray-900 text-slate-200' : 'bg-slate-50 text-slate-800'));
+const themeClass = computed(() => {
+    return theme.value === 'dark'
+        ? 'bg-gray-950 text-white'
+        : 'bg-white text-gray-950'
+})
 </script>
 
 <template>
@@ -218,4 +222,66 @@ const themeClass = computed(() => (theme.value === 'dark' ? 'dark bg-gray-900 te
 }
 .animate-blob { animation: blob 7s infinite ease-in-out; }
 .animation-delay-2000 { animation-delay: 2s; }
+
+.bounce-popup-enter-active,
+.bounce-popup-leave-active {
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bounce-popup-enter-from {
+    transform: scale(0.8);
+    opacity: 0;
+}
+
+.bounce-popup-leave-to {
+    transform: scale(1.2);
+    opacity: 0;
+}
+
+.fade-background-enter-active,
+.fade-background-leave-active {
+    transition: background-color 0.3s ease;
+}
+
+.fade-background-enter-from {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.fade-background-leave-to {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.fade-in-out-enter-active,
+.fade-in-out-leave-active {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-in-out-enter-from {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.fade-in-out-leave-to {
+    opacity: 0;
+    transform: scale(1.05);
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.slide-up-enter-from {
+    transform: translateY(20px);
+    opacity: 0;
+}
+
+.slide-up-leave-to {
+    transform: translateY(-20px);
+    opacity: 0;
+}
+
+.fixed.bg-black {
+    background-color: rgba(0, 0, 0, 0.5);
+}
 </style>

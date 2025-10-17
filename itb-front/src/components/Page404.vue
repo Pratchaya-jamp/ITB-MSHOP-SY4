@@ -9,9 +9,9 @@ const router = useRouter();
 // 2. Computed property ที่ใช้ theme จาก store ในการเปลี่ยนสีพื้นหลังและตัวอักษร
 const themeClass = computed(() => {
     return theme.value === 'dark'
-        ? 'dark bg-gray-900 text-slate-200'
-        : 'bg-slate-50 text-slate-800'
-});
+        ? 'bg-gray-950 text-white'
+        : 'bg-white text-gray-950'
+})
 </script>
 
 <template>
