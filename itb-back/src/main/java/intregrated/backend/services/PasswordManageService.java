@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class PasswordManageService {
@@ -30,6 +32,9 @@ public class PasswordManageService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
     @Transactional
     public UserRegisterResponseDto verifyEmailToken(String jwtToken) {
         if (!jwtTokenUtil.validateToken(jwtToken)) {
@@ -39,12 +44,17 @@ public class PasswordManageService {
         Claims claims = jwtTokenUtil.getClaims(jwtToken);
         Integer userId = claims.get("id", Integer.class);
         String email = claims.get("email", String.class);
+        String saltFromToken = claims.get("salt", String.class);
 
         UsersAccount user = userRepo.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
 
         if (!user.getEmail().equals(email)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token email mismatch");
+        }
+
+        if (!Objects.equals(user.getToken_used(), saltFromToken)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This link has already been used or expired");
         }
 
         return UserRegisterResponseDto.builder()
@@ -66,6 +76,7 @@ public class PasswordManageService {
         Claims claims = jwtTokenUtil.getClaims(token);
         Integer userId = claims.get("id", Integer.class);
         String email = claims.get("email", String.class);
+        String saltFromToken = claims.get("salt", String.class);
 
         UsersAccount user = userRepo.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
@@ -82,10 +93,18 @@ public class PasswordManageService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password cannot be the same as old password");
         }
 
+        if (!Objects.equals(user.getToken_used(), saltFromToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "This link has already been used or expired");
+        }
+
         String hashedPassword = passwordEncoder.encode(newPassword);
         user.setPassword(hashedPassword);
         user.setUpdatedOn(Instant.now());
+
+        user.setToken_used(UUID.randomUUID().toString());
+
         userRepo.saveAndFlush(user);
+
         sendNotifyEmail(email);
     }
 
@@ -98,6 +117,7 @@ public class PasswordManageService {
         Claims claims = jwtTokenUtil.getClaims(token);
         String emailFromToken = claims.get("email", String.class);
         Integer userIdFromToken = claims.get("id", Integer.class);
+        String saltFromToken = claims.get("salt", String.class);
 
         if (emailFromToken == null || userIdFromToken == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
@@ -130,10 +150,18 @@ public class PasswordManageService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different from old password");
         }
 
+        if (!Objects.equals(user.getToken_used(), saltFromToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "This link has already been used or expired");
+        }
+
         String hashedPassword = passwordEncoder.encode(newPassword);
         user.setPassword(hashedPassword);
         user.setUpdatedOn(Instant.now());
+
+        user.setToken_used(UUID.randomUUID().toString());
+
         userRepo.saveAndFlush(user);
+
         sendNotifyEmail(emailFromToken);
     }
 
@@ -142,7 +170,11 @@ public class PasswordManageService {
         UsersAccount user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        String token = jwtTokenUtil.generateVerificationToken(user);
+        String newSalt = UUID.randomUUID().toString();
+        user.setToken_used(newSalt);
+        userRepo.saveAndFlush(user);
+
+        String token = jwtTokenUtil.generateVerificationPasswordToken(user, newSalt);
 
         mailService.sendVerificationPassword(email, token);
     }

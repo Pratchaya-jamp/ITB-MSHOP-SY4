@@ -39,6 +39,7 @@ public class PasswordManagerController {
     public ResponseEntity<Void> resetForgotPassword(
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody NewForgotPasswordRequest req
+
     ) {
         // ตรวจสอบสิทธิ์
         if (token == null || !token.startsWith("Bearer ")) {

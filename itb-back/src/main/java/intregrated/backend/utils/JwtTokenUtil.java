@@ -38,6 +38,20 @@ public class JwtTokenUtil {
                 .compact();
     }
 
+    public String generateVerificationPasswordToken(UsersAccount user, String salt) {
+        long now = System.currentTimeMillis();
+
+        return Jwts.builder()
+                .setIssuer(ISSUER)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + verify_EXPIRATION_MS))
+                .claim("id", user.getId())
+                .claim("email", user.getEmail())
+                .claim("salt", salt)
+                .signWith(key)
+                .compact();
+    }
+
     public String generateToken(UsersAccount user, String role) {
     long now = System.currentTimeMillis();
 
