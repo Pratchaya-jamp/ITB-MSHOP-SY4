@@ -62,6 +62,9 @@ public class UsersAccount {
     @Column(name = "updatedOn", nullable = false)
     private Instant updatedOn;
 
+    @Column(name = "token_used")
+    private String token_used;
+
     @PreUpdate
     public void setUpdatedOn() {
         this.updatedOn = Instant.now();

@@ -74,8 +74,6 @@ public class AuthenticationController {
                     .body(new AccessTokenResponseDto(null));
         }
 
-        System.out.println("Refresh token received: " + refreshToken);
-
         LoginResponseDto response = authenticationService.refreshAccessToken(refreshToken);
         return ResponseEntity.ok(new AccessTokenResponseDto(response.getAccess_token()));
     }
