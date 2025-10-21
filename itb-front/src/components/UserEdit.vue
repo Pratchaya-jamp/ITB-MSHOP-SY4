@@ -39,6 +39,10 @@ const navigateToProfile = () => {
     router.push('/profile')
 }
 
+const navigateToChangePassword = () => {
+    router.push('/change-password')
+}
+
 const confirmSave = async () => {
     confirmUpdateProfile.value = false;
     isLoading.value = true;
@@ -111,7 +115,6 @@ const fetchUserProfileForEdit = async () => {
     }
 };
 
-// แก้ไขในส่วนนี้
 const maskedMobileNumber = computed(() => {
     const mobile = userProfile.value?.mobile;
     if (!mobile || mobile.length <= 4) return mobile;
@@ -120,7 +123,6 @@ const maskedMobileNumber = computed(() => {
     return `${maskedPart}${unmaskedPart}x`;
 })
 
-// แก้ไขในส่วนนี้
 const maskedBankNumber = computed(() => {
     const bankNumber = userProfile.value?.bankNumber;
     if (!bankNumber || bankNumber.length <= 4) return bankNumber;
@@ -144,7 +146,7 @@ const cancelSave = () => {
       <div class="lg:grid lg:grid-cols-12 lg:gap-x-12">
         
         <aside class="lg:col-span-3 mb-8 lg:mb-0 animate-fade-in-up">
-          <div class="p-4 rounded-2xl" :class="theme === 'dark' ? 'bg-white/5' : 'bg-black/5'">
+          <div class="p-4 rounded-2xl" :class="theme === 'dark' ? 'bg-gray-800/30' : 'bg-white shadow-sm ring-1 ring-black/5'">
             <div v-if="userProfile" class="flex items-center gap-4 p-2">
                 <img :src="userPicture.image" alt="User Profile" class="w-12 h-12 rounded-full object-cover">
                 <div>
@@ -152,11 +154,17 @@ const cancelSave = () => {
                 </div>
             </div>
             <nav class="mt-4 space-y-1">
-              <a href="#" class="group flex items-center px-3 py-2 text-sm font-semibold rounded-lg" :class="theme === 'dark' ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'">
+              <a href="#" class="group flex items-center px-3 py-2 text-sm font-semibold rounded-lg" :class="theme === 'dark' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-100 text-indigo-700'">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 Edit Profile
               </a>
-              <a href="#" @click.prevent="navigateToProfile" class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors" :class="theme === 'dark' ? 'hover:bg-white/10 text-gray-300' : 'hover:bg-black/5 text-gray-700'">
+              
+              <a href="#" @click.prevent="navigateToChangePassword" class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors" :class="theme === 'dark' ? 'hover:bg-gray-700/50 text-slate-300' : 'hover:bg-slate-100 text-slate-700'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                Change Password
+              </a>
+
+              <a href="#" @click.prevent="navigateToProfile" class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors" :class="theme === 'dark' ? 'hover:bg-gray-700/50 text-slate-300' : 'hover:bg-slate-100 text-slate-700'">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 Back to Profile
               </a>
@@ -165,50 +173,56 @@ const cancelSave = () => {
         </aside>
 
         <div v-if="userProfile" class="lg:col-span-9 animate-fade-in-up" style="animation-delay: 0.1s;">
-          <div class="p-8 rounded-3xl" :class="theme === 'dark' ? 'bg-white/5' : 'bg-black/5'">
+          <div class="p-8 rounded-2xl" :class="theme === 'dark' ? 'bg-gray-800/30' : 'bg-white shadow-sm ring-1 ring-black/5'">
             
             <div class="mb-8">
-                <h1 class="text-2xl font-bold">Personal Information</h1>
-                <p :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">Update your personal details here.</p>
+              <h1 class="text-2xl font-bold">Personal Information</h1>
+              <p :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">Update your personal details here.</p>
             </div>
 
             <form @submit.prevent="showConfirmation" class="space-y-6">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label for="nickname" class="block text-sm font-medium mb-1.5">Nickname</label>
-                  <input type="text" id="nickname" v-model="userProfile.nickname" class="w-full p-3 rounded-lg border-2 transition" :class="theme === 'dark' ? 'bg-white/5 border-white/10 focus:border-blue-500 focus:ring-0' : 'bg-gray-100 border-gray-200 focus:border-blue-500 focus:ring-0'">
+                  <input type="text" id="nickname" v-model="userProfile.nickname" class="w-full p-3 rounded-lg border-0 outline-none focus:ring-2 focus:ring-indigo-500 transition" :class="theme === 'dark' ? 'bg-gray-700/50' : 'bg-slate-100'">
                 </div>
                 <div>
                   <label for="fullname" class="block text-sm font-medium mb-1.5">Full Name</label>
-                  <input type="text" id="fullname" v-model="userProfile.fullname" class="w-full p-3 rounded-lg border-2 transition" :class="theme === 'dark' ? 'bg-white/5 border-white/10 focus:border-blue-500 focus:ring-0' : 'bg-gray-100 border-gray-200 focus:border-blue-500 focus:ring-0'">
+                  <input type="text" id="fullname" v-model="userProfile.fullname" class="w-full p-3 rounded-lg border-0 outline-none focus:ring-2 focus:ring-indigo-500 transition" :class="theme === 'dark' ? 'bg-gray-700/50' : 'bg-slate-100'">
                 </div>
               </div>
               
               <div>
                 <label for="email" class="block text-sm font-medium mb-1.5">Email Address</label>
-                <input type="email" id="email" :value="userProfile.email" disabled class="w-full p-3 rounded-lg border-2 opacity-60 cursor-not-allowed" :class="theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-gray-100 border-gray-200'">
+                <input type="email" id="email" :value="userProfile.email" disabled class="w-full p-3 rounded-lg border-0 outline-none cursor-not-allowed" :class="theme === 'dark' ? 'bg-gray-800/50 text-slate-400' : 'bg-slate-200 text-slate-500'">
               </div>
               <template v-if="isSeller">
-                <div>
-                <label for="email" class="block text-sm font-medium mb-1.5">Mobile Number</label>
-                <input type="text" id="mobile" :value="maskedMobileNumber" disabled class="w-full p-3 rounded-lg border-2 opacity-60 cursor-not-allowed" :class="theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-gray-100 border-gray-200'">
-              </div>
-              <div>
-                <label for="email" class="block text-sm font-medium mb-1.5">Bank Name</label>
-                <input type="text" id="bankName" :value="userProfile.bankName" disabled class="w-full p-3 rounded-lg border-2 opacity-60 cursor-not-allowed" :class="theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-gray-100 border-gray-200'">
-              </div>
-              <div>
-                <label for="email" class="block text-sm font-medium mb-1.5">Bank Account Number</label>
-                <input type="text" id="bankAccount" :value="maskedBankNumber" disabled class="w-full p-3 rounded-lg border-2 opacity-60 cursor-not-allowed" :class="theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-gray-100 border-gray-200'">
-              </div>
+                <div class="pt-6 border-t" :class="theme === 'dark' ? 'border-white/10' : 'border-slate-200'">
+                    <h2 class="text-xl font-bold mb-6">Seller Information (Read-only)</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Mobile Number</label>
+                            <input type="text" :value="maskedMobileNumber" disabled class="w-full p-3 rounded-lg border-0 outline-none cursor-not-allowed" :class="theme === 'dark' ? 'bg-gray-800/50 text-slate-400' : 'bg-slate-200 text-slate-500'">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Bank Name</label>
+                            <input type="text" :value="userProfile.bankName" disabled class="w-full p-3 rounded-lg border-0 outline-none cursor-not-allowed" :class="theme === 'dark' ? 'bg-gray-800/50 text-slate-400' : 'bg-slate-200 text-slate-500'">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Bank Account Number</label>
+                            <input type="text" :value="maskedBankNumber" disabled class="w-full p-3 rounded-lg border-0 outline-none cursor-not-allowed" :class="theme === 'dark' ? 'bg-gray-800/50 text-slate-400' : 'bg-slate-200 text-slate-500'">
+                        </div>
+                    </div>
+                </div>
               </template>
 
-              <div class="flex justify-end items-center pt-6 border-t" :class="theme === 'dark' ? 'border-white/10' : 'border-black/10'">
+              <div class="flex justify-end items-center pt-6 border-t" :class="theme === 'dark' ? 'border-white/10' : 'border-slate-200'">
                 <div class="flex gap-4">
-                  <button type="button" @click="navigateToProfile" class="px-6 py-2.5 font-semibold rounded-lg transition-colors" :class="theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-black/5'">
+                  <button type="button" @click="navigateToProfile" class="px-6 py-2.5 font-semibold rounded-full transition-colors" :class="theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-slate-100'">
                     Cancel
                   </button>
-                  <button type="submit" :disabled="!isSaveEnabled" class="px-6 py-2.5 text-white font-semibold rounded-lg shadow-lg transition-all transform" :class="isSaveEnabled ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:scale-105' : 'bg-gray-500 opacity-50 cursor-not-allowed'">
+                  <button type="submit" :disabled="!isSaveEnabled" class="px-6 py-2.5 text-white font-semibold rounded-full shadow-lg transition-all transform" 
+                          :class="isSaveEnabled ? 'bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-1' : 'bg-slate-400 dark:bg-gray-600 opacity-50 cursor-not-allowed'">
                     Save Changes
                   </button>
                 </div>
@@ -246,7 +260,7 @@ const cancelSave = () => {
         class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-30 flex items-center justify-center z-50 loading-overlay">
         <div class="p-8 rounded-2xl shadow-xl text-center transition-colors duration-500 transform scale-110"
             :class="theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'">
-            <svg class="animate-spin h-8 w-8 text-orange-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg"
+            <svg class="animate-spin h-8 w-8 text-indigo-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg"
                 fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                 <path class="opacity-75" fill="currentColor"

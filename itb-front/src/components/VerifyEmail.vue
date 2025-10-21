@@ -1,20 +1,59 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue'; 
 import { useRoute, useRouter } from 'vue-router';
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue'; // (+) นำเข้า DotLottieVue
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
 import { addItem } from '@/libs/fetchUtilsOur';
 import { theme } from '@/stores/themeStore.js';
 
 const route = useRoute();
 const router = useRouter();
-const verificationStatus = ref('verifying');
+const verificationStatus = ref('verifying'); // ✨ 1. เริ่มต้นที่ State 'verifying'
 const message = ref('');
+
+const showNotification = ref(false);
+const notificationMessage = ref("");
+const notificationSuccess = ref(false);
+let notificationTimeout = null;
+let countdownInterval = null;
 
 const themeClass = computed(() => {
     return theme.value === 'dark'
         ? 'bg-gray-950 text-white'
         : 'bg-white text-gray-950'
 });
+
+const triggerNotification = (message, isSuccess, duration = null) => {
+  if (notificationTimeout) {
+    clearTimeout(notificationTimeout);
+  }
+  notificationMessage.value = message;
+  notificationSuccess.value = isSuccess;
+  showNotification.value = true;
+  
+  if (duration) {
+    notificationTimeout = setTimeout(() => {
+      showNotification.value = false;
+    }, duration);
+  }
+};
+
+const startRedirectCountdown = (seconds) => {
+    let remaining = seconds;
+    const updateNotification = () => {
+        triggerNotification(`Redirecting to Sign In in ${remaining}...`, true, null);
+    };
+    updateNotification(); 
+    countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+            updateNotification();
+        } else {
+            clearInterval(countdownInterval);
+            triggerNotification("Redirecting...", true, 1000); 
+            router.push('/signin');
+        }
+    }, 1000);
+};
 
 const verifyEmail = async () => {
     const token = route.query.token;
@@ -26,8 +65,10 @@ const verifyEmail = async () => {
     }
     router.replace({ query: {} });
     
+    // ✨ 2. หน่วงเวลา 2 วินาที (เพื่อให้เห็น Lottie 'verifying')
     setTimeout(async () => {
         try {
+            // 3. ยิง API หลังจาก 2 วินาทีผ่านไป
             const response = await addItem(
                 `${import.meta.env.VITE_BACKEND}/v2/auth/verify-email?token=${token}`
             );
@@ -35,14 +76,15 @@ const verifyEmail = async () => {
             if (response.status === 200) {
                 verificationStatus.value = 'success';
                 message.value = 'Your account has been successfully activated.';
-                setTimeout(() => {
-                    router.push({ name: 'Login' });
-                }, 3000);
+                
+                // 4. ถ้าสำเร็จ ค่อยเริ่มนับถอยหลัง 3 วินาที
+                startRedirectCountdown(3); 
+
             } else if (response.status === 409) {
                 verificationStatus.value = 'warning';
                 message.value = 'This token has already been used. Your account is already active.';
             } else {
-                const errorData = await response.json();
+                const errorData = response.data; // ใช้ .data จาก fetchUtils
                 verificationStatus.value = 'error';
                 message.value = errorData.message || 'An error occurred, or the verification link has expired.';
             }
@@ -51,16 +93,36 @@ const verifyEmail = async () => {
             verificationStatus.value = 'error';
             message.value = 'A network error occurred. Please check your connection and try again.';
         }
-    }, 2000);
+    }, 2000); // 2 วินาที
 };
 
 onMounted(() => {
     verifyEmail();
 });
+
+onUnmounted(() => {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    if (notificationTimeout) {
+        clearTimeout(notificationTimeout);
+    }
+});
 </script>
 
 <template>
   <div :class="themeClass" class="relative min-h-screen font-sans overflow-hidden flex items-center justify-center text-center p-4">
+    
+    <transition name="slide-down">
+        <div v-if="showNotification" 
+             class="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 p-4 rounded-lg shadow-lg"
+             :class="notificationSuccess ? 'bg-green-500 text-white' : 'bg-red-500 text-white'">
+            <svg v-if="notificationSuccess" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span class="font-semibold">{{ notificationMessage }}</span>
+        </div>
+    </transition>
+
     <div class="absolute inset-0 w-full h-full opacity-20 pointer-events-none">
         <div class="absolute w-96 h-96 bg-blue-500 rounded-full blur-[100px] opacity-40 top-1/4 left-1/4 animate-blob"></div>
         <div class="absolute w-80 h-80 bg-purple-500 rounded-full blur-[100px] opacity-40 bottom-1/4 right-1/4 animate-blob animation-delay-2000"></div>
@@ -88,7 +150,7 @@ onMounted(() => {
           {{ message }}
         </p>
         <p class="text-sm" :class="theme === 'dark' ? 'text-gray-500' : 'text-gray-400'">
-            Redirecting you to the login page...
+            Preparing your account...
         </p>
       </div>
       
@@ -122,6 +184,18 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Slide Notification */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+  transform: translateY(-150%);
+  opacity: 0;
+}
+
+/* Card Animation */
 @keyframes fade-in-up {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -129,6 +203,8 @@ onMounted(() => {
 .animate-fade-in-up {
     animation: fade-in-up 0.6s ease-out forwards;
 }
+
+/* Background Animation */
 @keyframes blob {
     0% { transform: scale(1) translate(0px, 0px); }
     33% { transform: scale(1.1) translate(30px, -50px); }

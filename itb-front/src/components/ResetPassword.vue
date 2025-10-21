@@ -1,12 +1,19 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { theme } from '@/stores/themeStore.js';
 
+const route = useRoute();
+const router = useRouter();
+
 // --- State for UI ---
-const email = ref('');
-const isLoading = ref(false);
-const formSubmitted = ref(false);
-const submissionSuccess = ref(false);
+const token = ref(null);
+const emailToReset = ref('mock-user@example.com'); // อีเมลจำลอง
+const password = ref('');
+const confirmPassword = ref('');
+const isLoading = ref(true); // เริ่มต้นด้วยการโหลด (เพื่อ Verify token)
+const isVerified = ref(false); // ควบคุมการแสดงฟอร์ม
+const isSubmitting = ref(false); // ควบคุม Loading ตอน Submit
 
 // --- State for Slide Popup Notification ---
 const showNotification = ref(false);
@@ -14,7 +21,7 @@ const notificationMessage = ref("");
 const notificationSuccess = ref(false);
 let notificationTimeout = null;
 
-// --- Theming ---
+// --- Theming (มาจาก Store) ---
 const themeClass = computed(() => {
   return theme.value === "dark"
     ? "dark bg-gray-900 text-slate-200"
@@ -34,32 +41,63 @@ const triggerNotification = (message, isSuccess) => {
   }, 3000);
 };
 
-const handleSubmit = () => {
-  if (!email.value) {
-    triggerNotification("Please enter your email address.", false);
+// --- ✨ 1. Mock Function: Verify Token ---
+const verifyToken = async () => {
+  token.value = route.query.token; 
+  
+  // ล้าง Token ออกจาก URL ทันที
+  router.replace({ query: {} }); 
+
+  if (!token.value) {
+    isLoading.value = false;
+    isVerified.value = false;
+    triggerNotification("No token provided.", false);
     return;
   }
+
+  // จำลองการตรวจสอบ Token (2 วินาที)
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  // จำลองผลลัพธ์ (80% สำเร็จ)
+  if (Math.random() > 0.2) {
+    isVerified.value = true;
+    triggerNotification("Token verified. You can reset your password.", true);
+  } else {
+    isVerified.value = false;
+    triggerNotification("Invalid or expired token.", false);
+  }
   
-  isLoading.value = true;
-
-  // --- Mock Backend Call (3-second delay) ---
-  setTimeout(() => {
-    isLoading.value = false;
-
-    // --- Simulate success/failure ---
-    const isSuccess = Math.random() > 0.2; // 80% success chance
-
-    formSubmitted.value = true;
-    submissionSuccess.value = isSuccess;
-
-    if (isSuccess) {
-      triggerNotification("Password reset link sent!", true);
-    } else {
-      triggerNotification("Failed to send link. Please try again.", false);
-    }
-
-  }, 3000);
+  isLoading.value = false;
 };
+
+// --- ✨ 2. Mock Function: Handle Submit ---
+const handleSubmit = async () => {
+  if (password.value !== confirmPassword.value) {
+    triggerNotification("Passwords do not match.", false);
+    return;
+  }
+  if (password.value.length < 8) {
+    triggerNotification("Password must be at least 8 characters.", false);
+    return;
+  }
+
+  isSubmitting.value = true;
+
+  // --- Requirement: หน่วงเวลา 3 วินาที ---
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  isSubmitting.value = false;
+  
+  // จำลองว่าสำเร็จเสมอ
+  triggerNotification("Password reset successfully! Redirecting...", true);
+  setTimeout(() => {
+    router.push('/signin'); // ส่งไปหน้า Login
+  }, 2000);
+};
+
+onMounted(() => {
+  verifyToken();
+});
 </script>
 
 <template>
@@ -78,63 +116,71 @@ const handleSubmit = () => {
     <div class="w-full max-w-md animate-fade-in-up">
       <div class="p-8 rounded-2xl" :class="theme === 'dark' ? 'bg-gray-800/30' : 'bg-white shadow-sm'">
         
-        <div v-if="!formSubmitted" class="text-center">
-          <h1 class="text-3xl font-extrabold tracking-tight mb-3" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">Forgot Password?</h1>
+        <div v-if="isLoading" class="text-center py-10">
+          <svg class="animate-spin h-12 w-12 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <h2 class="mt-4 text-xl font-semibold">Verifying your link...</h2>
+        </div>
+
+        <div v-else-if="!isVerified" class="text-center">
+            <div class="mx-auto mb-6 w-16 h-16 flex items-center justify-center rounded-full bg-red-500/10 text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <h1 class="text-3xl font-extrabold tracking-tight mb-3" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">Link Invalid</h1>
+            <p :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
+                This password reset link is either invalid or has expired. Please request a new one.
+            </p>
+        </div>
+
+        <div v-else class="text-center">
+          <h1 class="text-3xl font-extrabold tracking-tight mb-3" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">Set New Password</h1>
           <p class="mb-8" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
-            No worries, we'll send you reset instructions.
+            Resetting password for: <span class="font-bold text-indigo-500 dark:text-indigo-400">{{ emailToReset }}</span>
           </p>
           <form @submit.prevent="handleSubmit" class="space-y-6">
             <div>
-              <label for="email" class="block text-left font-semibold mb-2">Email Address</label>
+              <label for="password" class="block text-left font-semibold mb-2">New Password</label>
               <input 
-                type="email" 
-                id="email" 
-                v-model="email"
+                type="password" 
+                id="password" 
+                v-model="password"
                 class="w-full p-3 rounded-lg border-0 outline-none focus:ring-2 focus:ring-indigo-500 transition"
                 :class="theme === 'dark' ? 'bg-gray-700/50' : 'bg-slate-100'"
-                placeholder="you@example.com"
+                placeholder="••••••••"
+              />
+            </div>
+             <div>
+              <label for="confirmPassword" class="block text-left font-semibold mb-2">Confirm New Password</label>
+              <input 
+                type="password" 
+                id="confirmPassword" 
+                v-model="confirmPassword"
+                class="w-full p-3 rounded-lg border-0 outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                :class="theme === 'dark' ? 'bg-gray-700/50' : 'bg-slate-100'"
+                placeholder="••••••••"
               />
             </div>
             <button 
               type="submit" 
               class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-full shadow-lg shadow-indigo-500/20 transition-all duration-300 transform hover:-translate-y-1">
-              Send Reset Link
+              Reset Password
             </button>
           </form>
-        </div>
-
-        <div v-else class="text-center">
-            <div v-if="submissionSuccess">
-                <div class="mx-auto mb-6 w-16 h-16 flex items-center justify-center rounded-full bg-green-500/10 text-green-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" /></svg>
-                </div>
-                <h1 class="text-3xl font-extrabold tracking-tight mb-3" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">Check your email</h1>
-                <p :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
-                    We've sent a password reset link to <span class="font-bold text-indigo-500 dark:text-indigo-400">{{ email }}</span>.
-                </p>
-            </div>
-            <div v-else>
-                <div class="mx-auto mb-6 w-16 h-16 flex items-center justify-center rounded-full bg-red-500/10 text-red-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                 <h1 class="text-3xl font-extrabold tracking-tight mb-3" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">Something Went Wrong</h1>
-                <p :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
-                    We couldn't send a reset link. Please check your email address and try again.
-                </p>
-            </div>
         </div>
 
       </div>
     </div>
 
     <transition name="fade-background">
-        <div v-if="isLoading" class="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+        <div v-if="isSubmitting" class="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
             <div class="p-8 rounded-2xl shadow-xl text-center" :class="theme === 'dark' ? 'bg-gray-800' : 'bg-white'">
                 <svg class="animate-spin h-8 w-8 text-indigo-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                <p class="text-lg font-medium">Sending...</p>
+                <p class="text-lg font-medium">Resetting Password...</p>
             </div>
         </div>
     </transition>
@@ -150,14 +196,12 @@ const handleSubmit = () => {
   animation: fade-in-up 0.8s ease-out forwards;
 }
 
-/* ✨ FIX: แก้ไข CSS ของ Slide Down Notification ✨ */
 .slide-down-enter-active,
 .slide-down-leave-active {
   transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
 .slide-down-enter-from,
 .slide-down-leave-to {
-  /* ลบ translateX(-50%) ออก ให้ class '-translate-x-1/2' ที่ element เป็นตัวจัดการแนวนอนอย่างเดียว */
   transform: translateY(-150%);
   opacity: 0;
 }
