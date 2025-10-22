@@ -8,7 +8,7 @@ import intregrated.backend.dtos.users.UserResponseDto;
 import intregrated.backend.entities.accounts.BuyerAccount;
 import intregrated.backend.entities.accounts.SellerAccount;
 import intregrated.backend.entities.accounts.UsersAccount;
-import intregrated.backend.repositories.UsersAccountRepo;
+import intregrated.backend.repositories.accounts.UsersAccountRepo;
 import intregrated.backend.utils.JwtTokenUtil;
 import intregrated.backend.utils.UserTypeResolver;
 import io.jsonwebtoken.Claims;

@@ -11,24 +11,24 @@ import java.util.List;
 
 @Data
 public class OrderRequestDto {
-    @NotNull
+    @NotNull(message = "buyerId is required")
     private Integer buyerId;
 
-    @NotNull
+    @NotNull(message = "sellerId is required")
     private Integer sellerId;
 
-    @NotNull
+    @NotNull(message = "orderDate is required")
     private Instant orderDate;
 
-    @NotBlank
+    @NotBlank(message = "shippingAddress is required")
     private String shippingAddress;
 
     private String orderNote;
 
-    @NotNull
-    @NotEmpty
+    @NotNull(message = "orderItems is required")
+    @NotEmpty(message = "orderItems is required")
     private List<OrderItemDto> orderItems;
 
-    @NotNull
+    @NotNull(message = "orderStatus is required")
     private OrderStatus orderStatus;
 }

@@ -54,7 +54,7 @@ public class SaleItemBaseController {
             @RequestParam(defaultValue = "id") String sortField,
             @RequestParam(defaultValue = "ASC") String sortDirection) {
 
-        validatePaginationParams(page, size, sortDirection, sortField);
+        saleItemBaseService.validatePaginationParams(page, size, sortDirection, sortField);
 
         boolean storageIsNullFlag = false;
         List<Integer> storages = null;
@@ -103,27 +103,6 @@ public class SaleItemBaseController {
                 .last(pagedResult.isLast())
                 .sort(sortField + ": " + sortDirection)
                 .build();
-    }
-
-    private void validatePaginationParams(Integer page, Integer size, String sortDirection, String sortField) {
-        if (page < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Page index must not be negative.");
-        }
-        if (size <= 0 || size > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Page size must be between 1 and 100.");
-        }
-        if (!sortDirection.equalsIgnoreCase("asc") && !sortDirection.equalsIgnoreCase("desc")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sort direction must be 'asc' or 'desc'.");
-        }
-        List<String> validSortFields = List.of(
-                "id", "model", "price", "ramGb", "screenSizeInch", "storageGb", "createdOn", "updatedOn", "brand.name"
-        );
-        if (!validSortFields.contains(sortField)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Sort field '" + sortField + "' is invalid. Must be one of: " + validSortFields
-            );
-        }
     }
 
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

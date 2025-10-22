@@ -5,7 +5,7 @@ import intregrated.backend.dtos.authentications.LoginResponseDto;
 import intregrated.backend.entities.RefreshToken;
 import intregrated.backend.entities.accounts.UsersAccount;
 import intregrated.backend.repositories.RefreshTokenRepo;
-import intregrated.backend.repositories.UsersAccountRepo;
+import intregrated.backend.repositories.accounts.UsersAccountRepo;
 import intregrated.backend.utils.JwtTokenUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;

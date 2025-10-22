@@ -51,22 +51,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleValidationException(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
 
-        String firstErrorMessage = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .findFirst()
-                .map(error -> error.getDefaultMessage())
-                .orElse("Validation failure");
+        HttpStatus status = HttpStatus.BAD_REQUEST;
 
         GeneralErrorResponse ger = new GeneralErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                firstErrorMessage,
-                request.getRequestURI());
+                status.value(),
+                status.getReasonPhrase(),
+                "Validation failed",
+                request.getRequestURI()
+        );
 
         ex.getBindingResult().getFieldErrors().forEach(error ->
-                ger.addValidationError(error.getField(), error.getDefaultMessage()));
+                ger.addValidationError(error.getField(), error.getDefaultMessage())
+        );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ger);
+        return ResponseEntity.status(status).body(ger);
     }
 }

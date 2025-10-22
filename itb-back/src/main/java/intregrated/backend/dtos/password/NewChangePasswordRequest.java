@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 public class NewChangePasswordRequest {
-    @NotBlank(message = "New password is required")
+    @NotBlank(message = "Old password is required")
     @Size(min = 8, max = 14, message = "Password must be between 8 and 14 characters")
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).+$",

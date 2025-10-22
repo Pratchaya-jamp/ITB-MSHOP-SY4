@@ -1,4 +1,4 @@
-package intregrated.backend.repositories;
+package intregrated.backend.repositories.saleitems;
 
 import intregrated.backend.entities.saleitems.SaleItemPicture;
 import jakarta.transaction.Transactional;

@@ -6,15 +6,13 @@ import intregrated.backend.fileproperties.ProductFileProperties;
 import intregrated.backend.entities.brands.BrandBase;
 import intregrated.backend.entities.saleitems.SaleItemBase;
 import intregrated.backend.entities.saleitems.SaleItemPicture;
-import intregrated.backend.repositories.BrandBaseRepo;
-import intregrated.backend.repositories.SaleItemBaseRepo;
-import intregrated.backend.repositories.SaleItemPictureRepo;
+import intregrated.backend.repositories.brands.BrandBaseRepo;
+import intregrated.backend.repositories.saleitems.SaleItemBaseRepo;
+import intregrated.backend.repositories.saleitems.SaleItemPictureRepo;
 //import jakarta.transaction.Transactional;
-import intregrated.backend.repositories.SellerAccountRepo;
+import intregrated.backend.repositories.accounts.SellerAccountRepo;
 import intregrated.backend.utils.JwtTokenUtil;
-import intregrated.backend.utils.ListMapper;
 import org.apache.commons.io.FilenameUtils;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.*;
@@ -657,5 +655,26 @@ public class SaleItemBaseService {
                         .username(s.getSeller().getNickname())
                         .build())
                 .build();
+    }
+
+    public void validatePaginationParams(Integer page, Integer size, String sortDirection, String sortField) {
+        if (page < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Page index must not be negative.");
+        }
+        if (size <= 0 || size > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Page size must be between 1 and 100.");
+        }
+        if (!sortDirection.equalsIgnoreCase("asc") && !sortDirection.equalsIgnoreCase("desc")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sort direction must be 'asc' or 'desc'.");
+        }
+        List<String> validSortFields = List.of(
+                "id", "model", "price", "ramGb", "screenSizeInch", "storageGb", "createdOn", "updatedOn", "brand.name"
+        );
+        if (!validSortFields.contains(sortField)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Sort field '" + sortField + "' is invalid. Must be one of: " + validSortFields
+            );
+        }
     }
 }
