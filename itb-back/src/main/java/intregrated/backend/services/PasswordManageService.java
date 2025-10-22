@@ -2,7 +2,7 @@ package intregrated.backend.services;
 
 import intregrated.backend.dtos.registers.UserRegisterResponseDto;
 import intregrated.backend.entities.accounts.UsersAccount;
-import intregrated.backend.repositories.UsersAccountRepo;
+import intregrated.backend.repositories.accounts.UsersAccountRepo;
 import intregrated.backend.utils.JwtTokenUtil;
 import intregrated.backend.utils.UserTypeResolver;
 import io.jsonwebtoken.Claims;

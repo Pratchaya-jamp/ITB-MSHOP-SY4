@@ -1,5 +1,6 @@
 package intregrated.backend.controllers;
 
+import intregrated.backend.dtos.orders.OrderListRequestDto;
 import intregrated.backend.dtos.orders.OrderRequestDto;
 import intregrated.backend.dtos.orders.OrderBuyerResponseDto;
 import intregrated.backend.dtos.orders.OrderSellerResponseDto;
@@ -119,7 +120,7 @@ public class OrderController {
     @PostMapping("/orders")
     public ResponseEntity<List<OrderBuyerResponseDto>> placeOrder(
             @RequestHeader("Authorization") String token,
-            @Valid @RequestBody List<@Valid OrderRequestDto> orderRequestDto
+            @Valid @RequestBody OrderListRequestDto orderRequestDto
     ) {
         // ตรวจสอบสิทธิ์
         if (token == null || !token.startsWith("Bearer ")) {
@@ -132,7 +133,7 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
         }
 
-        List<OrderBuyerResponseDto> orderResponseDto = orderService.placeOrder(orderRequestDto, token);
-        return ResponseEntity.ok(orderResponseDto);
+        List<OrderBuyerResponseDto> orderResponseDto = orderService.placeOrder(orderRequestDto.getOrders(), token);
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderResponseDto);
     }
 }

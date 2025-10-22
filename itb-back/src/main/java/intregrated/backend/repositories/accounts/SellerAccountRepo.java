@@ -1,4 +1,4 @@
-package intregrated.backend.repositories;
+package intregrated.backend.repositories.accounts;
 
 import intregrated.backend.entities.accounts.SellerAccount;
 import org.springframework.data.jpa.repository.JpaRepository;

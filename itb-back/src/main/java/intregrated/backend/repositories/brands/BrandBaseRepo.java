@@ -1,0 +1,10 @@
+package intregrated.backend.repositories.brands;
+
+import intregrated.backend.entities.brands.BrandBase;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface BrandBaseRepo extends JpaRepository<BrandBase, Integer> {
+    Optional<BrandBase> findByNameIgnoreCase(String name);
+}

@@ -38,7 +38,7 @@ public class AuthenticationController {
         response.addHeader("Set-Cookie", refreshCookie.toString());
 
         // return access_token เท่านั้นใน body
-        return ResponseEntity.ok(new AccessTokenResponseDto(tokens.getAccess_token()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AccessTokenResponseDto(tokens.getAccess_token()));
     }
 
     @PostMapping("/logout")
@@ -75,6 +75,6 @@ public class AuthenticationController {
         }
 
         LoginResponseDto response = authenticationService.refreshAccessToken(refreshToken);
-        return ResponseEntity.ok(new AccessTokenResponseDto(response.getAccess_token()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AccessTokenResponseDto(response.getAccess_token()));
     }
 }

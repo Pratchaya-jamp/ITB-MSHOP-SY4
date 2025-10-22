@@ -1,11 +1,9 @@
-package intregrated.backend.repositories;
+package intregrated.backend.repositories.orders;
 
 import intregrated.backend.entities.orders.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
 
 public interface OrderRepo extends JpaRepository<Order, Long> {
     Page<Order> findByUser_Id(Integer userId, Pageable pageable);
