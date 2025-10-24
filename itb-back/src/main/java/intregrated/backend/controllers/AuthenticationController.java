@@ -4,6 +4,7 @@ import intregrated.backend.dtos.authentications.AccessTokenResponseDto;
 import intregrated.backend.dtos.authentications.LoginRequestDto;
 import intregrated.backend.dtos.authentications.LoginResponseDto;
 import intregrated.backend.services.AuthenticationService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,8 @@ public class AuthenticationController {
 
     @PostMapping("/refresh")
     public ResponseEntity<AccessTokenResponseDto> refresh(
-            @CookieValue(value = "refresh_token", required = false) String refreshToken) {
+            @CookieValue(value = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response) {
 
         if (refreshToken == null) {
             System.out.println("No refresh token in cookie");
@@ -74,7 +76,16 @@ public class AuthenticationController {
                     .body(new AccessTokenResponseDto(null));
         }
 
-        LoginResponseDto response = authenticationService.refreshAccessToken(refreshToken);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new AccessTokenResponseDto(response.getAccess_token()));
+        LoginResponseDto newTokens = authenticationService.refreshAccessToken(refreshToken);
+
+        // Replace the cookie with the new refresh token
+        Cookie cookie = new Cookie("refresh_token", newTokens.getRefresh_token());
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/sy4");
+        cookie.setMaxAge(24 * 60 * 60);
+        response.addCookie(cookie);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AccessTokenResponseDto(newTokens.getAccess_token()));
     }
 }

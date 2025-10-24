@@ -2,8 +2,6 @@ create database if not exists itb;
 use itb;
 
 -- Drop tables in reverse order of creation to avoid foreign key issues
-DROP TABLE IF EXISTS cart_item;
-DROP TABLE IF EXISTS cart;
 DROP TABLE IF EXISTS order_item;
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS sale_item_picture;
@@ -55,6 +53,7 @@ CREATE TABLE IF NOT EXISTS users_account (
     buyerid INT NULL,
     sellerid INT NULL,
     isActive BOOLEAN NOT NULL DEFAULT FALSE,
+    token_used VARCHAR(255),
     createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_buyer_user FOREIGN KEY (buyerid) REFERENCES buyer_account(buyerid) ON DELETE CASCADE,
@@ -143,31 +142,7 @@ CREATE TABLE IF NOT EXISTS sale_item_picture (
     CONSTRAINT ck_new_picture_name CHECK (TRIM(new_picture_name) <> '')
 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 9. Cart
-CREATE TABLE IF NOT EXISTS cart (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users_account(uid) ON DELETE CASCADE
-) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 10. Cart Item
-CREATE TABLE IF NOT EXISTS cart_item (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cart_id INT NOT NULL,
-    sale_item_id INT,
-    seller_id INT NOT NULL,
-    quantity INT NOT NULL DEFAULT 1,
-    createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_cart_item_cart FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
-    CONSTRAINT fk_cart_item_sale FOREIGN KEY (sale_item_id) REFERENCES sale_item_base(id) ON DELETE CASCADE,
-    CONSTRAINT fk_cart_item_seller FOREIGN KEY (seller_id) REFERENCES seller_account(sellerid) ON DELETE CASCADE,
-    CONSTRAINT ck_cart_item_quantity CHECK (quantity > 0)
-) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 11. Orders
+-- 9. Orders
 CREATE TABLE IF NOT EXISTS orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -183,7 +158,7 @@ CREATE TABLE IF NOT EXISTS orders (
     CONSTRAINT fk_orders_seller FOREIGN KEY (seller_id) REFERENCES seller_account(sellerid) ON DELETE CASCADE
 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 12. Order Item
+-- 10. Order Item
 CREATE TABLE IF NOT EXISTS order_item (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,

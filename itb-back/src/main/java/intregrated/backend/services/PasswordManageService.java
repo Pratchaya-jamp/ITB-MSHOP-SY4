@@ -117,7 +117,6 @@ public class PasswordManageService {
         Claims claims = jwtTokenUtil.getClaims(token);
         String emailFromToken = claims.get("email", String.class);
         Integer userIdFromToken = claims.get("id", Integer.class);
-        String saltFromToken = claims.get("salt", String.class);
 
         if (emailFromToken == null || userIdFromToken == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Token");
@@ -150,15 +149,9 @@ public class PasswordManageService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different from old password");
         }
 
-        if (!Objects.equals(user.getToken_used(), saltFromToken)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "This link has already been used or expired");
-        }
-
         String hashedPassword = passwordEncoder.encode(newPassword);
         user.setPassword(hashedPassword);
         user.setUpdatedOn(Instant.now());
-
-        user.setToken_used(UUID.randomUUID().toString());
 
         userRepo.saveAndFlush(user);
 
