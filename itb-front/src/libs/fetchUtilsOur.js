@@ -1,5 +1,128 @@
+import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode'; // ✅ ใช้ import แบบนี้ให้ build ผ่านได้
+
+async function resetPasswordForgot(url, token, body) {
+  try {
+    const options = {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`   // ✅ ใส่ reset token
+      },
+      body: JSON.stringify(body)
+    };
+
+    const res = await fetch(url, options);
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
+    return { status: res.status, data };
+  } catch (error) {
+    throw new Error('Cannot reset password: ' + error.message);
+  }
+}
+
+
+// ✅ ฟังก์ชันตรวจสอบว่า access token หมดอายุหรือยัง
+function isTokenExpired(token) {
+  try {
+    const decoded = jwtDecode(token);
+    const now = Date.now() / 1000; // เวลาในหน่วยวินาที
+    return decoded.exp < now;
+  } catch (err) {
+    return true; // ถ้า decode ไม่ได้ ให้ถือว่าหมดอายุ
+  }
+}
+
+async function refreshAccessToken() {
+  const accessToken = Cookies.get('access_token'); // ใช้ access_token เดิมที่หมดอายุ
+  console.log("Refreshing token...");
+  if (!accessToken) return null;
+
+   try {
+    const res = await fetch('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/refresh', {
+      method: 'POST',
+      credentials: 'include', // ✅ ส่งคุกกี้ (refresh_token) ไปกับ request
+    });
+
+    if (!res.ok) {
+      console.error("Failed to refresh token:", res.status);
+
+      return null;
+    }
+
+    const data = await res.json();
+    // เก็บ access_token ใหม่ที่ได้กลับมา
+    Cookies.set('access_token', data.access_token);
+    return data.access_token;
+  } catch (err) {
+    console.error("Error refreshing token:", err);
+    return null;
+  }
+}
+
+//
+// ✅ ฟังก์ชัน addItemWithAuth — ใช้โครงสร้างเดียวกัน (refresh token อัตโนมัติ)
+//
+async function addItemWithAuth(url, newItem, isMultipart = false) {
+  try {
+    let token = Cookies.get('access_token');
+    console.log('Token exp:', jwtDecode(token).exp, 'Now:', Date.now() / 1000);
+    // ถ้า access token หมดอายุ → refresh ก่อน
+    if (!token || isTokenExpired(token)) {
+      console.warn("Access token expired, refreshing...");
+      token = await refreshAccessToken();
+      if (!token) throw new Error("Cannot refresh token");
+    }
+
+    const options = {
+      method: 'POST',
+      headers: {},
+    };
+
+    // แนบ Authorization header
+    if (token) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // ส่งเป็น JSON หรือ FormData
+    if (isMultipart) {
+      options.body = newItem; // newItem ต้องเป็น FormData
+    } else {
+      options.headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(newItem);
+    }
+
+    // ยิง request
+    let res = await fetch(url, options);
+
+    // ถ้าเจอ 401 → refresh แล้วลองอีกครั้ง
+    if (res.status === 401) {
+      token = await refreshAccessToken();
+      if (!token) throw new Error("Cannot refresh token");
+
+      options.headers['Authorization'] = `Bearer ${token}`;
+      res = await fetch(url, options);
+    }
+
+    const data = res.status !== 204 ? await res.json() : null;
+    return { status: res.status, data };
+  } catch (error) {
+    throw new Error('Cannot add your item: ' + error.message);
+  }
+}
+
+
 async function editItemWithAuth(url, id, updatedItem, token, isMultipart = false) {
   try {
+    let token = Cookies.get('access_token');
+    console.log('Token exp:', jwtDecode(token).exp, 'Now:', Date.now() / 1000);
+    // ถ้า access token หมดอายุ → refresh ก่อน
+    if (!token || isTokenExpired(token)) {
+      console.warn("Access token expired, refreshing...");
+      token = await refreshAccessToken();
+      if (!token) throw new Error("Cannot refresh token");
+    }
+
     const options = {
       method: 'PUT',
       headers: {}
@@ -19,45 +142,27 @@ async function editItemWithAuth(url, id, updatedItem, token, isMultipart = false
     }
 
     const res = await fetch(`${url}/${id}`, options)
-    const data = res.status !== 204 ? await res.json() : null
+const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
     return { status: res.status, data }
   } catch (error) {
     throw new Error('Cannot edit your item: ' + error.message)
   }
 }
 
-async function addItemWithAuth(url, newItem, isMultipart = false, token) {
-  try {
-    const options = { 
-      method: 'POST',
-      headers: {}
-    };
-
-    if (token) {
-      options.headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    if (isMultipart) {
-      // newItem ต้องเป็น FormData
-      options.body = newItem;
-      // ไม่ต้องใส่ Content-Type เพราะ browser จะใส่ให้เอง
-    } else {
-      options.headers['Content-Type'] = 'application/json';
-      options.body = JSON.stringify(newItem);
-    }
-
-    const res = await fetch(url, options);
-    const data = res.status !== 204 ? await res.json() : null;
-
-    return { status: res.status, data };
-  } catch (error) {
-    throw new Error('Cannot add your item: ' + error.message);
-  }
-}
 
 
 async function getItemByIdWithAuth(baseUrl, id, token) {
   try {
+    let token = Cookies.get('access_token');
+    console.log('Token exp:', jwtDecode(token).exp, 'Now:', Date.now() / 1000);
+    // ถ้า access token หมดอายุ → refresh ก่อน
+    if (!token || isTokenExpired(token)) {
+      console.warn("Access token expired, refreshing...");
+      token = await refreshAccessToken();
+      if (!token) throw new Error("Cannot refresh token");
+    }
+
     const response = await fetch(`${baseUrl}/${id}`, {
       method: 'GET',
       headers: {
@@ -75,6 +180,15 @@ async function getItemByIdWithAuth(baseUrl, id, token) {
 // ฟังก์ชัน fetch แบบรองรับ Authorization token
 async function getItemsWithAuth(url, options = {}) {
   try {
+    let accesstoken = Cookies.get('access_token');
+    console.log('Token exp:', jwtDecode(accesstoken).exp, 'Now:', Date.now() / 1000);
+    // ถ้า access token หมดอายุ → refresh ก่อน
+    if (!accesstoken || isTokenExpired(accesstoken)) {
+      console.warn("Access token expired, refreshing...");
+      accesstoken = await refreshAccessToken();
+      if (!accesstoken) throw new Error("Cannot refresh token");
+    }
+
     const { params, token } = options;
 
     // ประกอบ query string
@@ -109,6 +223,7 @@ async function getItemsWithAuth(url, options = {}) {
     throw error;
   }
 }
+
 
 async function getItems(url, options = {}) {
   try {
@@ -178,7 +293,6 @@ async function addItem(url, newItem, isMultipart = false) {
     const options = { method: 'POST' }
 
     if (isMultipart) {
-      // newItem ต้องเป็น FormData
       options.body = newItem
     } else {
       options.headers = { 'Content-Type': 'application/json' }
@@ -186,12 +300,20 @@ async function addItem(url, newItem, isMultipart = false) {
     }
 
     const res = await fetch(url, options)
-    const data = res.status !== 204 ? await res.json() : null
+
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+
+    // ตรวจสอบว่า response มี content-length > 0
+    const text = await res.text()
+    const data = text ? JSON.parse(text) : null
+
     return { status: res.status, data }
+
   } catch (error) {
     throw new Error('Cannot add your item: ' + error.message)
   }
 }
+
 
 async function editItem(url, id, updatedItem, isMultipart = false) {
   try {
@@ -239,4 +361,4 @@ async function patchItem(url, id, partialItem) {
   }
 }
 
-export { getItems, getItemById, deleteItemById, addItem, editItem, patchItem,getItemByIdWithAuth,getItemsWithAuth, addItemWithAuth, editItemWithAuth}
+export { resetPasswordForgot, getItems, getItemById, deleteItemById, addItem, editItem, patchItem,getItemByIdWithAuth,getItemsWithAuth, addItemWithAuth, editItemWithAuth}

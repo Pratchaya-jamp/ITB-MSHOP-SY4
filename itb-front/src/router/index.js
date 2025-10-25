@@ -20,6 +20,7 @@ import OrderDetail from '@/components/Orders/OrderDetail.vue'
 import ForgotPassword from '@/components/Accounts/ForgotPassword.vue'
 import ResetPassword from '@/components/Accounts/ResetPassword.vue'
 import ChangePassword from '@/components/Profiles/ChangePassword.vue'
+import SellerOrder from '@/components/Orders/SellerOrder.vue'
 
 const routes = [
   {
@@ -117,7 +118,7 @@ const routes = [
   meta: { requiresAuth: true }
 },
 {
-  path: '/order/:orderid',
+  path: '/order/:id',
   name: 'orderDetail',
   component: OrderDetail,
   meta: { requiresAuth: true }
@@ -137,6 +138,12 @@ const routes = [
   name: 'changePassword',
   component: ChangePassword,
   meta: { requiresAuth: true }
+},
+{
+  path: '/sale-order',
+  name: 'sellerOrder',
+  component: SellerOrder,
+  meta: { requiresSeller: true }
 },
 ]
 
