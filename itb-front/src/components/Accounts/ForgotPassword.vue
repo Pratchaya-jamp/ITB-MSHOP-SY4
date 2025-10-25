@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { theme } from '@/stores/themeStore.js';
+import { addItem } from "@/libs/fetchUtilsOur";
 
 // --- State for UI ---
 const email = ref('');
@@ -34,31 +35,39 @@ const triggerNotification = (message, isSuccess) => {
   }, 3000);
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!email.value) {
     triggerNotification("Please enter your email address.", false);
     return;
   }
-  
+
   isLoading.value = true;
+const params = {email:email.value}
+  try {
 
-  // --- Mock Backend Call (3-second delay) ---
-  setTimeout(() => {
+    // --- เรียกใช้ฟังก์ชัน addItem() ---
+    const data  = await addItem(`${import.meta.env.VITE_BACKEND}/v2/send-email?email=${encodeURIComponent(email.value)}`); // ไม่มี body ก็ส่ง {} ได้
+
     isLoading.value = false;
-
-    // --- Simulate success/failure ---
-    const isSuccess = Math.random() > 0.2; // 80% success chance
-
     formSubmitted.value = true;
-    submissionSuccess.value = isSuccess;
 
-    if (isSuccess) {
+    if (data.status === 201) {
+      submissionSuccess.value = true;
       triggerNotification("Password reset link sent!", true);
+      console.log("✅ Response:", data);
     } else {
-      triggerNotification("Failed to send link. Please try again.", false);
+      submissionSuccess.value = false;
+      triggerNotification(data?.message || "Failed to send link. Please try again.", false);
+      console.warn("⚠️ Backend response:", data);
     }
 
-  }, 3000);
+  } catch (error) {
+    isLoading.value = false;
+    formSubmitted.value = true;
+    submissionSuccess.value = false;
+    triggerNotification("An error occurred. Please try again.", false);
+    console.error("❌ Error:", error);
+  }
 };
 </script>
 

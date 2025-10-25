@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { theme } from '@/stores/themeStore.js';
+import { resetPasswordForgot,addItem,editItem ,editItemWithAuth} from '@/libs/fetchUtilsOur';
 
 const route = useRoute();
 const router = useRouter();
@@ -44,10 +45,8 @@ const triggerNotification = (message, isSuccess) => {
 // --- ✨ 1. Mock Function: Verify Token ---
 const verifyToken = async () => {
   token.value = route.query.token; 
-  
-  // ล้าง Token ออกจาก URL ทันที
-  router.replace({ query: {} }); 
-
+ // ล้าง query
+router.replace({ query: {} });
   if (!token.value) {
     isLoading.value = false;
     isVerified.value = false;
@@ -55,19 +54,23 @@ const verifyToken = async () => {
     return;
   }
 
-  // จำลองการตรวจสอบ Token (2 วินาที)
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
-  // จำลองผลลัพธ์ (80% สำเร็จ)
-  if (Math.random() > 0.2) {
+  try {
+    isLoading.value = true;
+    
+    const data = await addItem(`${import.meta.env.VITE_BACKEND}/v2/verify-password?token=${encodeURIComponent(token.value)}`);
+console.log(data);
+   if (data.status === 201){
+    // data จะเป็น user object จาก backend
+    emailToReset.value = data.data.email;
     isVerified.value = true;
     triggerNotification("Token verified. You can reset your password.", true);
-  } else {
-    isVerified.value = false;
-    triggerNotification("Invalid or expired token.", false);
   }
-  
-  isLoading.value = false;
+  } catch (err) {
+    isVerified.value = false;
+    triggerNotification(err.message, false);
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 // --- ✨ 2. Mock Function: Handle Submit ---
@@ -76,23 +79,47 @@ const handleSubmit = async () => {
     triggerNotification("Passwords do not match.", false);
     return;
   }
+
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/
+
   if (password.value.length < 8) {
     triggerNotification("Password must be at least 8 characters.", false);
+    return;
+  } else if (password.value.length >14){
+    triggerNotification("Password must be no more than 14 characters long.", false);
+    return
+  } else if(!passwordRegex.test(password.value)){
+    triggerNotification("Password must include upper, lower, number, and special character.", false);
+    return
+  }
+
+  if (!token.value || typeof token.value !== 'string') {
+    triggerNotification("Invalid or missing token.", false);
     return;
   }
 
   isSubmitting.value = true;
 
-  // --- Requirement: หน่วงเวลา 3 วินาที ---
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  try {
+    const response = await resetPasswordForgot(
+      `${import.meta.env.VITE_BACKEND}/v2/reset-password-forgot`,
+      token.value,   // ✅ ส่ง reset token ใน header
+      { newPassword: password.value, confirmPassword: confirmPassword.value }
+    );
 
-  isSubmitting.value = false;
-  
-  // จำลองว่าสำเร็จเสมอ
-  triggerNotification("Password reset successfully! Redirecting...", true);
-  setTimeout(() => {
-    router.push('/signin'); // ส่งไปหน้า Login
-  }, 2000);
+    if (response.status === 200 || response.status === 204) {
+      triggerNotification("Password reset successfully! Redirecting...", true);
+      setTimeout(() => router.push('/signin'), 2000);
+    } else {
+      triggerNotification("Failed to reset password.", false);
+    }
+
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    triggerNotification('A network error occurred. Please try again.', false);
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 
 onMounted(() => {

@@ -75,7 +75,7 @@ const handleSubmit = async () => {
       }
     );
 
-    if (response.status === 200) {
+    if (response.status === 201) {
       const accessToken = response.data?.access_token;
       Cookies.set('access_token', accessToken);
 
