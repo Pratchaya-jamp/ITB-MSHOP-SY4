@@ -1,39 +1,47 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { getItemsWithAuth } from '@/libs/fetchUtilsOur';
+import { useRoute, useRouter } from 'vue-router';
+import { getItemByIdWithAuth } from '@/libs/fetchUtilsOur'; 
 import Cookies from 'js-cookie' 
 import { jwtDecode } from 'jwt-decode' 
 import { theme } from '@/stores/themeStore.js'
-import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const orderIdInRoute = ref('2') 
+const route = useRoute(); 
+const orderId = route.params.id; 
 
-const orders = ref([])
+const currentOrder = ref(null);
+const isLoading = ref(true);
 
 // --- Computed Properties ---
 const themeClass = computed(() => {
     return theme.value === 'dark'
-        ? 'bg-gray-950 text-white'
-        : 'bg-white text-gray-950'
-})
-
-const currentOrder = computed(() => {
-    return orders.value.find(order => order.id.toString() === orderIdInRoute.value) || null;
+        ? 'dark bg-gray-900 text-slate-200'
+        : 'bg-slate-50 text-slate-800'
 });
 
-// (+) START: เพิ่ม Computed Property สำหรับ Progress Bar
+const orderTotal = computed(() => {
+    if (!currentOrder.value || !currentOrder.value.orderItems) return 0;
+    return currentOrder.value.orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+});
+
+// ✨ FIX: เพิ่ม computed property สำหรับเช็คสถานะ Cancelled
+const isOrderCancelled = computed(() => {
+    if (!currentOrder.value?.orderStatus) return false;
+    const status = currentOrder.value.orderStatus.toUpperCase();
+    return status === 'CANCELLED' || status === 'CANCELED';
+});
+
 const progressWidth = computed(() => {
     if (!currentOrder.value) return '0%';
     const steps = ['PLACED', 'PAID', 'COMPLETED'];
     const currentStepIndex = steps.indexOf(currentOrder.value.orderStatus?.toUpperCase());
 
-    if (currentStepIndex === 0) return '0%';    // ที่ Placed, progress = 0%
-    if (currentStepIndex === 1) return '50%';   // ที่ Paid, progress = 50%
-    if (currentStepIndex >= 2) return '100%'; // ที่ Completed, progress = 100%
+    if (currentStepIndex === 0) return '0%';
+    if (currentStepIndex === 1) return '50%';
+    if (currentStepIndex >= 2) return '100%';
     return '0%';
 });
-// (+) END: เพิ่ม Computed Property
 
 const formatPrice = (price) => {
     if (price === undefined || price === null) return '0'
@@ -50,71 +58,41 @@ const getStepStatus = (stepName, orderStatus) => {
     return 'upcoming';
 };
 
-// // --- API Fetching ---
-// async function fetchItemOrderbyId() {
-//   const token = Cookies.get('access_token');
-//   if (!token) {
-//     router.push('/signin');
-//     return;
-//   }
+async function fetchItemOrderbyId() {
+  isLoading.value = true;
+  const token = Cookies.get('access_token');
+  if (!token) {
+    router.push('/signin');
+    return;
+  }
 
-//   try {
-//     const response = await getItemsWithAuth(
-//       `${import.meta.env.VITE_BACKEND}/v2/orders/${orderIdInRoute.value}`,
-//       { token: token }
-//     );
-//     if (!response || (response.status && (response.status === 401 || response.status === 403))) {
-//         router.push('/signin');
-//         return;
-//     }
-//     const data = response.data ?? response;
-//     orders.value = [data];
-//   } catch (error) {
-//     console.error('Error fetching order details:', error);
-//     orders.value = [];
-//   }
-// }
+  try {
+    const response = await getItemByIdWithAuth(
+      `${import.meta.env.VITE_BACKEND}/v2/orders`, // Base URL
+      orderId, // ID จาก route
+      token
+    );
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+          router.push('/signin');
+      }
+      throw new Error('Failed to fetch order details');
+    }
+
+    const data = await response.json();
+    currentOrder.value = data; 
+    
+  } catch (error) {
+    console.error('Error fetching order details:', error);
+    currentOrder.value = null;
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 onMounted(() => {
-    // fetchItemOrderbyId()
-    orders.value = [
-    {
-      id: 2,
-      orderStatus: 'PAID', // ลองเปลี่ยนเป็น 'PLACED' / 'COMPLETED' เพื่อดู progress bar
-      shippingAddress: 'Tanaj L., 123/45 Rama II Road, Bangkok, Thailand 10150',
-      subTotal: 45900,
-      totalPrice: 48900,
-      orderItems: [
-        {
-          no: 1,
-          description: 'Apple iPhone 15 Pro Max 256GB - Natural Titanium',
-          price: 45900,
-          quantity: 1
-        },
-        {
-          no: 2,
-          description: 'MagSafe Charger',
-          price: 3000,
-          quantity: 1
-        }
-      ]
-    },
-    {
-      id: 3,
-      orderStatus: 'COMPLETED',
-      shippingAddress: 'Kittipong S., 88 Sukhumvit Soi 33, Bangkok 10110',
-      subTotal: 29900,
-      totalPrice: 29900,
-      orderItems: [
-        {
-          no: 1,
-          description: 'Samsung Galaxy S24 Ultra 256GB',
-          price: 29900,
-          quantity: 1
-        }
-      ]
-    }
-  ]
+  fetchItemOrderbyId();
 });
 </script>
 
@@ -122,63 +100,84 @@ onMounted(() => {
   <div :class="themeClass" class="min-h-screen font-sans transition-colors duration-500">
     <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       
-      <div v-if="currentOrder" class="animate-fade-in-up">
+      <div v-if="isLoading" class="text-center py-20 animate-fade-in-up">
+        <svg class="animate-spin h-12 w-12 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <p class="mt-4 text-lg font-medium" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
+          Loading Order Details...
+        </p>
+      </div>
+      
+      <div v-else-if="currentOrder" class="animate-fade-in-up">
         <div class="mb-8 text-center">
             <p :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">Order #{{ currentOrder.id }}</p>
-            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+            
+            <h1 v-if="isOrderCancelled" class="text-4xl font-bold text-red-500">
+                Order Cancelled
+            </h1>
+            <h1 v-else class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                 Thank you for your order!
             </h1>
         </div>
 
-        <div class="mb-12 max-w-xl mx-auto">
+        <div v-if="!isOrderCancelled" class="mb-12 max-w-xl mx-auto">
             <div class="flex items-start">
                 <div class="text-center w-20">
                     <div class="w-10 h-10 mx-auto rounded-full flex items-center justify-center transition-all duration-500 border-4"
-                         :class="{
+                        :class="{
                             'bg-blue-500 border-blue-500': getStepStatus('PLACED', currentOrder.orderStatus) === 'completed' || getStepStatus('PLACED', currentOrder.orderStatus) === 'active',
                             'bg-gray-800 border-gray-800': theme === 'dark' && getStepStatus('PLACED', currentOrder.orderStatus) === 'upcoming',
                             'bg-gray-200 border-gray-200': theme !== 'dark' && getStepStatus('PLACED', currentOrder.orderStatus) === 'upcoming'
-                         }">
-                         <svg v-if="getStepStatus('PLACED', currentOrder.orderStatus) === 'completed' || getStepStatus('PLACED', currentOrder.orderStatus) === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        }">
+                        <svg v-if="getStepStatus('PLACED', currentOrder.orderStatus) === 'completed' || getStepStatus('PLACED', currentOrder.orderStatus) === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                     </div>
                     <p class="mt-2 text-xs font-semibold">Placed</p>
                 </div>
-
                 <div class="flex-1 h-1 mt-5 rounded-full transition-colors duration-500" 
                      :class="getStepStatus('PLACED', currentOrder.orderStatus) === 'completed' ? 'bg-blue-500' : (theme === 'dark' ? 'bg-white/10' : 'bg-black/5')">
                 </div>
-
                 <div class="text-center w-20">
                     <div class="w-10 h-10 mx-auto rounded-full flex items-center justify-center transition-all duration-500 border-4"
-                         :class="{
+                        :class="{
                             'bg-blue-500 border-blue-500': getStepStatus('PAID', currentOrder.orderStatus) === 'completed' || getStepStatus('PAID', currentOrder.orderStatus) === 'active',
                             'bg-gray-800 border-gray-800': theme === 'dark' && getStepStatus('PAID', currentOrder.orderStatus) === 'upcoming',
                             'bg-gray-200 border-gray-200': theme !== 'dark' && getStepStatus('PAID', currentOrder.orderStatus) === 'upcoming'
-                         }">
-                         <svg v-if="getStepStatus('PAID', currentOrder.orderStatus) === 'completed' || getStepStatus('PAID', currentOrder.orderStatus) === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        }">
+                        <svg v-if="getStepStatus('PAID', currentOrder.orderStatus) === 'completed' || getStepStatus('PAID', currentOrder.orderStatus) === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                     </div>
                     <p class="mt-2 text-xs font-semibold" :class="getStepStatus('PAID', currentOrder.orderStatus) === 'upcoming' ? 'text-gray-500' : ''">Paid</p>
                 </div>
-
                 <div class="flex-1 h-1 mt-5 rounded-full transition-colors duration-500" 
                      :class="getStepStatus('PAID', currentOrder.orderStatus) === 'completed' ? 'bg-blue-500' : (theme === 'dark' ? 'bg-white/10' : 'bg-black/5')">
                 </div>
-
                 <div class="text-center w-20">
                     <div class="w-10 h-10 mx-auto rounded-full flex items-center justify-center transition-all duration-500 border-4"
-                         :class="{
-                            'bg-gradient-to-br from-blue-500 to-purple-600 border-purple-500/50 shadow-lg': getStepStatus('COMPLETED', currentOrder.orderStatus) === 'active',
-                            'bg-blue-500 border-blue-500': getStepStatus('COMPLETED', currentOrder.orderStatus) === 'completed',
+                        :class="{
+                            'bg-blue-500 border-blue-500': getStepStatus('COMPLETED', currentOrder.orderStatus) === 'completed' || getStepStatus('COMPLETED', currentOrder.orderStatus) === 'active',
                             'bg-gray-800 border-gray-800': theme === 'dark' && getStepStatus('COMPLETED', currentOrder.orderStatus) === 'upcoming',
                             'bg-gray-200 border-gray-200': theme !== 'dark' && getStepStatus('COMPLETED', currentOrder.orderStatus) === 'upcoming'
-                         }">
-                         <svg v-if="getStepStatus('COMPLETED', currentOrder.orderStatus) === 'completed'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                         <span v-else class="font-bold text-white">3</span>
+                        }">
+                        <svg v-if="getStepStatus('COMPLETED', currentOrder.orderStatus) === 'completed' || getStepStatus('COMPLETED', currentOrder.orderStatus) === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                     </div>
                     <p class="mt-2 text-xs font-semibold" :class="getStepStatus('COMPLETED', currentOrder.orderStatus) === 'upcoming' ? 'text-gray-500' : ''">Completed</p>
                 </div>
             </div>
         </div>
+        
+        <div v-else class="mb-12 max-w-xl mx-auto p-6 rounded-2xl flex items-center gap-4" :class="theme === 'dark' ? 'bg-red-900/30 border border-red-500/30' : 'bg-red-50 border border-red-200'">
+            <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-full bg-red-500/10 text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold" :class="theme === 'dark' ? 'text-red-400' : 'text-red-700'">Order Status: Cancelled</h3>
+                <p class="text-sm" :class="theme === 'dark' ? 'text-slate-300' : 'text-slate-600'">This order was cancelled and will not be processed.</p>
+            </div>
+        </div>
+
         <div class="p-8 rounded-3xl space-y-8" :class="theme === 'dark' ? 'bg-gray-950/70 backdrop-blur-xl border border-white/10' : 'bg-white/70 backdrop-blur-xl border border-black/10'">
             <div class="grid md:grid-cols-2 gap-8">
                 <div class="space-y-2">
@@ -188,8 +187,8 @@ onMounted(() => {
                  <div class="space-y-2">
                     <h2 class="text-lg font-semibold flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>Payment Summary</h2>
                     <div class="text-sm" :class="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-                        <p><strong>Subtotal:</strong> {{ formatPrice(currentOrder.subTotal) }} ฿</p>
-                        <p><strong>Total Paid:</strong> <span class="font-bold text-base" :class="theme === 'dark' ? 'text-white' : 'text-black'">{{ formatPrice(currentOrder.totalPrice) }} ฿</span></p>
+                        <p><strong>Subtotal:</strong> {{ formatPrice(orderTotal) }} ฿</p>
+                        <p><strong>Total Paid:</strong> <span class="font-bold text-base" :class="theme === 'dark' ? 'text-white' : 'text-black'">{{ formatPrice(orderTotal) }} ฿</span></p>
                     </div>
                 </div>
             </div>

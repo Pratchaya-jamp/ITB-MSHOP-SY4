@@ -193,21 +193,23 @@ const addorder = async () => {
         return groups;
     }, {});
 
-    const orderPayload = Object.entries(groupedBySeller).map(([sellerId, items]) => ({
-        buyerId,
-        sellerId: Number(sellerId),
-        orderDate: new Date().toISOString(),
-        orderNote: orderNote.value,
-        shippingAddress: shippingAddress.value,
-        orderStatus: 'COMPLETED',
-        orderItems: items.map((item, index) => ({
-            no: index + 1,
-            saleItemId: item.saleItemId,
-            price: item.price,
-            quantity: item.quantity,
-            description: item.description
-        }))
-    }));
+const orderPayload = {
+  orders: Object.entries(groupedBySeller).map(([sellerId, items]) => ({
+    buyerId,
+    sellerId: Number(sellerId),
+    orderDate: new Date().toISOString(),
+    orderNote: orderNote.value,
+    shippingAddress: shippingAddress.value,
+    orderStatus: 'COMPLETED',
+    orderItems: items.map((item, index) => ({
+      no: index + 1,
+      saleItemId: item.saleItemId,
+      price: item.price,
+      quantity: item.quantity,
+      description: item.description
+    }))
+  }))
+};
 
     try {
         const response = await addItemWithAuth(

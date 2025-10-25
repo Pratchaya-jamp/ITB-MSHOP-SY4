@@ -9,41 +9,62 @@ import { theme } from "@/stores/themeStore.js";
 const router = useRouter();
 const orders = ref([]);
 const selectedTab = ref("Completed");
-const goToOrderDetail = (orderId) => {
-    router.push(`/order/${orderId}`);
+
+// --- ✨ FIX: เพิ่ม State สำหรับจัดการ "NEW" Badge ---
+const viewedOrders = ref(new Set()); // ใช้ Set เพื่อประสิทธิภาพในการค้นหา
+const storageKey = ref(''); // Key ของ LocalStorage (เช่น 'viewed_orders_user_1')
+let userIdentifier = null; // จะเก็บ ID ของ User หรือ Seller
+
+// --- ✨ FIX: แก้ไข goToOrderDetail ให้ทำการ "Mark as Read" ---
+const goToOrderDetail = (id) => {
+    // 1. เพิ่ม Order ID นี้ไปยัง Set ของที่อ่านแล้ว
+    viewedOrders.value.add(id);
+    // 2. บันทึก Set ที่อัปเดตแล้วลง LocalStorage
+    if (storageKey.value) {
+        localStorage.setItem(storageKey.value, JSON.stringify(Array.from(viewedOrders.value)));
+    }
+    // 3. ไปยังหน้า Detail
+    router.push(`/order/${id}`);
 }
+
+// --- ✨ FIX: เพิ่มฟังก์ชันสำหรับโหลดข้อมูลที่เคยอ่านแล้ว ---
+const loadViewedOrders = (id) => {
+    if (!id) return;
+    storageKey.value = `viewed_orders_${id}`; // สร้าง Key ที่ผูกกับ User
+    const data = localStorage.getItem(storageKey.value);
+    if (data) {
+        viewedOrders.value = new Set(JSON.parse(data));
+    }
+};
+
+// --- ✨ FIX: เพิ่มฟังก์ชันสำหรับ Template ใช้เช็ค ---
+const isOrderNew = (orderId) => {
+    return !viewedOrders.value.has(orderId);
+};
+// --- (จบส่วน FIX) ---
+
 
 const themeClass = computed(() => {
     return theme.value === 'dark'
-        ? 'bg-gray-950 text-white'
-        : 'bg-white text-gray-950'
+        ? 'dark bg-gray-900 text-slate-200'
+        : 'bg-slate-50 text-slate-800'
 })
 
-// --- ✨ FIX: รวม Filter และ Sort เข้าไว้ด้วยกันใน Computed เดียว ---
 const sortedFilteredOrders = computed(() => {
-    // 0. ตรวจสอบก่อนว่า orders.value เป็น Array จริงๆ เพื่อป้องกัน Error
     if (!Array.isArray(orders.value)) {
         return [];
     }
-
     const upperSelectedTab = selectedTab.value.toUpperCase();
-
     return orders.value
-        .filter((order) => order.orderStatus.toUpperCase() === upperSelectedTab) // 1. กรองตาม Tab ที่เลือกก่อน
-        .sort((a, b) => { // 2. จากนั้นนำผลลัพธ์ที่กรองแล้วมาเรียงลำดับ
-            // Level 1: เปรียบเทียบ orderDate ก่อน (ใหม่ไปเก่า)
+        .filter((order) => order.orderStatus.toUpperCase() === upperSelectedTab)
+        .sort((a, b) => {
             const dateDifference = new Date(b.orderDate) - new Date(a.orderDate);
-
-            // ถ้าวันที่ไม่เท่ากัน ให้ใช้ผลต่างของวันที่เป็นตัวตัดสิน
             if (dateDifference !== 0) {
                 return dateDifference;
             }
-
-            // Level 2: ถ้าวันที่เท่ากัน ให้เปรียบเทียบด้วย id (ใหม่ไปเก่า)
             return b.id - a.id;
         });
 });
-
 
 const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -74,23 +95,30 @@ async function fetchItemOrder() {
         return;
     }
 
-    let userId, userRole, sellerId;
+    let userId, userRole, sellerId, endpoint;
     try {
         const decodedToken = jwtDecode(token);
         userId = decodedToken.id;
         userRole = decodedToken.role;
         sellerId = decodedToken.seller_id;
+
+        // ✨ FIX: กำหนด userIdentifier และ endpoint
+        if (userRole === "SELLER") {
+            userIdentifier = sellerId;
+            endpoint = `${import.meta.env.VITE_BACKEND}/v2/sellers/${sellerId}/orders`;
+        } else {
+            userIdentifier = userId;
+            endpoint = `${import.meta.env.VITE_BACKEND}/v2/users/${userId}/orders`;
+        }
+
     } catch (err) {
         console.error("Failed to decode token:", err);
         router.push("/signin");
         return;
     }
 
-    const endpoint =
-        // userRole === "SELLER"
-        //     ? `${import.meta.env.VITE_BACKEND}/v2/sellers/${sellerId}/orders`
-        //     : `${import.meta.env.VITE_BACKEND}/v2/users/${userId}/orders`;
-        `${import.meta.env.VITE_BACKEND}/v2/users/${userId}/orders`
+    // ✨ FIX: โหลดข้อมูลการอ่านก่อนยิง API
+    loadViewedOrders(userIdentifier);
 
     try {
         const response = await getItemsWithAuth(endpoint, { token });
@@ -153,8 +181,14 @@ onMounted(() => {
                         </div>
                         <div class="text-sm" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
                             Order
-                            <!-- <span class="font-semibold"
-                                :class="theme === 'dark' ? 'text-slate-200' : 'text-slate-700'">#{{ order.id }}</span> -->
+                            <span class="font-semibold"
+                                :class="theme === 'dark' ? 'text-slate-200' : 'text-slate-700'">#{{ order.id }}</span>
+                            
+                            <span v-if="isOrderNew(order.id)"
+                                  class="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400">
+                                NEW
+                            </span>
+
                             <span class="mx-2">·</span>
                             <span>{{ formatDate(order.orderDate) }}</span>
                         </div>
@@ -208,8 +242,8 @@ onMounted(() => {
                                             order.orderItems.reduce(
                                                 (sum, item) => sum + item.price * item.quantity,
                                                 0
-                                    )
-                                    )
+                                            )
+                                        )
                                     }}
                                     ฿
                                 </span>
