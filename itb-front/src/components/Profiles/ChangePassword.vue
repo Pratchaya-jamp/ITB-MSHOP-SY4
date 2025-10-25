@@ -95,7 +95,7 @@ const handleSubmit = async () => {
   try {
     const result = await editItemWithAuth(url, idForPath, body, token, false); // false = ไม่ใช่ multipart
 
-    if (result.status === 204) {
+    if (result.status === 200) {
       triggerNotification("Password changed successfully! Redirecting...", true);
       setTimeout(() => {
         router.push('/profile'); // กลับไปหน้า Profile
