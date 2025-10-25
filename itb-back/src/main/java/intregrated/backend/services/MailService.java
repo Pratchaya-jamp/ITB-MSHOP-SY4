@@ -21,45 +21,51 @@ public class MailService {
                 <html>
                 <head>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
                     </style>
                 </head>
-                <body style="font-family: 'Roboto', sans-serif; background-color: #f0f2f5; margin: 0; padding: 40px 0; text-align: center;">
-                
-                    <div style="max-width: 500px; margin: auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); overflow: hidden;">
-                
-                        <div style="background-color: #4CAF50; color: #ffffff; padding: 30px 20px; border-top-left-radius: 12px; border-top-right-radius: 12px;">
-                            <h1 style="margin: 0; font-size: 28px; font-weight: 700;">ITBM-SHOP</h1>
+                <body style="font-family: 'Inter', sans-serif; background-color: #eef2f6; margin: 0; padding: 60px 20px; text-align: center; color: #333;">
+
+                    <div style="max-width: 550px; margin: auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08); overflow: hidden; text-align: left; border: 1px solid #e3e8ed;">
+
+                        <div style="background-color: #f8fbfd; padding: 30px 45px; text-align: center; border-bottom: 1px solid #eef2f6;">
+                            <h1 style="font-size: 30px; font-weight: 700; color: #38a169; margin: 0; letter-spacing: -0.5px;">ITBM-SHOP</h1>
+                            <p style="font-size: 15px; color: #8898aa; margin-top: 8px;">Email Verification</p>
                         </div>
-                
-                        <div style="padding: 30px;">
-                            <p style="font-size: 16px; color: #555555; line-height: 1.6;">
-                                Hello,
+
+                        <div style="padding: 40px 45px;">
+
+                            <p style="font-size: 17px; line-height: 1.8; color: #52667a; margin-bottom: 20px;">
+                                Hello there,
                             </p>
-                            <p style="font-size: 16px; color: #555555; line-height: 1.6;">
-                                Please verify your email address by clicking the button below.
+                            <p style="font-size: 17px; line-height: 1.8; color: #52667a; margin-bottom: 35px;">
+                                Thank you for joining ITBM-SHOP! To activate your account, please verify your email address by clicking the button below.
                             </p>
-                
-                            <div style="margin: 30px 0;">
-                                <a href="%s" style="background-color: #4CAF50; color: #ffffff; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; font-size: 16px; transition: background-color 0.3s ease;">
-                                    Verify Email
+
+                            <div style="margin: 40px 0; text-align: center;">
+                                <a href="%s" style="background-color: #4CAF50; color: #ffffff; padding: 18px 40px; text-decoration: none; font-weight: 600; border-radius: 10px; display: inline-block; font-size: 18px; transition: background-color 0.3s ease, transform 0.2s ease; box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);">
+                                    Verify Your Email Address
                                 </a>
                             </div>
-                
-                            <p style="font-size: 14px; color: #999999; margin-top: 20px;">
-                                This link will expire in <b>1 hour</b>.
+
+                            <p style="font-size: 15px; color: #aab8c2; margin-top: 40px; text-align: center;">
+                                This link is valid for <b style="color: #6d7f95;">1 hour</b>. If you did not sign up for ITBM-SHOP, please ignore this email.
                             </p>
+
+                            <div style="border-top: 1px solid #eef2f6; margin-top: 45px; padding-top: 30px; text-align: center;">
+                                <p style="font-size: 14px; color: #8898aa; margin: 0; line-height: 1.7;">
+                                    Warm regards,<br/>
+                                    The ITBM-SHOP Team
+                                </p>
+                                <p style="font-size: 12px; color: #ccd6df; margin-top: 15px;">
+                                    © 2023 ITBM-SHOP. All rights reserved.
+                                </p>
+                            </div>
+
                         </div>
-                
-                        <div style="background-color: #f8f9fa; padding: 20px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
-                            <p style="font-size: 14px; color: #777777; margin: 0;">
-                                Thanks,<br/>
-                                The ITBM-SHOP Team
-                            </p>
-                        </div>
-                
+
                     </div>
-                
+
                 </body>
                 </html>
                 """.formatted(verificationUrl);
@@ -89,45 +95,51 @@ public class MailService {
                 <html>
                 <head>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
                     </style>
                 </head>
-                <body style="font-family: 'Roboto', sans-serif; background-color: #f0f2f5; margin: 0; padding: 40px 0; text-align: center;">
-                
-                    <div style="max-width: 500px; margin: auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); overflow: hidden;">
-                
-                        <div style="background-color: #4CAF50; color: #ffffff; padding: 30px 20px; border-top-left-radius: 12px; border-top-right-radius: 12px;">
-                            <h1 style="margin: 0; font-size: 28px; font-weight: 700;">ITBM-SHOP</h1>
+                <body style="font-family: 'Inter', sans-serif; background-color: #eef2f6; margin: 0; padding: 60px 20px; text-align: center; color: #333;">
+                    
+                    <div style="max-width: 550px; margin: auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08); overflow: hidden; text-align: left; border: 1px solid #e3e8ed;">
+                        
+                        <div style="background-color: #f8fbfd; padding: 30px 45px; text-align: center; border-bottom: 1px solid #eef2f6;">
+                            <h1 style="font-size: 30px; font-weight: 700; color: #38a169; margin: 0; letter-spacing: -0.5px;">ITBM-SHOP</h1>
+                            <p style="font-size: 15px; color: #8898aa; margin-top: 8px;">Password Reset Request</p>
                         </div>
-                
-                        <div style="padding: 30px;">
-                            <p style="font-size: 16px; color: #555555; line-height: 1.6;">
+                    
+                        <div style="padding: 40px 45px;">
+                        
+                            <p style="font-size: 17px; line-height: 1.8; color: #52667a; margin-bottom: 20px;">
                                 Hello,
                             </p>
-                            <p style="font-size: 16px; color: #555555; line-height: 1.6;">
-                                Please verify your email address to change password by clicking the button below.
+                            <p style="font-size: 17px; line-height: 1.8; color: #52667a; margin-bottom: 35px;">
+                                We received a request to reset your password. To proceed, please click the button below. No changes will be made to your account until you act.
                             </p>
-                
-                            <div style="margin: 30px 0;">
-                                <a href="%s" style="background-color: #4CAF50; color: #ffffff; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; font-size: 16px; transition: background-color 0.3s ease;">
-                                    Change Password
+                    
+                            <div style="margin: 40px 0; text-align: center;">
+                                <a href="%s" style="background-color: #4CAF50; color: #ffffff; padding: 18px 40px; text-decoration: none; font-weight: 600; border-radius: 10px; display: inline-block; font-size: 18px; transition: background-color 0.3s ease, transform 0.2s ease; box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);">
+                                    Reset Your Password
                                 </a>
                             </div>
-                
-                            <p style="font-size: 14px; color: #999999; margin-top: 20px;">
-                                This link will expire in <b>1 hour</b>.
+                    
+                            <p style="font-size: 15px; color: #aab8c2; margin-top: 40px; text-align: center;">
+                                This link is valid for <b style="color: #6d7f95;">1 hour</b>. If you did not request this change, please ignore this email.
                             </p>
+                            
+                            <div style="border-top: 1px solid #eef2f6; margin-top: 45px; padding-top: 30px; text-align: center;">
+                                <p style="font-size: 14px; color: #8898aa; margin: 0; line-height: 1.7;">
+                                    Warm regards,<br/>
+                                    The ITBM-SHOP Team
+                                </p>
+                                <p style="font-size: 12px; color: #ccd6df; margin-top: 15px;">
+                                    © 2023 ITBM-SHOP. All rights reserved.
+                                </p>
+                            </div>
+                            
                         </div>
-                
-                        <div style="background-color: #f8f9fa; padding: 20px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
-                            <p style="font-size: 14px; color: #777777; margin: 0;">
-                                Thanks,<br/>
-                                The ITBM-SHOP Team
-                            </p>
-                        </div>
-                
+                        
                     </div>
-                
+                    
                 </body>
                 </html>
                 """.formatted(verificationUrl);
@@ -156,34 +168,45 @@ public class MailService {
                 <html>
                 <head>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
                     </style>
                 </head>
-                <body style="font-family: 'Roboto', sans-serif; background-color: #f0f2f5; margin: 0; padding: 40px 0; text-align: center;">
-                
-                    <div style="max-width: 500px; margin: auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); overflow: hidden;">
-                
-                        <div style="background-color: #4CAF50; color: #ffffff; padding: 30px 20px; border-top-left-radius: 12px; border-top-right-radius: 12px;">
-                            <h1 style="margin: 0; font-size: 28px; font-weight: 700;">ITBM-SHOP</h1>
+                <body style="font-family: 'Inter', sans-serif; background-color: #eef2f6; margin: 0; padding: 60px 20px; text-align: center; color: #333;">
+
+                    <div style="max-width: 550px; margin: auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08); overflow: hidden; text-align: left; border: 1px solid #e3e8ed;">
+
+                        <div style="background-color: #f8fbfd; padding: 30px 45px; text-align: center; border-bottom: 1px solid #eef2f6;">
+                            <h1 style="font-size: 30px; font-weight: 700; color: #38a169; margin: 0; letter-spacing: -0.5px;">ITBM-SHOP</h1>
+                            <p style="font-size: 15px; color: #8898aa; margin-top: 8px;">Password Changed Successfully</p>
                         </div>
-                
-                        <div style="padding: 30px;">
-                            <p style="font-size: 16px; color: #555555; line-height: 1.6;">
+
+                        <div style="padding: 40px 45px;">
+
+                            <p style="font-size: 17px; line-height: 1.8; color: #52667a; margin-bottom: 20px;">
                                 Hello,
                             </p>
-                            <p style="font-size: 16px; color: #555555; line-height: 1.6;">
-                                We are notify you that your password has been changed recently.
+                            <p style="font-size: 17px; line-height: 1.8; color: #52667a; margin-bottom: 35px;">
+                                This is to confirm that the password for your ITBM-SHOP account was successfully changed.
                             </p>
-          
-                        <div style="background-color: #f8f9fa; padding: 20px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
-                            <p style="font-size: 14px; color: #777777; margin: 0;">
-                                Thanks,<br/>
-                                The ITBM-SHOP Team
+
+                            <p style="font-size: 15px; color: #aab8c2; margin-top: 40px; text-align: center; line-height: 1.7;">
+                                If you did not make this change, please contact our support team immediately to secure your account.
                             </p>
+
+                            <div style="border-top: 1px solid #eef2f6; margin-top: 45px; padding-top: 30px; text-align: center;">
+                                <p style="font-size: 14px; color: #8898aa; margin: 0; line-height: 1.7;">
+                                    Warm regards,<br/>
+                                    The ITBM-SHOP Team
+                                </p>
+                                <p style="font-size: 12px; color: #ccd6df; margin-top: 15px;">
+                                    © 2023 ITBM-SHOP. All rights reserved.
+                                </p>
+                            </div>
+
                         </div>
-                
+
                     </div>
-                
+
                 </body>
                 </html>
                 """;
