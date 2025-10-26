@@ -28,19 +28,13 @@ async function refreshAccessToken() {
       return null;
     }
 
-    const data = await response.json()
-    if (data?.accessToken) {
-      Cookies.set('access_token', data.accessToken)
-      return data.accessToken
-    } else {
-      console.warn("No access token returned. Redirecting to login...")
-      window.location.assign(`${import.meta.env.BASE_URL}/signin`);
-      return null
-    }
+    const data = await res.json();
+    // เก็บ access_token ใหม่ที่ได้กลับมา
+    Cookies.set('access_token', data.access_token);
+    return data.access_token;
   } catch (err) {
-    console.error("Error refreshing token:", err)
-    window.location.assign(`${import.meta.env.BASE_URL}/signin`);
-    return null
+    console.error("Error refreshing token:", err);
+    return null;
   }
 }
 

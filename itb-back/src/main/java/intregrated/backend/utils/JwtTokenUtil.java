@@ -15,6 +15,7 @@ public class JwtTokenUtil {
     private static final String ISSUER = "http://intproj24.sit.kmutt.ac.th/sy4/";
     private static final long EXPIRATION_MS = 30*60*1000;
     private static final long verify_EXPIRATION_MS = 30*60*1000;
+    private static final long PASSWORD_VERIFY_EXPIRATION_MS = 10 * 60 * 1000;
     private final Key key;
 
     public JwtTokenUtil(@Value("${jwt.secret}") String secret) {
@@ -44,7 +45,7 @@ public class JwtTokenUtil {
         return Jwts.builder()
                 .setIssuer(ISSUER)
                 .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + verify_EXPIRATION_MS))
+                .setExpiration(new Date(now + PASSWORD_VERIFY_EXPIRATION_MS))
                 .claim("id", user.getId())
                 .claim("email", user.getEmail())
                 .claim("salt", salt)
