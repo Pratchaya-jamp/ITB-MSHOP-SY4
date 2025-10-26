@@ -7,20 +7,9 @@ const router = useRouter()
 const services = ref(null)
 const contact = ref(null)
 const randomSaleItems = ref([])
-const slidePosition = ref(0) // ตำแหน่งการสไลด์
-let slideInterval = null // ตัวแปรสำหรับเก็บ interval
+const slidePosition = ref(0) 
+let slideInterval = null 
 const mainImage = ref("/sy4/phone/iPhone.png")
-
-// --- Script ถูกปรับให้เหลือแค่การรับค่า Theme มาใช้งาน ---
-// const theme = ref(localStorage.getItem('theme') || 'dark')
-
-// // Listener to update the theme if it's changed in another tab
-// window.addEventListener('storage', () => {
-//     const newTheme = localStorage.getItem('theme') || 'dark'
-//     if (newTheme !== theme.value) {
-//         theme.value = newTheme
-//     }
-// })
 
 const themeClass = computed(() => {
     return theme.value === 'dark'
@@ -46,7 +35,7 @@ const typeEffect = () => {
     charIndex++
     if (charIndex === currentText.length) {
       isDeleting = true
-      setTimeout(typeEffect, 1500) // พักก่อนลบ
+      setTimeout(typeEffect, 1500)
       return
     }
   } else {
@@ -59,18 +48,6 @@ const typeEffect = () => {
   }
   setTimeout(typeEffect, isDeleting ? 50 : 80)
 }
-
-// const applyTheme = (newTheme) => {
-//   document.body.className = newTheme === 'dark' ? 'dark-theme' : ''
-//   localStorage.setItem('theme', newTheme)
-//   theme.value = newTheme
-// }
-
-// const toggleTheme = () => {
-//   const newTheme = theme.value === 'dark' ? 'light' : 'dark'
-//   applyTheme(newTheme)
-// }
-// --- สิ้นสุดส่วน Script ---
 
 const fetchRandomSaleItems = async () => {
     try {
@@ -144,11 +121,6 @@ const goToSignUp = () => {
   router.push(`/registers`)
 }
 
-// const iconComponent = computed(() => {
-//     return theme.value === 'dark'
-//         ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>`
-//         : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>`
-// })
 </script>
 
 <template>
@@ -258,7 +230,6 @@ const goToSignUp = () => {
 </template>
 
 <style scoped>
-/* === Typing Text Animation === */
 .cursor {
   display: inline-block;
   width: 1ch;
@@ -271,7 +242,6 @@ const goToSignUp = () => {
   }
 }
 
-/* === Floating Image Animation === */
 @keyframes float-slow {
   0% {
     transform: translateY(0);
@@ -288,11 +258,10 @@ const goToSignUp = () => {
   animation: float-slow 4s ease-in-out infinite;
 }
 
-/* Optional – smooth typing text fade-in */
 .typing-text {
   transition: all 0.3s ease;
 }
-/* @keyframes และอื่นๆ เหมือนเดิม */
+
 @keyframes fade-in-up {
   from {
     opacity: 0;

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
 import { theme } from '@/stores/themeStore.js';
-import { editItemWithAuth } from '@/libs/fetchUtilsOur'; // Import utility
+import { editItemWithAuth } from '@/libs/fetchUtilsOur';
 
 const router = useRouter();
 
@@ -14,7 +14,7 @@ const userId = ref(null);
 const oldPassword = ref('');
 const newPassword = ref('');
 const confirmPassword = ref('');
-const isLoading = ref(false); // Loading ตอน Submit
+const isLoading = ref(false); 
 
 // State สำหรับการแสดงผลรหัสผ่าน
 const showOldPassword = ref(false);
@@ -39,22 +39,18 @@ const passwordError = ref('');
 const confirmPasswordError = ref('');
 
 const isFormValid = computed(() => {
-  // ตรวจสอบว่ากรอกครบ
   if (!oldPassword.value || !newPassword.value || !confirmPassword.value) {
     return false;
   }
-  // ตรวจสอบว่ารหัสใหม่ตรงกัน
   if (newPassword.value !== confirmPassword.value) {
     confirmPasswordError.value = "Passwords do not match.";
     return false;
   }
-  // ตรวจสอบความยาวรหัสใหม่ (ตัวอย่าง)
   if (newPassword.value.length < 8) {
     passwordError.value = "New password must be at least 8 characters.";
     return false;
   }
   
-  // ถ้าผ่านหมด
   passwordError.value = '';
   confirmPasswordError.value = '';
   return true;
@@ -71,17 +67,13 @@ const triggerNotification = (message, isSuccess) => {
   }, 3000);
 };
 
-// --- ✨ Logic การ Submit ---
 const handleSubmit = async () => {
   if (!isFormValid.value) {
     triggerNotification("Please check your inputs.", false);
     return;
   }
-
   isLoading.value = true;
 
-  // Controller ที่คุณให้มา: PUT /v2/user/{uid}/reset-password-change
-  // เราจะใช้ editItemWithAuth(url, id, body, token)
   const url = `${import.meta.env.VITE_BACKEND}/v2/user`;
   const idForPath = `${userId.value}/reset-password-change`;
   const token = Cookies.get('access_token');
@@ -93,15 +85,14 @@ const handleSubmit = async () => {
   };
 
   try {
-    const result = await editItemWithAuth(url, idForPath, body, token, false); // false = ไม่ใช่ multipart
+    const result = await editItemWithAuth(url, idForPath, body, token, false); 
 
     if (result.status === 200) {
       triggerNotification("Password changed successfully! Redirecting...", true);
       setTimeout(() => {
-        router.push('/profile'); // กลับไปหน้า Profile
+        router.push('/profile'); 
       }, 2000);
     } else {
-      // 401 (รหัสเก่าผิด) หรือ 400 (Bad Request)
       const errorMsg = result.data?.message || "Failed to change password. Please check your old password.";
       triggerNotification(errorMsg, false);
     }
@@ -113,21 +104,21 @@ const handleSubmit = async () => {
   }
 };
 
-// --- ✨ Logic การตรวจสอบสิทธิ์ ---
+
 onMounted(() => {
   const token = Cookies.get('access_token');
   if (!token) {
-    router.push('/signin'); // ดีดไปหน้า Sign In ถ้าไม่ Login
+    router.push('/signin');
     return;
   }
 
   try {
     const decodedToken = jwtDecode(token);
-    userEmail.value = decodedToken.email; // ดึง Email มาแสดง
-    userId.value = decodedToken.id;       // เก็บ ID ไว้ใช้ยิง API
+    userEmail.value = decodedToken.email; 
+    userId.value = decodedToken.id;     
   } catch (error) {
     console.error("Invalid token:", error);
-    router.push('/signin'); // ถ้า Token มั่ว ก็ดีดไป
+    router.push('/signin');
   }
 });
 </script>

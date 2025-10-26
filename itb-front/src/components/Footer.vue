@@ -1,7 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
-// 1. Import 'theme' จาก Store ส่วนกลาง เพื่อให้ Footer เปลี่ยนสีตามได้
-import { theme } from '@/stores/themeStore.js'; // <-- ตรวจสอบว่า Path ไปยังไฟล์ store ถูกต้อง
+import { theme } from '@/stores/themeStore.js';
 
 const router = useRouter();
 </script>
@@ -70,5 +69,4 @@ const router = useRouter();
 </template>
 
 <style scoped>
-/* No additional styles are needed as it's all handled by Tailwind CSS */
 </style>

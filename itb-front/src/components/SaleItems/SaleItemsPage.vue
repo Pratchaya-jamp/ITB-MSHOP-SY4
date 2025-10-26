@@ -241,7 +241,7 @@ const loadOrderCount = async (token, sellerId) => {
     );
     
     if (response && response.totalElements !== undefined) {
-      orderCount.value = response.totalElements; // ได้จำนวน Order ทั้งหมด
+      orderCount.value = response.totalElements; 
     }
   } catch (err) {
     console.error("Error fetching order count:", err);
@@ -313,13 +313,11 @@ const token = Cookies.get("access_token");
   let response;
 
   if (token && userRole === "SELLER" && !isGridView.value) {
-    // fetch สำหรับ seller
     response = await getItemsWithAuth(
       `${import.meta.env.VITE_BACKEND}/v2/sellers/${userId}/sale-items`,
       { params, token }
     );
   } else {
-    // fetch public สำหรับทุกกรณีที่ไม่ตรงเงื่อนไข
     response = await getItems(
       `${import.meta.env.VITE_BACKEND}/v2/sale-items/page-sale-items`,
       { params }
@@ -944,7 +942,6 @@ const removeActiveFilter = (filter) => {
           <div class="flex items-center gap-2 rounded-full p-1 text-sm font-semibold"
             :class="theme === 'dark' ? 'bg-gray-800' : 'bg-slate-200'">
 
-            <!-- ปุ่มไปหน้าแรก -->
             <button 
               @click="goToPage(0)" 
               :disabled="currentPage === 0"
@@ -953,7 +950,6 @@ const removeActiveFilter = (filter) => {
               &lt;&lt; First
             </button>
           
-            <!-- ปุ่มก่อนหน้า -->
             <button 
               @click="goToPage(currentPage - 1)" 
               :disabled="currentPage === 0"
@@ -962,7 +958,6 @@ const removeActiveFilter = (filter) => {
               &lt; Prev
             </button>
           
-            <!-- ตัวเลขหน้า -->
             <button 
               v-for="page in visiblePages" 
               :key="page" 
@@ -974,7 +969,6 @@ const removeActiveFilter = (filter) => {
               {{ page }}
             </button>
           
-            <!-- ปุ่มถัดไป -->
             <button 
               @click="goToPage(currentPage + 1)" 
               :disabled="currentPage >= totalPages - 1"
@@ -983,7 +977,6 @@ const removeActiveFilter = (filter) => {
               Next &gt;
             </button>
           
-            <!-- ปุ่มไปหน้าสุดท้าย -->
             <button 
               @click="goToPage(totalPages - 1)" 
               :disabled="currentPage >= totalPages - 1"
@@ -1114,11 +1107,9 @@ const removeActiveFilter = (filter) => {
 </template>
 
 <style scoped>
-/* ✨ CSS สำหรับ Slide Down Notification ✨ */
 .slide-down-enter-active,
 .slide-down-leave-active {
   transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-  /* Smoother easing */
 }
 
 .slide-down-enter-from,
@@ -1127,7 +1118,6 @@ const removeActiveFilter = (filter) => {
   opacity: 0;
 }
 
-/* Custom styles for checkbox to match the new theme */
 .form-checkbox,
 .form-radio {
   appearance: none;

@@ -2,7 +2,6 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { addItem, editItem, getItemById } from '@/libs/fetchUtilsOur'
-// ✨ 1. ปรับปรุง: Import theme จาก store โดยตรง
 import { theme, toggleTheme } from '@/stores/themeStore.js';
 
 const route = useRoute();
@@ -15,7 +14,7 @@ const originalBrand = ref(null)
 const showConfirmationAddPopup = ref(false)
 const showConfirmationEditPopup = ref(false)
 const id = route.params.id
-const isEditMode = ref(!!id); // ใช้ !!id เพื่อให้เป็น boolean ชัดเจน
+const isEditMode = ref(!!id); 
 const countdown = ref(3)
 const isLoading = ref(false)
 const responseMessage = ref('')
@@ -24,7 +23,7 @@ const showNotFoundPopup = ref(false)
 const brand = ref({
     name: '',
     websiteUrl: '',
-    isActive: true, // ตั้งค่าเริ่มต้นเป็น true เพื่อ UX ที่ดีกว่า
+    isActive: true, 
     countryOfOrigin: '',
 });
 
@@ -67,8 +66,6 @@ onMounted(async () => {
             }
             brand.value = { ...formattedBrand }
             originalBrand.value = { ...formattedBrand }
-
-            // ตั้งค่า validation flags ตามข้อมูลที่โหลดมา
             isNameValid.value = !!data.name && data.name.length <= 30;
 
         } else if (!data || data?.status === 404) {
@@ -82,7 +79,6 @@ onMounted(async () => {
 });
 
 // --- Watchers for Validation ---
-// ✨ FIX: เอา { immediate: true } ออก เพื่อไม่ให้ validation ทำงานตอนโหลดหน้า Add
 watch(() => brand.value.name, (newVal) => {
     const name = newVal?.trim() ?? ''
     if (!name || name.length > 30) {
@@ -123,7 +119,7 @@ watch(() => brand.value.countryOfOrigin, (newVal) => {
 
 // --- Computed Properties for Form State ---
 const isModified = computed(() => {
-    if (!originalBrand.value) return true; // Always true for new items
+    if (!originalBrand.value) return true; 
     return Object.keys(brand.value).some(key => String(brand.value[key]) !== String(originalBrand.value[key]))
 });
 
@@ -133,7 +129,6 @@ const isFormValid = computed(() => {
 
 // --- Form Submission ---
 const submitForm = async () => {
-    // Trigger validation for untouched fields
     if (brand.value.name === '') {
         nameError.value = 'Brand name must be 1-30 characters long.';
         isNameValid.value = false;

@@ -1,12 +1,10 @@
 <script setup>
 import { useRouter } from 'vue-router';
-// 1. Import 'theme' จาก Store ส่วนกลาง เพื่อให้หน้านี้เปลี่ยนสีตามได้
-import { theme } from '@/stores/themeStore.js'; // <-- ตรวจสอบว่า Path ไปยังไฟล์ store ถูกต้อง
+import { theme } from '@/stores/themeStore.js'; 
 import { computed } from 'vue';
 
 const router = useRouter();
 
-// 2. Computed property ที่ใช้ theme จาก store ในการเปลี่ยนสีพื้นหลังและตัวอักษร
 const themeClass = computed(() => {
     return theme.value === 'dark'
         ? 'bg-gray-950 text-white'
@@ -57,7 +55,6 @@ const themeClass = computed(() => {
     animation: fade-in-up 0.8s ease-out forwards; 
 }
 
-/* Background blob animations for consistency */
 @keyframes blob {
   0% { transform: scale(1) translate(0px, 0px); }
   33% { transform: scale(1.1) translate(30px, -50px); }

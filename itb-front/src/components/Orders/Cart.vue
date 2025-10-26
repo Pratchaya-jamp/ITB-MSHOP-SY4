@@ -2,12 +2,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { jwtDecode } from 'jwt-decode'
-import { getItemsWithAuth, addItemWithAuth } from '@/libs/fetchUtilsOur';
+import { addItemWithAuth } from '@/libs/fetchUtilsOur';
 import Cookies from 'js-cookie'
-// 1. Import 'theme' จาก Store ส่วนกลาง
-import { theme } from '@/stores/themeStore.js'; // <-- ตรวจสอบว่า Path ไปยังไฟล์ store ถูกต้อง
+import { theme } from '@/stores/themeStore.js';
 
-// --- โค้ดส่วน Logic ทั้งหมดเหมือนเดิมทุกประการ ไม่มีการแก้ไข ---
 const cartItems = ref([])
 const router = useRouter()
 const totalCartCountKey = 'total_cart_count'
@@ -24,7 +22,7 @@ const triggerNotification = (message) => {
     showNotification.value = true;
     notificationTimeout = setTimeout(() => {
         showNotification.value = false;
-    }, 1500); // Popup จะหายไปใน 3 วินาที
+    }, 1500);
 };
 
 function saveCartToLocalStorage() {
@@ -458,7 +456,6 @@ const orderPayload = {
     appearance: none;
     background-color: transparent;
     border-radius: 0.375rem;
-    /* rounded */
     border-width: 2px;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
@@ -466,17 +463,14 @@ const orderPayload = {
 
 .dark .form-checkbox {
     border-color: #4b5563;
-    /* slate-600 */
 }
 
 .light .form-checkbox {
     border-color: #cbd5e1;
-    /* slate-300 */
 }
 
 .form-checkbox:checked {
     background-color: #6366f1;
-    /* indigo-500 */
     border-color: #6366f1;
     background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
 }
@@ -485,7 +479,6 @@ const orderPayload = {
     outline: 2px solid transparent;
     outline-offset: 2px;
     --tw-ring-color: #818cf8;
-    /* indigo-400 */
     --tw-ring-offset-shadow: 0 0 #0000;
     --tw-ring-shadow: 0 0 #0000;
     box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);

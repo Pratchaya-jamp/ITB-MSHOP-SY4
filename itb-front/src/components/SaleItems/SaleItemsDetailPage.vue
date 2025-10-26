@@ -11,16 +11,12 @@ const router = useRouter();
 
 const product = ref(null);
 const id = route.params.id;
-
-const imageLoading = ref(true);
-const imageError = ref(false);
 const productImages = ref([]);
 const mainImage = ref("");
 
 const showNotFoundPopup = ref(false);
 const isDeleting = ref(false);
 const showDeleteConfirmationPopup = ref(false);
-const deleteResponseMessage = ref("");
 const countdown = ref(3);
 const showEditSuccessPopup = ref(false);
 const showEditFallPopup = ref(false);
@@ -33,10 +29,7 @@ const showNotification = ref(false);
 const notificationMessage = ref("");
 const notificationSuccess = ref(false);
 const loggedInSellerId = ref(null);
-
 let notificationTimeout = null;
-
-// --- ✨ 1. สร้าง State สำหรับติดตามจำนวนสินค้าชิ้นนี้ในตะกร้าโดยเฉพาะ ---
 const currentItemQtyInCart = ref(0);
 
 const themeClass = computed(() => {
@@ -69,7 +62,6 @@ const startCountdown = () => {
 const goToCart = () => {
   isAuthenticated.value ? router.push("/cart") : router.push("/signin");
 };
-// const isSeller = computed(() => userRole.value === "SELLER");
 const closeSuccessPopup = () => {
   showEditSuccessPopup.value = false;
   showEditFallPopup.value = false;
@@ -104,7 +96,7 @@ const decodeTokenAndSetRole = () => {
 };
 
 const handleMainImageError = () => {
-  mainImage.value = "/sy4/phone/iPhone.png"; // Fallback image
+  mainImage.value = "/sy4/phone/iPhone.png";
 };
 
 const getUserIdFromToken = () => {
@@ -117,7 +109,6 @@ const getUserIdFromToken = () => {
   }
 };
 
-// --- ✨ 2. สร้างฟังก์ชันสำหรับอัปเดต State ที่เราสร้างขึ้น ---
 const updateCurrentItemQtyInCart = () => {
   const userId = getUserIdFromToken();
   if (!userId) {
@@ -142,7 +133,6 @@ const loadCartCount = () => {
   cartCount.value = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 };
 
-// --- ✨ 3. Computed Property ทั้งหมดจะอ่านค่าจาก State ที่เป็น Reactive ---
 const isMaxQuantityReached = computed(() => {
   if (!product.value) return true;
   return currentItemQtyInCart.value >= product.value.quantity;
@@ -151,7 +141,7 @@ const isMaxQuantityReached = computed(() => {
 const handleStorageChange = (event) => {
   if (event.key.startsWith("CartData_")) {
     loadCartCount();
-    updateCurrentItemQtyInCart(); // อัปเดตจำนวนของชิ้นนี้ด้วย
+    updateCurrentItemQtyInCart(); 
   }
 };
 
@@ -224,9 +214,8 @@ const addToCart = (item) => {
   localStorage.setItem(cartKey, JSON.stringify(existingCart));
   triggerNotification("Item added to cart!", true)
 
-  // --- ✨ 4. สั่งให้อัปเดต State ทั้งหมดหลังจากเพิ่มของลงตะกร้า ---
   loadCartCount();
-  updateCurrentItemQtyInCart(); // สำคัญมาก: อัปเดตจำนวนของชิ้นนี้เพื่อให้ปุ่มเปลี่ยนสถานะ
+  updateCurrentItemQtyInCart();
   itemQuantityToAddToCart.value = 1;
 };
 
@@ -244,7 +233,6 @@ onMounted(async () => {
     }
     product.value = data;
 
-    // --- ✨ 5. โหลดจำนวนสินค้าชิ้นนี้ในตะกร้าครั้งแรก ---
     updateCurrentItemQtyInCart(); 
 
     if (data.saleItemImages && data.saleItemImages.length > 0) {

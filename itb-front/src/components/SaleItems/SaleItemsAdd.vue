@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
-  addItem,
   editItem,
   getItems,
   getItemById,
@@ -40,7 +39,6 @@ const showConfirmationEditPopup = ref(false);
 const isLoading = ref(false);
 const brandList = ref([]);
 const isEditMode = ref(!!id);
-const addnewitemMessage = ref("New Sale Item");
 const countdown = ref(3);
 const showNotFoundPopup = ref(false);
 
@@ -66,7 +64,7 @@ const colorError = ref("");
 const quantityError = ref("");
 const brandError = ref("");
 
-// --- Theming (Receiver Only) ---
+// --- Theming---
 const themeClass = computed(() => {
     return theme.value === 'dark'
         ? 'bg-gray-950 text-white'
@@ -110,7 +108,6 @@ function handleFileUpload(event) {
   input.value = "";
 }
 
-// ✨ FIX: ปรับปรุง Logic การเลื่อนลำดับให้แม่นยำขึ้น
 function moveUp(index) {
   if (index === 0) return;
   const visiblePics = visiblePictures.value;
@@ -120,11 +117,9 @@ function moveUp(index) {
   const actualIndexToMove = pictures.value.findIndex(p => p === itemToMove);
   const actualIndexToSwapWith = pictures.value.findIndex(p => p === itemToSwapWith);
 
-  // Swap in the main array
   [pictures.value[actualIndexToMove], pictures.value[actualIndexToSwapWith]] = 
   [pictures.value[actualIndexToSwapWith], pictures.value[actualIndexToMove]];
 
-  // Mark existing items as moved to track changes
   pictures.value.forEach(pic => {
     if (pic.status === 'keep' || pic.status === 'move') pic.status = 'move';
   });
@@ -139,11 +134,9 @@ function moveDown(index) {
   const actualIndexToMove = pictures.value.findIndex(p => p === itemToMove);
   const actualIndexToSwapWith = pictures.value.findIndex(p => p === itemToSwapWith);
   
-  // Swap in the main array
   [pictures.value[actualIndexToMove], pictures.value[actualIndexToSwapWith]] = 
   [pictures.value[actualIndexToSwapWith], pictures.value[actualIndexToMove]];
 
-  // Mark existing items as moved
   pictures.value.forEach(pic => {
     if (pic.status === 'keep' || pic.status === 'move') pic.status = 'move';
   });
@@ -156,11 +149,9 @@ function removePicture(index) {
     const actualIndex = pictures.value.findIndex(p => p === pictureToRemove);
 
     if (pictures.value[actualIndex].status === 'new') {
-        // If it's a new unsaved image, completely remove it
         URL.revokeObjectURL(pictures.value[actualIndex].previewUrl);
         pictures.value.splice(actualIndex, 1);
     } else {
-        // If it's an existing image, mark it for removal
         pictures.value[actualIndex].status = 'remove';
     }
 }
@@ -171,7 +162,6 @@ const getImageUrl = (item) => {
   return item.previewUrl || item.url;
 };
 
-// --- Lifecycle & Form Logic ---
 onMounted(async () => {
   try {
     const data = await getItems(`${import.meta.env.VITE_BACKEND}/v1/brands`);
@@ -383,10 +373,10 @@ const confirmAddItem = async () => {
     }
 }
 
-// ✨ FIX: แก้ไข Timing ของ Popup Loading
+
 const confirmEditItem = async () => {
-  isLoading.value = true; // 1. แสดง Loading ก่อน
-  showConfirmationEditPopup.value = false; // 2. ซ่อน Popup ยืนยัน
+  isLoading.value = true;
+  showConfirmationEditPopup.value = false;
 
   const selectedBrand = brandList.value.find(b => b.id === selectedBrandId.value)
   const formData = new FormData()
@@ -419,10 +409,7 @@ const confirmEditItem = async () => {
       formData,
       true
     )
-
     if (result.status !== 200 || !result.data?.id) throw new Error('Edit failed')
-    
-    // 3. หน่วงเวลาก่อนเปลี่ยนหน้าเพื่อ UX ที่ดี
     setTimeout(async () => {
         isLoading.value = false
         await router.push({ path: `/sale-items/${route.params.id}`, query: { editSuccess: 'true' } })
@@ -790,7 +777,6 @@ const cancelAddItem = () => {
 </template>
 
 <style scoped>
-/* All existing styles are kept, no changes needed here */
 @keyframes fadeInUp {
   from {
     opacity: 0;

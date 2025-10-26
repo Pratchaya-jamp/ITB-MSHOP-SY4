@@ -5,7 +5,6 @@ import { editItemWithAuth } from '@/libs/fetchUtilsOur';
 import Cookies from 'js-cookie'
 import { theme } from '@/stores/themeStore.js' 
 
-// SCRIPT ทั้งหมดเหมือนเดิม ไม่มีการเปลี่ยนแปลง
 const router = useRouter()
 const userPicture = ref({ image: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
 const userProfile = ref(null)
@@ -97,12 +96,9 @@ const fetchUserProfileForEdit = async () => {
         return;
     }
     const userId = decodedToken.id;
-    const API_URL = `${import.meta.env.VITE_BACKEND}/v2/users/${userId}`;
     try {
-        const response = await fetch(API_URL, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await getItemByIdWithAuth(`${import.meta.env.VITE_BACKEND}/v2/users/`,userId,token)
+
         if (!response.ok) {
             throw new Error(`Failed to fetch user profile`);
         }

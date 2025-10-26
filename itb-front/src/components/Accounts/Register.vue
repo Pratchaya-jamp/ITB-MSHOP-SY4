@@ -1,34 +1,15 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { addItem } from '@/libs/fetchUtilsOur';
-// 1. Import 'theme' จาก Store ส่วนกลาง
-import { theme } from '@/stores/themeStore.js'; // <-- ตรวจสอบว่า Path ไปยังไฟล์ store ถูกต้อง
+import { theme } from '@/stores/themeStore.js'; 
 
 const router = useRouter();
-const accountType = ref('Buyer'); // Default to Buyer
+const accountType = ref('Buyer'); 
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 
-// --- โค้ดส่วนที่เหลือทั้งหมดเหมือนเดิมทุกประการ ไม่มีการแก้ไข Logic ---
 
-const uploadedPhotos = ref([]);
-
-// ฟังก์ชันสำหรับจัดการการเลือกไฟล์ภาพ
-const handlePhotoUpload = (event) => {
-    const files = event.target.files;
-    if (files) {
-        for (const file of files) {
-            const imageUrl = URL.createObjectURL(file);
-            uploadedPhotos.value.push({ file, url: imageUrl });
-        }
-    }
-};
-
-const removePhoto = (index) => {
-    // ใช้ splice เพื่อลบภาพออกจาก array ตาม index
-    uploadedPhotos.value.splice(index, 1);
-};
 
 // form data
 const nickname = ref('');
@@ -182,7 +163,6 @@ const handleSubmit = async () => {
     }
 
     if (isFormValid.value) {
-        // ✅ เมื่อฟอร์มถูกต้อง ให้แสดง Pop-up ยืนยัน
         showConfirmationSignUp.value = true;
     } else {
         SubmitError.value = 'Please fill out the information completely.';
@@ -190,10 +170,9 @@ const handleSubmit = async () => {
 };
 
 const confirmSignUp = async () => {
-    // ✅ ซ่อน Pop-up ยืนยัน
+
     showConfirmationSignUp.value = false;
 
-    // ✅ แสดง Pop-up Loading
     isLoading.value = true;
 
     const formData = new FormData();
@@ -246,7 +225,7 @@ const formatMobileNumber = () => {
   mobileNumber.value = mobileNumber.value.replace(/[^0-9]/g, '');
 };
 
-// 2. Computed property ที่ใช้ theme จาก store ในการเปลี่ยนสี
+
 const themeClass = computed(() => {
     return theme.value === 'dark'
         ? 'bg-gray-950 text-white'

@@ -3,22 +3,20 @@ import { useRouter, useRoute } from 'vue-router'
 import { computed, ref, onMounted, watch } from 'vue'
 import { getItemByIdWithAuth } from '@/libs/fetchUtilsOur';
 import Cookies from 'js-cookie'
-import { theme } from '@/stores/themeStore.js' // 1. ดึง theme จาก store
+import { theme } from '@/stores/themeStore.js' 
 
 const router = useRouter()
 const route = useRoute()
-// const theme = ref(localStorage.getItem('theme') || 'dark') // ลบออก ใช้จาก store แทน
+
 const userPicture = ref({ image: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
 const userProfile = ref(null) 
-const showUpdateSuccess = ref(false) // แก้ไข: เริ่มต้นเป็น false
-
+const showUpdateSuccess = ref(false) 
 const themeClass = computed(() => {
     return theme.value === 'dark'
         ? 'bg-gray-950 text-white'
         : 'bg-white text-gray-950'
 })
 
-// --- ส่วนที่เหลือของ Script เหมือนเดิมทั้งหมด ---
 const isSeller = computed(() => userProfile.value?.userType === 'Seller')
 
 const navigateToEdit = () => {
@@ -82,7 +80,6 @@ const fetchUserProfile = async () => {
 
 const closeSuccessPopup = async () => {
   showUpdateSuccess.value = false
-  // ไม่จำเป็นต้อง reload หน้า สามารถ fetch data ใหม่ได้
   await fetchUserProfile();
   router.replace({ path: route.path, query: {} });
 }

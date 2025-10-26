@@ -1,47 +1,24 @@
 import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode'; // ✅ ใช้ import แบบนี้ให้ build ผ่านได้
+import { jwtDecode } from 'jwt-decode'; 
 
-async function resetPasswordForgot(url, token, body) {
-  try {
-    const options = {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`   // ✅ ใส่ reset token
-      },
-      body: JSON.stringify(body)
-    };
-
-    const res = await fetch(url, options);
-    const text = await res.text();
-    const data = text ? JSON.parse(text) : null;
-    return { status: res.status, data };
-  } catch (error) {
-    throw new Error('Cannot reset password: ' + error.message);
-  }
-}
-
-
-// ✅ ฟังก์ชันตรวจสอบว่า access token หมดอายุหรือยัง
 function isTokenExpired(token) {
   try {
     const decoded = jwtDecode(token);
-    const now = Date.now() / 1000; // เวลาในหน่วยวินาที
+    const now = Date.now() / 1000; 
     return decoded.exp < now;
   } catch (err) {
-    return true; // ถ้า decode ไม่ได้ ให้ถือว่าหมดอายุ
+    return true; 
   }
 }
 
 async function refreshAccessToken() {
-  const accessToken = Cookies.get('access_token'); // ใช้ access_token เดิมที่หมดอายุ
-  console.log("Refreshing token...");
+  const accessToken = Cookies.get('access_token'); 
   if (!accessToken) return null;
 
    try {
     const res = await fetch(`${import.meta.env.VITE_BACKEND}/v2/auth/refresh`, {
       method: 'POST',
-      credentials: 'include', // ✅ ส่งคุกกี้ (refresh_token) ไปกับ request
+      credentials: 'include', 
     });
 
     if (!res.ok) {
@@ -54,7 +31,6 @@ async function refreshAccessToken() {
     const data = await response.json()
     if (data?.accessToken) {
       Cookies.set('access_token', data.accessToken)
-      console.log("✅ Access token refreshed successfully.")
       return data.accessToken
     } else {
       console.warn("No access token returned. Redirecting to login...")
@@ -68,14 +44,36 @@ async function refreshAccessToken() {
   }
 }
 
-//
-// ✅ ฟังก์ชัน addItemWithAuth — ใช้โครงสร้างเดียวกัน (refresh token อัตโนมัติ)
-//
+async function resetPasswordForgot(url, token, body) {
+  try {
+    let token = Cookies.get('access_token');
+    if (!token || isTokenExpired(token)) {
+      console.warn("Access token expired, refreshing...");
+      token = await refreshAccessToken();
+      if (!token) throw new Error("Cannot refresh token");
+    }
+    
+    const options = {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`   
+      },
+      body: JSON.stringify(body)
+    };
+
+    const res = await fetch(url, options);
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
+    return { status: res.status, data };
+  } catch (error) {
+    throw new Error('Cannot reset password: ' + error.message);
+  }
+}
+
 async function addItemWithAuth(url, newItem, isMultipart = false) {
   try {
     let token = Cookies.get('access_token');
-    console.log('Token exp:', jwtDecode(token).exp, 'Now:', Date.now() / 1000);
-    // ถ้า access token หมดอายุ → refresh ก่อน
     if (!token || isTokenExpired(token)) {
       console.warn("Access token expired, refreshing...");
       token = await refreshAccessToken();
@@ -87,23 +85,19 @@ async function addItemWithAuth(url, newItem, isMultipart = false) {
       headers: {},
     };
 
-    // แนบ Authorization header
     if (token) {
       options.headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // ส่งเป็น JSON หรือ FormData
     if (isMultipart) {
-      options.body = newItem; // newItem ต้องเป็น FormData
+      options.body = newItem; 
     } else {
       options.headers['Content-Type'] = 'application/json';
       options.body = JSON.stringify(newItem);
     }
 
-    // ยิง request
     let res = await fetch(url, options);
 
-    // ถ้าเจอ 401 → refresh แล้วลองอีกครั้ง
     if (res.status === 401) {
       token = await refreshAccessToken();
       if (!token) throw new Error("Cannot refresh token");
@@ -123,8 +117,6 @@ async function addItemWithAuth(url, newItem, isMultipart = false) {
 async function editItemWithAuth(url, id, updatedItem, token, isMultipart = false) {
   try {
     let token = Cookies.get('access_token');
-    console.log('Token exp:', jwtDecode(token).exp, 'Now:', Date.now() / 1000);
-    // ถ้า access token หมดอายุ → refresh ก่อน
     if (!token || isTokenExpired(token)) {
       console.warn("Access token expired, refreshing...");
       token = await refreshAccessToken();
@@ -136,13 +128,11 @@ async function editItemWithAuth(url, id, updatedItem, token, isMultipart = false
       headers: {}
     }
 
-    // ถ้ามี token ให้ใส่ลงใน header
     if (token) {
       options.headers['Authorization'] = `Bearer ${token}`
     }
 
     if (isMultipart) {
-      // updatedItem เป็น FormData
       options.body = updatedItem
     } else {
       options.headers['Content-Type'] = 'application/json'
@@ -163,14 +153,11 @@ const text = await res.text();
 async function getItemByIdWithAuth(baseUrl, id, token) {
   try {
     let token = Cookies.get('access_token');
-    console.log('Token exp:', jwtDecode(token).exp, 'Now:', Date.now() / 1000);
-    // ถ้า access token หมดอายุ → refresh ก่อน
     if (!token || isTokenExpired(token)) {
       console.warn("Access token expired, refreshing...");
       token = await refreshAccessToken();
       if (!token) throw new Error("Cannot refresh token");
     }
-
     const response = await fetch(`${baseUrl}/${id}`, {
       method: 'GET',
       headers: {
@@ -178,19 +165,17 @@ async function getItemByIdWithAuth(baseUrl, id, token) {
       }
     });
 
-    return response; // ส่ง response object กลับไปตรง ๆ
+    return response;
   } catch (error) {
     console.error('Fetch error:', error);
     return undefined;
   }
 }
 
-// ฟังก์ชัน fetch แบบรองรับ Authorization token
+
 async function getItemsWithAuth(url, options = {}) {
   try {
     let accesstoken = Cookies.get('access_token');
-    console.log('Token exp:', jwtDecode(accesstoken).exp, 'Now:', Date.now() / 1000);
-    // ถ้า access token หมดอายุ → refresh ก่อน
     if (!accesstoken || isTokenExpired(accesstoken)) {
       console.warn("Access token expired, refreshing...");
       accesstoken = await refreshAccessToken();
@@ -199,7 +184,6 @@ async function getItemsWithAuth(url, options = {}) {
 
     const { params, token } = options;
 
-    // ประกอบ query string
     const query = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -236,8 +220,6 @@ async function getItemsWithAuth(url, options = {}) {
 async function getItems(url, options = {}) {
   try {
     const { params } = options;
-
-    // ประกอบ query string
     const query = new URLSearchParams();
 
     if (params) {
@@ -268,8 +250,6 @@ async function getItems(url, options = {}) {
 
 async function getItemById(url, id) {
   try {
-    //console.log(`🔍 Fetching from: ${url}/${id}`);
-
     const data = await fetch(`${url}/${id}`)
 
     if (!data.ok) {
@@ -311,7 +291,6 @@ async function addItem(url, newItem, isMultipart = false) {
 
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
 
-    // ตรวจสอบว่า response มี content-length > 0
     const text = await res.text()
     const data = text ? JSON.parse(text) : null
 
@@ -331,7 +310,6 @@ async function editItem(url, id, updatedItem, isMultipart = false) {
     }
 
     if (isMultipart) {
-      // updatedItem เป็น FormData
       options.body = updatedItem
     } else {
       options.headers = { 'Content-Type': 'application/json' }
