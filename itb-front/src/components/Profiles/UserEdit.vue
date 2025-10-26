@@ -1,10 +1,11 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { computed, ref, onMounted } from 'vue'
-import { editItemWithAuth } from '@/libs/fetchUtilsOur';
+import { editItemWithAuth, getItemByIdWithAuth } from '@/libs/fetchUtilsOur';
 import Cookies from 'js-cookie'
 import { theme } from '@/stores/themeStore.js' 
 
+// SCRIPT ทั้งหมดเหมือนเดิม ไม่มีการเปลี่ยนแปลง
 const router = useRouter()
 const userPicture = ref({ image: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' })
 const userProfile = ref(null)
@@ -97,8 +98,7 @@ const fetchUserProfileForEdit = async () => {
     }
     const userId = decodedToken.id;
     try {
-        const response = await getItemByIdWithAuth(`${import.meta.env.VITE_BACKEND}/v2/users/`,userId,token)
-
+const response = await getItemByIdWithAuth(`${import.meta.env.VITE_BACKEND}/v2/users/`,userId,token);
         if (!response.ok) {
             throw new Error(`Failed to fetch user profile`);
         }

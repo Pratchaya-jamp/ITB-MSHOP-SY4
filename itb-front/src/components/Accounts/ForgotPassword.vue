@@ -64,7 +64,7 @@ const handleSubmit = async () => {
     isLoading.value = false;
     formSubmitted.value = true;
     submissionSuccess.value = false;
-    triggerNotification("An error occurred. Please try again.", false);
+    triggerNotification("E-mail not found. Please try again.", false);
     console.error("❌ Error:", error);
   }
 };

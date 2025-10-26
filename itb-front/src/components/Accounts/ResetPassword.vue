@@ -110,7 +110,7 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/
       triggerNotification("Password reset successfully! Redirecting...", true);
       setTimeout(() => router.push('/signin'), 2000);
     } else {
-      triggerNotification("Failed to reset password.", false);
+      triggerNotification("Cannot use an old password.", false);
     }
 
   } catch (error) {

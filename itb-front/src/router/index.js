@@ -155,7 +155,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = Cookies.get('access_token');
 
-  if ((to.name === 'signin' || to.name === 'register') && token) {
+  if ((to.name === 'signin' || to.name === 'register' || to.name === "forgotPassword") && token) {
     console.log('User is already logged in. Redirecting to Home...');
     next({ name: 'Home' });
     return;
