@@ -34,30 +34,21 @@ function isTokenExpired(token) {
 }
 
 async function refreshAccessToken() {
-  const refreshToken = Cookies.get('refresh_token')
+  const accessToken = Cookies.get('access_token'); // ใช้ access_token เดิมที่หมดอายุ
+  console.log("Refreshing token...");
+  if (!accessToken) return null;
 
-  // 🧩 ตรวจว่า refresh token หมดอายุไหม
-  if (!refreshToken || isTokenExpired(refreshToken)) {
-    console.warn("Refresh token expired or missing. Redirecting to login...")
-    Cookies.remove('access_token')
-    Cookies.remove('refresh_token')
-    router.push('/signin')
-    return null
-  }
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND}/v2/auth/refresh`, {
+   try {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND}/v2/auth/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken })
-    })
+      credentials: 'include', // ✅ ส่งคุกกี้ (refresh_token) ไปกับ request
+    });
 
-    if (!response.ok) {
-      console.error("Failed to refresh token. Redirecting to login...")
-      Cookies.remove('access_token')
-      Cookies.remove('refresh_token')
-      router.push('/signin')
-      return null
+    if (!res.ok) {
+      console.error("Failed to refresh token:", res.status);
+      Cookies.remove('access_token');
+      window.location.assign(`${import.meta.env.BASE_URL}/signin`);
+      return null;
     }
 
     const data = await response.json()
@@ -67,12 +58,12 @@ async function refreshAccessToken() {
       return data.accessToken
     } else {
       console.warn("No access token returned. Redirecting to login...")
-      router.push('/login')
+      window.location.assign(`${import.meta.env.BASE_URL}/signin`);
       return null
     }
   } catch (err) {
     console.error("Error refreshing token:", err)
-    router.push('/login')
+    window.location.assign(`${import.meta.env.BASE_URL}/signin`);
     return null
   }
 }
