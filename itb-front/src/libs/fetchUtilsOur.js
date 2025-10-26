@@ -1,5 +1,25 @@
 import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode'; 
+import { jwtDecode } from 'jwt-decode'; // ✅ ใช้ import แบบนี้ให้ build ผ่านได้
+
+async function resetPasswordForgot(url, token, body) {
+  try {
+    const options = {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify(body)
+    };
+
+    const res = await fetch(url, options);
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
+    return { status: res.status, data };
+  } catch (error) {
+    throw new Error('Cannot reset password: ' + error.message);
+  }
+}
 
 function isTokenExpired(token) {
   try {
@@ -35,33 +55,6 @@ async function refreshAccessToken() {
   } catch (err) {
     console.error("Error refreshing token:", err);
     return null;
-  }
-}
-
-async function resetPasswordForgot(url, token, body) {
-  try {
-    let token = Cookies.get('access_token');
-    if (!token || isTokenExpired(token)) {
-      console.warn("Access token expired, refreshing...");
-      token = await refreshAccessToken();
-      if (!token) throw new Error("Cannot refresh token");
-    }
-    
-    const options = {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`   
-      },
-      body: JSON.stringify(body)
-    };
-
-    const res = await fetch(url, options);
-    const text = await res.text();
-    const data = text ? JSON.parse(text) : null;
-    return { status: res.status, data };
-  } catch (error) {
-    throw new Error('Cannot reset password: ' + error.message);
   }
 }
 
@@ -165,7 +158,6 @@ async function getItemByIdWithAuth(baseUrl, id, token) {
     return undefined;
   }
 }
-
 
 async function getItemsWithAuth(url, options = {}) {
   try {
