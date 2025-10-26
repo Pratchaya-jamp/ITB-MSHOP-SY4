@@ -2,7 +2,6 @@
 import { useRouter } from 'vue-router'
 import { ref, onMounted, computed } from 'vue'
 import { jwtDecode } from 'jwt-decode'
-// เรายังคง import addItem ไว้เผื่อส่วนอื่นของแอปพลิเคชันอาจจะยังใช้ แต่ logout จะไม่ใช้แล้ว
 import { addItem } from '@/libs/fetchUtilsOur' 
 import Cookies from 'js-cookie'
 import { theme, toggleTheme, applyInitialTheme } from '@/stores/themeStore.js'
@@ -39,25 +38,21 @@ const logout = async () => {
       `${import.meta.env.VITE_BACKEND}/v2/auth/logout`
     )
 
-    // ลบ token ทั้งสองตัวออกจาก Cookies
-
     if (response.status === 204) {
        setTimeout(() => {
-        // ลบ token
+
         Cookies.remove('access_token', { path: '/' })
         Cookies.remove('refresh_token', { path: '/' })
 
         localStorage.removeItem('total_cart_count')
         localStorage.removeItem('CartData')
 
-        // อัปเดตสถานะ
         isLoggedIn.value = false
 
-        // ไปหน้า Signin และรีเฟรช
         router.push('/signin').then(() => {
           window.location.reload()
         })
-      }, 1000) // 10000 ms = 10 วินาที
+      }, 1000) 
     }
   } catch (error) {
     console.error('Logout failed:', error)
@@ -151,5 +146,4 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* No styles needed here, everything is handled by Tailwind CSS */
 </style>

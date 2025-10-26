@@ -9,40 +9,30 @@ import { theme } from "@/stores/themeStore.js";
 const router = useRouter();
 const orders = ref([]);
 const selectedTab = ref("Completed");
+const viewedOrders = ref(new Set()); 
+const storageKey = ref('');
+let userIdentifier = null; 
 
-// --- ✨ FIX: เพิ่ม State สำหรับจัดการ "NEW" Badge ---
-const viewedOrders = ref(new Set()); // ใช้ Set เพื่อประสิทธิภาพในการค้นหา
-const storageKey = ref(''); // Key ของ LocalStorage (เช่น 'viewed_orders_user_1')
-let userIdentifier = null; // จะเก็บ ID ของ User หรือ Seller
-
-// --- ✨ FIX: แก้ไข goToOrderDetail ให้ทำการ "Mark as Read" ---
 const goToOrderDetail = (id) => {
-    // 1. เพิ่ม Order ID นี้ไปยัง Set ของที่อ่านแล้ว
     viewedOrders.value.add(id);
-    // 2. บันทึก Set ที่อัปเดตแล้วลง LocalStorage
     if (storageKey.value) {
         localStorage.setItem(storageKey.value, JSON.stringify(Array.from(viewedOrders.value)));
     }
-    // 3. ไปยังหน้า Detail
     router.push(`/order/${id}`);
 }
 
-// --- ✨ FIX: เพิ่มฟังก์ชันสำหรับโหลดข้อมูลที่เคยอ่านแล้ว ---
 const loadViewedOrders = (id) => {
     if (!id) return;
-    storageKey.value = `viewed_orders_${id}`; // สร้าง Key ที่ผูกกับ User
+    storageKey.value = `viewed_orders_${id}`;
     const data = localStorage.getItem(storageKey.value);
     if (data) {
         viewedOrders.value = new Set(JSON.parse(data));
     }
 };
 
-// --- ✨ FIX: เพิ่มฟังก์ชันสำหรับ Template ใช้เช็ค ---
 const isOrderNew = (orderId) => {
     return !viewedOrders.value.has(orderId);
 };
-// --- (จบส่วน FIX) ---
-
 
 const themeClass = computed(() => {
     return theme.value === 'dark'
@@ -102,7 +92,6 @@ async function fetchItemOrder() {
         userRole = decodedToken.role;
         sellerId = decodedToken.seller_id;
 
-        // ✨ FIX: กำหนด userIdentifier และ endpoint
         if (userRole === "SELLER") {
             userIdentifier = sellerId;
             endpoint = `${import.meta.env.VITE_BACKEND}/v2/sellers/${sellerId}/orders`;
@@ -117,7 +106,6 @@ async function fetchItemOrder() {
         return;
     }
 
-    // ✨ FIX: โหลดข้อมูลการอ่านก่อนยิง API
     loadViewedOrders(userIdentifier);
 
     try {

@@ -3,9 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getItems } from '@/libs/fetchUtilsOur';
 import { deleteItemById } from '@/libs/fetchUtilsOur'
-import { theme } from '@/stores/themeStore.js' // 1. ดึง theme จาก store
-
-// --- Script ทั้งหมดเหมือนเดิม ไม่มีการเปลี่ยนแปลง ---
+import { theme } from '@/stores/themeStore.js' 
 
 const themeClass = computed(() => {
     return theme.value === 'dark'
@@ -13,18 +11,11 @@ const themeClass = computed(() => {
         : 'bg-white text-gray-950'
 })
 
-const iconComponent = computed(() => {
-  return theme.value === 'dark'
-    ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>`
-    : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>`
-})
-
 const router = useRouter()
 const route = useRoute()
 const items = ref([])
 const saleItems = ref([])
 const searchQuery = ref('')
-const filterBy = ref('')
 const viewMode = ref('grid') 
 
 const showBrandNameDelete = ref('')
@@ -261,10 +252,6 @@ const visiblePages = computed(() => {
   
   return pages
 })
-  
-// watch(currentPage, (newPage) => {
-//   router.replace({ query: { ...route.query, page: newPage } })
-// })
   
 watch([pageSize, searchQuery], () => {
   currentPage.value = 1

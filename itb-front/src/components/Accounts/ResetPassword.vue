@@ -9,12 +9,12 @@ const router = useRouter();
 
 // --- State for UI ---
 const token = ref(null);
-const emailToReset = ref('mock-user@example.com'); // อีเมลจำลอง
+const emailToReset = ref('mock-user@example.com'); 
 const password = ref('');
 const confirmPassword = ref('');
-const isLoading = ref(true); // เริ่มต้นด้วยการโหลด (เพื่อ Verify token)
-const isVerified = ref(false); // ควบคุมการแสดงฟอร์ม
-const isSubmitting = ref(false); // ควบคุม Loading ตอน Submit
+const isLoading = ref(true);
+const isVerified = ref(false); 
+const isSubmitting = ref(false); 
 
 // --- State for Slide Popup Notification ---
 const showNotification = ref(false);
@@ -42,10 +42,10 @@ const triggerNotification = (message, isSuccess) => {
   }, 3000);
 };
 
-// --- ✨ 1. Mock Function: Verify Token ---
+// --- Verify Token ---
 const verifyToken = async () => {
   token.value = route.query.token; 
- // ล้าง query
+
 router.replace({ query: {} });
   if (!token.value) {
     isLoading.value = false;
@@ -60,7 +60,6 @@ router.replace({ query: {} });
     const data = await addItem(`${import.meta.env.VITE_BACKEND}/v2/verify-password?token=${encodeURIComponent(token.value)}`);
 console.log(data);
    if (data.status === 201){
-    // data จะเป็น user object จาก backend
     emailToReset.value = data.data.email;
     isVerified.value = true;
     triggerNotification("Token verified. You can reset your password.", true);
@@ -73,7 +72,7 @@ console.log(data);
   }
 };
 
-// --- ✨ 2. Mock Function: Handle Submit ---
+// --- Handle Submit ---
 const handleSubmit = async () => {
   if (password.value !== confirmPassword.value) {
     triggerNotification("Passwords do not match.", false);
@@ -103,7 +102,7 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/
   try {
     const response = await resetPasswordForgot(
       `${import.meta.env.VITE_BACKEND}/v2/reset-password-forgot`,
-      token.value,   // ✅ ส่ง reset token ใน header
+      token.value,   
       { newPassword: password.value, confirmPassword: confirmPassword.value }
     );
 

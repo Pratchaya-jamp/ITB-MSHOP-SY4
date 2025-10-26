@@ -3,7 +3,6 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { getItemByIdWithAuth } from '@/libs/fetchUtilsOur'; 
 import Cookies from 'js-cookie' 
-import { jwtDecode } from 'jwt-decode' 
 import { theme } from '@/stores/themeStore.js'
 
 const router = useRouter();
@@ -25,22 +24,10 @@ const orderTotal = computed(() => {
     return currentOrder.value.orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 });
 
-// ✨ FIX: เพิ่ม computed property สำหรับเช็คสถานะ Cancelled
 const isOrderCancelled = computed(() => {
     if (!currentOrder.value?.orderStatus) return false;
     const status = currentOrder.value.orderStatus.toUpperCase();
     return status === 'CANCELLED' || status === 'CANCELED';
-});
-
-const progressWidth = computed(() => {
-    if (!currentOrder.value) return '0%';
-    const steps = ['PLACED', 'PAID', 'COMPLETED'];
-    const currentStepIndex = steps.indexOf(currentOrder.value.orderStatus?.toUpperCase());
-
-    if (currentStepIndex === 0) return '0%';
-    if (currentStepIndex === 1) return '50%';
-    if (currentStepIndex >= 2) return '100%';
-    return '0%';
 });
 
 const formatPrice = (price) => {
@@ -68,8 +55,8 @@ async function fetchItemOrderbyId() {
 
   try {
     const response = await getItemByIdWithAuth(
-      `${import.meta.env.VITE_BACKEND}/v2/orders`, // Base URL
-      orderId, // ID จาก route
+      `${import.meta.env.VITE_BACKEND}/v2/orders`,
+      orderId,
       token
     );
 

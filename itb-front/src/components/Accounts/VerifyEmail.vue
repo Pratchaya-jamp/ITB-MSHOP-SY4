@@ -65,10 +65,9 @@ const verifyEmail = async () => {
     }
     router.replace({ query: {} });
     
-    // ✨ 2. หน่วงเวลา 2 วินาที (เพื่อให้เห็น Lottie 'verifying')
+
     setTimeout(async () => {
         try {
-            // 3. ยิง API หลังจาก 2 วินาทีผ่านไป
             const response = await addItem(
                 `${import.meta.env.VITE_BACKEND}/v2/auth/verify-email?token=${token}`
             );
@@ -77,14 +76,13 @@ const verifyEmail = async () => {
                 verificationStatus.value = 'success';
                 message.value = 'Your account has been successfully activated.';
                 
-                // 4. ถ้าสำเร็จ ค่อยเริ่มนับถอยหลัง 3 วินาที
                 startRedirectCountdown(3); 
 
             } else if (response.status === 409) {
                 verificationStatus.value = 'warning';
                 message.value = 'This token has already been used. Your account is already active.';
             } else {
-                const errorData = response.data; // ใช้ .data จาก fetchUtils
+                const errorData = response.data; 
                 verificationStatus.value = 'error';
                 message.value = errorData.message || 'An error occurred, or the verification link has expired.';
             }
@@ -93,7 +91,7 @@ const verifyEmail = async () => {
             verificationStatus.value = 'error';
             message.value = 'A network error occurred. Please check your connection and try again.';
         }
-    }, 2000); // 2 วินาที
+    }, 2000);
 };
 
 onMounted(() => {

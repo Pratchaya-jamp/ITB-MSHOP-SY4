@@ -5,8 +5,7 @@ import { addItem } from '@/libs/fetchUtilsOur';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
-// 1. Import 'theme' จาก Store ส่วนกลาง
-import { theme } from '@/stores/themeStore.js'; // <-- ตรวจสอบว่า Path ไปยังไฟล์ store ถูกต้อง
+import { theme } from '@/stores/themeStore.js'; 
 
 const router = useRouter();
 const showPassword = ref(false);
@@ -22,7 +21,6 @@ const isEmailValid = ref(false)
 const isPasswordValid = ref(true)
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
-// --- โค้ดส่วน Logic การทำงานทั้งหมดเหมือนเดิม ---
 
 const Pleaseactivate = () => {
   emailactivate.value = false
@@ -63,7 +61,7 @@ const isFormValid = computed(() => {
 })
 
 const handleSubmit = async () => {
-  isLoading.value = true; // <-- ปุ่มเปลี่ยนเป็น "Signing In..."
+  isLoading.value = true; 
   loginError.value = '';
 
   try {

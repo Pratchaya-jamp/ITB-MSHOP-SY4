@@ -9,6 +9,7 @@ import { theme } from "@/stores/themeStore.js";
 const router = useRouter();
 const orders = ref([]);
 const selectedTab = ref("Completed");
+
 const goToOrderDetail = (orderId) => {
     router.push(`/order/${orderId}`);
 }
@@ -19,9 +20,8 @@ const themeClass = computed(() => {
         : 'bg-white text-gray-950'
 })
 
-// --- ✨ FIX: รวม Filter และ Sort เข้าไว้ด้วยกันใน Computed เดียว ---
+
 const sortedFilteredOrders = computed(() => {
-    // 0. ตรวจสอบก่อนว่า orders.value เป็น Array จริงๆ เพื่อป้องกัน Error
     if (!Array.isArray(orders.value)) {
         return [];
     }
@@ -29,17 +29,14 @@ const sortedFilteredOrders = computed(() => {
     const upperSelectedTab = selectedTab.value.toUpperCase();
 
     return orders.value
-        .filter((order) => order.orderStatus.toUpperCase() === upperSelectedTab) // 1. กรองตาม Tab ที่เลือกก่อน
-        .sort((a, b) => { // 2. จากนั้นนำผลลัพธ์ที่กรองแล้วมาเรียงลำดับ
-            // Level 1: เปรียบเทียบ orderDate ก่อน (ใหม่ไปเก่า)
+        .filter((order) => order.orderStatus.toUpperCase() === upperSelectedTab) 
+        .sort((a, b) => { 
             const dateDifference = new Date(b.orderDate) - new Date(a.orderDate);
 
-            // ถ้าวันที่ไม่เท่ากัน ให้ใช้ผลต่างของวันที่เป็นตัวตัดสิน
             if (dateDifference !== 0) {
                 return dateDifference;
             }
 
-            // Level 2: ถ้าวันที่เท่ากัน ให้เปรียบเทียบด้วย id (ใหม่ไปเก่า)
             return b.id - a.id;
         });
 });
@@ -87,11 +84,7 @@ async function fetchItemOrder() {
     }
 
     const endpoint =
-        // userRole === "SELLER"
-        //     ? `${import.meta.env.VITE_BACKEND}/v2/sellers/${sellerId}/orders`
-        //     : `${import.meta.env.VITE_BACKEND}/v2/users/${userId}/orders`;
         `${import.meta.env.VITE_BACKEND}/v2/users/${userId}/orders`
-
     try {
         const response = await getItemsWithAuth(endpoint, { token });
         orders.value = response?.content ?? [];
@@ -153,8 +146,6 @@ onMounted(() => {
                         </div>
                         <div class="text-sm" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
                             Order
-                            <!-- <span class="font-semibold"
-                                :class="theme === 'dark' ? 'text-slate-200' : 'text-slate-700'">#{{ order.id }}</span> -->
                             <span class="mx-2">·</span>
                             <span>{{ formatDate(order.orderDate) }}</span>
                         </div>

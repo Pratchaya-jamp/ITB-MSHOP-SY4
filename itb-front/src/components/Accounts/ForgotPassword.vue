@@ -42,7 +42,6 @@ const handleSubmit = async () => {
   }
 
   isLoading.value = true;
-const params = {email:email.value}
   try {
 
     // --- เรียกใช้ฟังก์ชัน addItem() ---
@@ -159,14 +158,13 @@ const params = {email:email.value}
   animation: fade-in-up 0.8s ease-out forwards;
 }
 
-/* ✨ FIX: แก้ไข CSS ของ Slide Down Notification ✨ */
+
 .slide-down-enter-active,
 .slide-down-leave-active {
   transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
 .slide-down-enter-from,
 .slide-down-leave-to {
-  /* ลบ translateX(-50%) ออก ให้ class '-translate-x-1/2' ที่ element เป็นตัวจัดการแนวนอนอย่างเดียว */
   transform: translateY(-150%);
   opacity: 0;
 }
