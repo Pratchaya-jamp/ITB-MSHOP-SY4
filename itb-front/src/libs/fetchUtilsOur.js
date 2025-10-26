@@ -34,29 +34,46 @@ function isTokenExpired(token) {
 }
 
 async function refreshAccessToken() {
-  const accessToken = Cookies.get('access_token'); // ใช้ access_token เดิมที่หมดอายุ
-  console.log("Refreshing token...");
-  if (!accessToken) return null;
+  const refreshToken = Cookies.get('refresh_token')
 
-   try {
-    const res = await fetch('https://intproj24.sit.kmutt.ac.th/sy4/itb-mshop/v2/auth/refresh', {
+  // 🧩 ตรวจว่า refresh token หมดอายุไหม
+  if (!refreshToken || isTokenExpired(refreshToken)) {
+    console.warn("Refresh token expired or missing. Redirecting to login...")
+    Cookies.remove('access_token')
+    Cookies.remove('refresh_token')
+    router.push('/signin')
+    return null
+  }
+
+  try {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND}/v2/auth/refresh`, {
       method: 'POST',
-      credentials: 'include', // ✅ ส่งคุกกี้ (refresh_token) ไปกับ request
-    });
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken })
+    })
 
-    if (!res.ok) {
-      console.error("Failed to refresh token:", res.status);
-
-      return null;
+    if (!response.ok) {
+      console.error("Failed to refresh token. Redirecting to login...")
+      Cookies.remove('access_token')
+      Cookies.remove('refresh_token')
+      router.push('/signin')
+      return null
     }
 
-    const data = await res.json();
-    // เก็บ access_token ใหม่ที่ได้กลับมา
-    Cookies.set('access_token', data.access_token);
-    return data.access_token;
+    const data = await response.json()
+    if (data?.accessToken) {
+      Cookies.set('access_token', data.accessToken)
+      console.log("✅ Access token refreshed successfully.")
+      return data.accessToken
+    } else {
+      console.warn("No access token returned. Redirecting to login...")
+      router.push('/login')
+      return null
+    }
   } catch (err) {
-    console.error("Error refreshing token:", err);
-    return null;
+    console.error("Error refreshing token:", err)
+    router.push('/login')
+    return null
   }
 }
 

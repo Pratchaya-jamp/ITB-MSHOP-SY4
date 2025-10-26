@@ -67,7 +67,7 @@ console.log(data);
   }
   } catch (err) {
     isVerified.value = false;
-    triggerNotification(err.message, false);
+    triggerNotification("Invalid Token, Please request a new one to continue.", false);
   } finally {
     isLoading.value = false;
   }

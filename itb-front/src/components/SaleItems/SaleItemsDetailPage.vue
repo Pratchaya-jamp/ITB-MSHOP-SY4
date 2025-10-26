@@ -32,6 +32,8 @@ const itemQuantityToAddToCart = ref(1);
 const showNotification = ref(false);
 const notificationMessage = ref("");
 const notificationSuccess = ref(false);
+const loggedInSellerId = ref(null);
+
 let notificationTimeout = null;
 
 // --- ✨ 1. สร้าง State สำหรับติดตามจำนวนสินค้าชิ้นนี้ในตะกร้าโดยเฉพาะ ---
@@ -67,12 +69,20 @@ const startCountdown = () => {
 const goToCart = () => {
   isAuthenticated.value ? router.push("/cart") : router.push("/signin");
 };
-const isSeller = computed(() => userRole.value === "SELLER");
+// const isSeller = computed(() => userRole.value === "SELLER");
 const closeSuccessPopup = () => {
   showEditSuccessPopup.value = false;
   showEditFallPopup.value = false;
   window.location.reload();
 };
+
+const isOwnerOfItem = computed(() => {
+  return (
+    userRole.value === "SELLER" &&
+    product.value &&
+    loggedInSellerId.value === product.value.sellerId
+  );
+});
 
 const decodeTokenAndSetRole = () => {
   try {
@@ -81,6 +91,9 @@ const decodeTokenAndSetRole = () => {
       const decodedToken = jwtDecode(token);
       userRole.value = decodedToken.role;
       isAuthenticated.value = true;
+      if (decodedToken.role === 'SELLER') {
+        loggedInSellerId.value = decodedToken.seller_id; 
+      }
     } else {
       isAuthenticated.value = false;
     }
@@ -365,7 +378,7 @@ const cancelDeleteItem = () => { showDeleteConfirmationPopup.value = false; };
                 </div>
             </div>
             <div class="mt-auto pt-8">
-                <div v-if="isSeller" class="flex gap-4">
+                <div v-if="isOwnerOfItem" class="flex gap-4">
                     <button @click="router.push(`/sale-items/${product.id}/edit`)" class="itbms-edit-button w-full flex items-center justify-center gap-2 font-semibold bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full px-6 py-4 transition-colors duration-300 hover:bg-yellow-500/20">Edit</button>
                     <button @click="deleteproduct" class="itbms-delete-button w-full flex items-center justify-center gap-2 font-semibold bg-red-500/10 text-red-600 dark:text-red-400 rounded-full px-6 py-4 transition-colors duration-300 hover:bg-red-500/20">Delete</button>
                 </div>
