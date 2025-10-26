@@ -123,7 +123,7 @@ public class MailService {
                             </div>
                     
                             <p style="font-size: 15px; color: #aab8c2; margin-top: 40px; text-align: center;">
-                                This link is valid for <b style="color: #6d7f95;">1 hour</b>. If you did not request this change, please ignore this email.
+                                This link is valid for <b style="color: #6d7f95;">10 Minutes</b>. If you did not request this change, please ignore this email.
                             </p>
                             
                             <div style="border-top: 1px solid #eef2f6; margin-top: 45px; padding-top: 30px; text-align: center;">
