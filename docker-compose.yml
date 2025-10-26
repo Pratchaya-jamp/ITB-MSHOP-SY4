@@ -31,6 +31,7 @@ services:
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
       - FRONTEND_URL=${FRONTEND_URL}
       - JWT_TOKEN=${JWT_TOKEN}
+      - SELLER_IMG=${SELLER_IMG}
     depends_on:
       - db
     networks:
