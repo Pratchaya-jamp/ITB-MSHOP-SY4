@@ -36,9 +36,9 @@ services:
       - db
     networks:
       - itb-net
-    # volumes:
-      # - ./uploads/product-images:/app/product-images
-      # - ./uploads/seller-images:/app/seller-images
+    volumes:
+      - ./uploads/product-images:/app/uploads/product-images
+      - ./uploads/seller-images:/app/uploads/seller-images
       # - ./uploads:/app/uploads
 
   db:
