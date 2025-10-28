@@ -171,6 +171,7 @@ public class OrderService {
         Claims claims = jwtTokenUtil.getClaims(token);
         String role = claims.get("role", String.class);
         Integer buyerId = claims.get("buyer_id", Integer.class);
+        Integer userId = claims.get("id", Integer.class);
         Integer sellerId = claims.get("seller_id", Integer.class);
 
         Order order = orderRepo.findById(orderId)
@@ -181,7 +182,7 @@ public class OrderService {
         if ("SELLER".equalsIgnoreCase(role) && order.getSeller() != null) {
             isOwner = order.getSeller().getId().equals(sellerId);
         } else if ("BUYER".equalsIgnoreCase(role) && order.getUser() != null) {
-            isOwner = order.getUser().getId().equals(buyerId);
+            isOwner = order.getUser().getId().equals(userId);
         }
 
         if (!isOwner) {

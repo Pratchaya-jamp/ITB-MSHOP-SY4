@@ -18,7 +18,8 @@ const message = ref('');
 const EmailError = ref('')
 const PasswordError = ref('')
 const isEmailValid = ref(false)
-const isPasswordValid = ref(true)
+// 💡 FIX 2: เปลี่ยนเป็น false เพื่อให้ validation ทำงานถูกต้อง
+const isPasswordValid = ref(false) 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
 
@@ -36,17 +37,24 @@ watch(email, (val) => {
     isEmailValid.value = false
   } else if (val.length > 50) {
     EmailError.value = 'Email must not exceed 50 characters.'
+    isEmailValid.value = false // <-- เพิ่ม
   } else if (!emailRegex.test(val)) {
     EmailError.value = 'Invalid email format.'
+    isEmailValid.value = false // <-- เพิ่ม
   } else {
     EmailError.value = ''
     isEmailValid.value = true
   }
 })
 
+// 💡 FIX 2: เพิ่มการตรวจสอบค่าว่าง
 watch(password, (val) => {
-  if (val.length > 14) {
+  if (!val.trim()) {
+    PasswordError.value = 'Password is required.'
+    isPasswordValid.value = false
+  } else if (val.length > 14) {
     PasswordError.value = 'Password must not exceed 14 characters.'
+    isPasswordValid.value = false // <-- เปลี่ยนเป็น false
   } else {
     PasswordError.value = ''
     isPasswordValid.value = true
@@ -61,8 +69,9 @@ const isFormValid = computed(() => {
 })
 
 const handleSubmit = async () => {
-  isLoading.value = true; 
+  isLoading.value = true;
   loginError.value = '';
+  emailactivate.value = false; // รีเซ็ตค่าก่อน
 
   try {
     const response = await addItem(
@@ -95,16 +104,22 @@ const handleSubmit = async () => {
         }
       }, 1000);
       
-    } else if (response.status === 403) {
-      emailactivate.value = true
-      isLoading.value = false;
     } else {
+      // 💡 CLEANUP: ลบ else if (403) ที่ไม่ทำงานออกไป
       loginError.value = 'Invalid email or password';
       isLoading.value = false;
     }
   } catch (error) {
-    loginError.value = 'Email or Pasword is incorrect.';
+    // --- 💡 FIX 1: นี่คือจุดแก้ไขหลัก ---
+    // ตรวจสอบ error.message ที่มาจาก Console Log
+    if (error.message && error.message.includes('403')) {
+      emailactivate.value = true;
+    } else {
+      // 💡 FIX 5: แก้คำผิด Pasword -> Password
+      loginError.value = 'Email or Password is incorrect.';
+    }
     isLoading.value = false;
+    // --- 💡 สิ้นสุดจุดแก้ไข ---
   }
 };
 
@@ -117,7 +132,7 @@ const themeClass = computed(() => {
 
 <template>
   <div :class="themeClass" class="relative min-h-screen font-sans flex items-center justify-center p-6 transition-colors duration-300">
-    <div class="absolute inset-0 w-full h-full opacity-10 pointer-events-none">
+        <div class="absolute inset-0 w-full h-full opacity-10 pointer-events-none">
       <div class="absolute w-96 h-96 bg-indigo-500 rounded-full blur-3xl opacity-30 top-1/4 left-1/4 animate-blob"></div>
       <div class="absolute w-80 h-80 bg-sky-500 rounded-full blur-3xl opacity-30 bottom-1/4 right-1/4 animate-blob animation-delay-2000"></div>
     </div>
@@ -137,7 +152,7 @@ const themeClass = computed(() => {
           <p v-if="EmailError" class="itbms-message text-red-500 text-xs mt-1 px-2">{{ EmailError }}</p>
         </div>
         
-        <div>
+                <div>
           <div class="relative">
             <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" maxlength="14"
                    class="itbms-password w-full p-4 rounded-lg pr-12 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 transition-all border-0 outline-none"
@@ -152,9 +167,9 @@ const themeClass = computed(() => {
                 Forgot Password?
             </router-link>
           </div>
-          <p v-if="PasswordError" class="itbms-message text-red-500 text-xs mt-1 px-2">{{ PasswordError }}</p>
+                    <p v-if="PasswordError" class="itbms-message text-red-500 text-xs mt-1 px-2">{{ PasswordError }}</p>
         </div>
-        
+
         <p v-if="loginError" class="itbms-message text-red-500 text-sm text-center pt-2">{{ loginError }}</p>
         
         <div class="pt-4">
@@ -164,7 +179,7 @@ const themeClass = computed(() => {
               'opacity-50 cursor-not-allowed': !isFormValid,
               'opacity-50 pointer-events-none': isLoading
             }"
-            :disabled="!isFormValid || isLoading">
+                        :disabled="!isFormValid || isLoading">
             {{ isLoading ? 'Signing In...' : 'Sign In' }}
           </button>
         </div>
@@ -181,7 +196,7 @@ const themeClass = computed(() => {
     </div>
   </div>
 
-  <transition name="bounce-popup">
+    <transition name="bounce-popup">
     <div v-if="emailactivate"
       class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div class="p-8 rounded-3xl shadow-xl text-center"
