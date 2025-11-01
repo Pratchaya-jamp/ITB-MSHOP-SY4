@@ -35,6 +35,7 @@ public class AuthenticationService {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
+    @SuppressWarnings("unused")
     public LoginResponseDto authenticateUser(LoginRequestDto requestDto) {
         // Null values → 400
         if (requestDto.getEmail() == null || requestDto.getPassword() == null) {
@@ -135,8 +136,73 @@ public class AuthenticationService {
                 .build(); // return access token only
     }
 
+    public UsersAccount validateCredentialsAndGetUser(LoginRequestDto requestDto) {
+        // reuse existing validation logic (copy from authenticateUser until password check)
+        // I will extract logic you already had in authenticateUser (validate fields, findByEmail, password check, isActive)
+        // return UsersAccount if ok
+        // throw ResponseStatusException on error (same as existing)
+        // For brevity, paste the code you already have (I show full method)
+        if (requestDto.getEmail() == null || requestDto.getPassword() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+        if (requestDto.getEmail().length() > 50) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+        if (requestDto.getPassword().length() < 8 || requestDto.getPassword().length() > 14) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+        if (requestDto.getEmail().trim().isEmpty() || requestDto.getPassword().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+        if (!requestDto.getEmail().equals(requestDto.getEmail().trim()) ||
+                !requestDto.getPassword().equals(requestDto.getPassword().trim())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+
+        Optional<UsersAccount> optionalUser = usersRepo.findByEmail(requestDto.getEmail());
+
+        if (optionalUser.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email or Password is incorrect.");
+        }
+
+        UsersAccount userAccount = optionalUser.get();
+
+        if (!Boolean.TRUE.equals(userAccount.getIsActive())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You need to activate your account before signing in.");
+        }
+
+        if (!passwordEncoder.matches(requestDto.getPassword(), userAccount.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Email or Password is incorrect.");
+        }
+
+        return userAccount;
+    }
+
+    public LoginResponseDto generateTokensForUser(UsersAccount userAccount) {
+        // revoke old refresh tokens for user
+        refreshTokenRepo.revokeAllTokensForUser(userAccount);
+
+        String role = getRole(userAccount);
+
+        String accessToken = jwtTokenUtil.generateToken(userAccount, role);
+        String refreshToken = jwtTokenUtil.generateRefreshToken(userAccount);
+
+        // save refresh token ใหม่
+        refreshTokenService.createRefreshToken(userAccount, refreshToken, 24 * 60 * 60);
+
+        return LoginResponseDto.builder()
+                .access_token(accessToken)
+                .refresh_token(refreshToken)
+                .build();
+    }
+
     public void revokeRefreshToken(String refreshToken) {
         refreshTokenService.revokeToken(refreshToken);
+    }
+
+    public UsersAccount getUserByEmail(String email) {
+        return usersRepo.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     public String getRole(UsersAccount userAccount) {

@@ -1,9 +1,10 @@
 package intregrated.backend.controllers;
 
-import intregrated.backend.dtos.authentications.AccessTokenResponseDto;
-import intregrated.backend.dtos.authentications.LoginRequestDto;
-import intregrated.backend.dtos.authentications.LoginResponseDto;
+import intregrated.backend.dtos.authentications.*;
+import intregrated.backend.dtos.authentications.RequestOtpResponseDto;
+import intregrated.backend.entities.accounts.UsersAccount;
 import intregrated.backend.services.AuthenticationService;
+import intregrated.backend.services.OtpService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -20,25 +21,66 @@ public class AuthenticationController {
     @Autowired
     private AuthenticationService authenticationService;
 
+    @Autowired
+    private OtpService otpService;
+
     @PostMapping("/login")
-    public ResponseEntity<AccessTokenResponseDto> login(
+    public ResponseEntity<?> login(
             @Valid @RequestBody LoginRequestDto request,
             HttpServletResponse response) {
 
-        LoginResponseDto tokens = authenticationService.authenticateUser(request);
+        // validate credentials (password checks etc.)
+        UsersAccount user = authenticationService.validateCredentialsAndGetUser(request);
 
-        // สร้าง HttpOnly Cookie สำหรับ Refresh Token
+        // check remember token
+        boolean hasRemember = otpService.hasValidRememberToken(user);
+        if (hasRemember) {
+            // generate tokens immediately and set cookie like before
+            LoginResponseDto tokens = authenticationService.generateTokensForUser(user);
+
+            ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", tokens.getRefresh_token())
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/sy4")
+                    .maxAge(24 * 60 * 60)
+                    .sameSite("Strict")
+                    .build();
+
+            response.addHeader("Set-Cookie", refreshCookie.toString());
+            return ResponseEntity.status(HttpStatus.CREATED).body(new AccessTokenResponseDto(tokens.getAccess_token()));
+        } else {
+            // request OTP (this will enforce 60s cooldown etc.)
+            RequestOtpResponseDto otpResp = otpService.requestOtp(user.getEmail());
+            // return 202 Accepted with message (do not issue tokens)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(otpResp);
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<AccessTokenResponseDto> verifyOtp(
+            @Valid @RequestBody VerifyOtpRequestDto request,
+            HttpServletResponse response) {
+
+        try {
+            otpService.verifyOtp(request.getEmail(), request.getOtp(), Boolean.TRUE.equals(request.getRememberMe()));
+        } catch (IllegalArgumentException iae) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AccessTokenResponseDto(null));
+        } catch (IllegalStateException ise) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AccessTokenResponseDto(null));
+        }
+
+        UsersAccount user = authenticationService.getUserByEmail(request.getEmail());
+        LoginResponseDto tokens = authenticationService.generateTokensForUser(user);
+
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", tokens.getRefresh_token())
                 .httpOnly(true)
                 .secure(true)
                 .path("/sy4")
                 .maxAge(24 * 60 * 60)
-                .sameSite("Strict") // Add SameSite here
+                .sameSite("Strict")
                 .build();
 
         response.addHeader("Set-Cookie", refreshCookie.toString());
-
-        // return access_token เท่านั้นใน body
         return ResponseEntity.status(HttpStatus.CREATED).body(new AccessTokenResponseDto(tokens.getAccess_token()));
     }
 
