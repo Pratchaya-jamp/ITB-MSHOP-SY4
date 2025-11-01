@@ -61,6 +61,8 @@ public class OtpService {
         UsersAccount user = usersAccountRepo.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        otpRequestRepo.deleteAllByUser(user);
+
         // check latest request time
         Optional<OtpRequest> lastOpt = otpRequestRepo.findTopByUserOrderByCreatedOnDesc(user);
         if (lastOpt.isPresent()) {
@@ -84,14 +86,13 @@ public class OtpService {
         r.setUpdatedOn(now);
         otpRequestRepo.save(r);
 
-        // send OTP via email (MailService: we'll add a sendOtpEmail method)
         try {
             mailService.sendOtpEmail(user.getEmail(), otp);
         } catch (Exception e) {
-            // if mail fails, still allow returning OTP in response in dev mode
+            // still return OTP for debug/dev
         }
 
-        return new RequestOtpResponseDto("OTP sent", otp, r.getExpiredAt());
+        return new RequestOtpResponseDto("OTP sent", r.getExpiredAt());
     }
 
     /**

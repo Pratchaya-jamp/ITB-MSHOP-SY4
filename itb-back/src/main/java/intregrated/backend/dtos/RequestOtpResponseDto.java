@@ -8,6 +8,5 @@ import java.time.Instant;
 @AllArgsConstructor
 public class RequestOtpResponseDto {
     private String message;
-    private String otp; // in production you may omit this and only send via email/sms
     private Instant expiredAt;
 }
