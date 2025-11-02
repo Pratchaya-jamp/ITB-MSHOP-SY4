@@ -23,6 +23,11 @@ import ChangePassword from '@/components/Profiles/ChangePassword.vue'
 import SellerOrder from '@/components/Orders/SellerOrder.vue'
 import CookiePolicy from '@/components/CookiePolicy.vue'
 import About from '@/components/About.vue'
+import Contact from '@/components/Contact.vue'
+import Terms from '@/components/Terms.vue'
+import Service from '@/components/Service.vue'
+import FAQ from '@/components/FAQ.vue'
+import Privacy from '@/components/Privacy.vue'
 
 const routes = [
   {
@@ -156,6 +161,31 @@ const routes = [
   path: '/about',
   name: 'About',
   component: About,
+},
+{
+  path: '/contact',
+  name: 'contact',
+  component: Contact,
+},
+{
+  path: '/terms-of-service',
+  name: 'terms',
+  component: Terms,
+},
+{
+  path: '/service',
+  name: 'service',
+  component: Service,
+},
+{
+  path: '/questions',
+  name: 'faq',
+  component: FAQ,
+},
+{
+  path: '/privacy-policy',
+  name: 'privacy',
+  component: Privacy,
 },
 ]
 

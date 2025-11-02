@@ -82,8 +82,8 @@ onMounted(() => {
     <nav class="space-x-8 hidden md:flex items-center text-sm font-medium" :class="theme === 'dark' ? 'text-slate-300' : 'text-slate-600'">
       <router-link to="/" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Home</router-link>
       <router-link to="/sale-items" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Phones</router-link>
-      <a href="#" @click.prevent="scrollTo(services)" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Services</a>
-      <a href="#" @click.prevent="scrollTo(contact)" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Contact</a>
+      <router-link to="/service" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Services</router-link>
+      <router-link to="/contact" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Contact Us</router-link>
       <router-link to="/about" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">About Us</router-link>
     </nav>
     

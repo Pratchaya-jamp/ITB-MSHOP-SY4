@@ -36,9 +36,11 @@ const router = useRouter();
             Company
           </h4>
           <div class="mt-4 space-y-3 text-sm">
-            <a href="#" class="block hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">About Us</a>
-            <a href="#" class="block hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Contact Us</a>
-            <a href="#" class="block hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Terms of Service</a>
+            <router-link to="/about" class="block hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">About Us</router-link>
+            <router-link to="/contact" class="block hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Contact Us</router-link>
+            <router-link to="/privacy-policy" class="block hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Privacy Policy</router-link>
+            <router-link to="/terms-of-service" class="block hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Terms of Service</router-link>
+            <router-link to="/questions" class="block hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">FAQ</router-link>
           </div>
         </div>
 
