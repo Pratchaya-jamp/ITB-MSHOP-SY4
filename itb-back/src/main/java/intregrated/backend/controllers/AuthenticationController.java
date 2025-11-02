@@ -27,15 +27,17 @@ public class AuthenticationController {
     @PostMapping("/login")
     public ResponseEntity<?> login(
             @Valid @RequestBody LoginRequestDto request,
+            @CookieValue(value = "remember_token", required = false) String rememberToken,
             HttpServletResponse response) {
 
-        // validate credentials (password checks etc.)
         UsersAccount user = authenticationService.validateCredentialsAndGetUser(request);
 
-        // check remember token
-        boolean hasRemember = otpService.hasValidRememberToken(user);
+        boolean hasRemember = false;
+        if (rememberToken != null) {
+            hasRemember = otpService.hasValidRememberToken(rememberToken, user);
+        }
+
         if (hasRemember) {
-            // generate tokens immediately and set cookie like before
             LoginResponseDto tokens = authenticationService.generateTokensForUser(user);
 
             ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", tokens.getRefresh_token())
@@ -47,11 +49,10 @@ public class AuthenticationController {
                     .build();
 
             response.addHeader("Set-Cookie", refreshCookie.toString());
-            return ResponseEntity.status(HttpStatus.CREATED).body(new AccessTokenResponseDto(tokens.getAccess_token()));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new AccessTokenResponseDto(tokens.getAccess_token()));
         } else {
-            // request OTP (this will enforce 60s cooldown etc.)
             RequestOtpResponseDto otpResp = otpService.requestOtp(user.getEmail());
-            // return 202 Accepted with message (do not issue tokens)
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(otpResp);
         }
     }

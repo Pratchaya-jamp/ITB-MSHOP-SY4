@@ -2,11 +2,10 @@ package intregrated.backend.services;
 
 import intregrated.backend.dtos.authentications.RequestOtpResponseDto;
 import intregrated.backend.entities.OtpRequest;
-import intregrated.backend.entities.UserRememberToken;
 import intregrated.backend.entities.accounts.UsersAccount;
 import intregrated.backend.repositories.OtpRequestRepo;
-import intregrated.backend.repositories.UserRememberTokenRepo;
 import intregrated.backend.repositories.accounts.UsersAccountRepo;
+import intregrated.backend.utils.JwtTokenUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +14,6 @@ import org.springframework.util.StringUtils;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.Optional;
 
 @Service
@@ -33,10 +31,10 @@ public class OtpService {
     private UsersAccountRepo usersAccountRepo;
 
     @Autowired
-    private UserRememberTokenRepo rememberRepo;
+    private MailService mailService;
 
     @Autowired
-    private MailService mailService;
+    private JwtTokenUtil jwtTokenUtil;
 
     private final SecureRandom rnd = new SecureRandom();
 
@@ -46,24 +44,15 @@ public class OtpService {
         return String.format("%0" + OTP_LENGTH + "d", num);
     }
 
-    private String generateRememberToken() {
-        byte[] random = new byte[32];
-        rnd.nextBytes(random);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(random);
-    }
-
-    /**
-     * Request an OTP for user with given email.
-     * Enforces 60s cooldown since last requested OTP.
-     */
     @Transactional
     public RequestOtpResponseDto requestOtp(String email) {
         UsersAccount user = usersAccountRepo.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        // clean up any old OTPs
         otpRequestRepo.deleteAllByUser(user);
 
-        // check latest request time
+        // enforce resend cooldown
         Optional<OtpRequest> lastOpt = otpRequestRepo.findTopByUserOrderByCreatedOnDesc(user);
         if (lastOpt.isPresent()) {
             Instant last = lastOpt.get().getLastRequestedAt();
@@ -76,6 +65,7 @@ public class OtpService {
         // create otp
         String otp = generateOtp();
         Instant now = Instant.now();
+
         OtpRequest r = new OtpRequest();
         r.setUser(user);
         r.setOtpCode(otp);
@@ -104,7 +94,6 @@ public class OtpService {
         UsersAccount user = usersAccountRepo.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // get latest unused OTP
         Optional<OtpRequest> opt = otpRequestRepo.findTopUnusedByUserOrderByCreatedOnDesc(user);
         if (opt.isEmpty()) {
             throw new IllegalStateException("No OTP requested");
@@ -129,28 +118,14 @@ public class OtpService {
         otpRequestRepo.save(req);
 
         if (rememberMe) {
-            // invalidate old remember tokens
-            rememberRepo.invalidateAllForUser(user);
-
-            UserRememberToken rt = new UserRememberToken();
-            rt.setUser(user);
-            String rememberToken = generateRememberToken();
-            rt.setRememberToken(rememberToken);
-            rt.setRememberUntil(Instant.now().plus(REMEMBER_DAYS, ChronoUnit.DAYS));
-            rt.setIsValid(true);
-            rt.setCreatedOn(Instant.now());
-            rt.setUpdatedOn(Instant.now());
-            rememberRepo.save(rt);
-            return rememberToken;
+            // ✅ Use JWT token instead of DB record
+            return jwtTokenUtil.generateRememberToken(user);
         }
 
         return null;
     }
 
-    public boolean hasValidRememberToken(UsersAccount user) {
-        Optional<UserRememberToken> opt = rememberRepo.findValidByUserOrderByRememberUntilDesc(user);
-        if (opt.isEmpty()) return false;
-        UserRememberToken t = opt.get();
-        return t.getIsValid() && t.getRememberUntil().isAfter(Instant.now());
+    public boolean hasValidRememberToken(String token, UsersAccount user) {
+        return jwtTokenUtil.validateRememberToken(token, user);
     }
 }

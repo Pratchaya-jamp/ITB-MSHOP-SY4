@@ -16,10 +16,10 @@ public class JwtTokenUtil {
     private static final long EXPIRATION_MS = 30*60*1000;
     private static final long verify_EXPIRATION_MS = 30*60*1000;
     private static final long PASSWORD_VERIFY_EXPIRATION_MS = 10 * 60 * 1000;
+    private static final long REMEMBER_EXPIRATION_MS = 30L * 24 * 60 * 60 * 1000;
     private final Key key;
 
     public JwtTokenUtil(@Value("${jwt.secret}") String secret) {
-        // ตรวจสอบว่า secret key มีความยาวเพียงพอ (อย่างน้อย 32 characters สำหรับ HS256)
         if (secret.length() < 32) {
             throw new IllegalArgumentException("JWT secret must be at least 32 characters long");
         }
@@ -90,6 +90,20 @@ public class JwtTokenUtil {
                 .compact();
     }
 
+    public String generateRememberToken(UsersAccount user) {
+        long now = System.currentTimeMillis();
+
+        return Jwts.builder()
+                .setIssuer(ISSUER)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + REMEMBER_EXPIRATION_MS))
+                .claim("typ", "remember_token")
+                .claim("id", user.getId())
+                .claim("email", user.getEmail())
+                .signWith(key)
+                .compact();
+    }
+
     public Boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
@@ -99,6 +113,28 @@ public class JwtTokenUtil {
             return true;
         } catch (Exception e) {
             System.err.println("Token validation failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean validateRememberToken(String token, UsersAccount user) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            String type = claims.get("typ", String.class);
+            String email = claims.get("email", String.class);
+            Date expiration = claims.getExpiration();
+
+            if (!"remember_token".equals(type)) return false;
+            if (expiration.before(new Date())) return false;
+            if (!email.equals(user.getEmail())) return false;
+
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }

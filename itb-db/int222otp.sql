@@ -69,7 +69,6 @@ CREATE TABLE IF NOT EXISTS users_account (
     CONSTRAINT ck_user_fullname CHECK (TRIM(fullname) <> '')
 ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
 -- 4️⃣ Refresh Token
 CREATE TABLE IF NOT EXISTS refresh_token (
     id INT AUTO_INCREMENT PRIMARY KEY,
