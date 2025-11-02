@@ -80,6 +80,16 @@ public class AuthenticationController {
                     .sameSite("Strict")
                     .build();
             response.addHeader("Set-Cookie", rememberCookie.toString());
+        } else if (Boolean.FALSE.equals(request.getRememberMe())) {
+            // ถ้า User ไม่ติ๊ก (และ rememberToken เป็น null) ให้สั่งลบ Cookie เก่าทิ้ง
+            ResponseCookie deleteRememberCookie = ResponseCookie.from("remember_token", "") // ตั้งค่าเป็นค่าว่าง
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/sy4")
+                    .maxAge(0)     // ตั้งค่า MaxAge = 0 เพื่อลบ
+                    .sameSite("Strict")
+                    .build();
+            response.addHeader("Set-Cookie", deleteRememberCookie.toString());
         }
 
         UsersAccount user = authenticationService.getUserByEmail(request.getEmail());
