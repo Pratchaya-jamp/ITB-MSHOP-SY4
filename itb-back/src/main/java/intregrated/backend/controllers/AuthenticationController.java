@@ -61,12 +61,24 @@ public class AuthenticationController {
             @Valid @RequestBody VerifyOtpRequestDto request,
             HttpServletResponse response) {
 
+        String rememberToken = null;
         try {
-            otpService.verifyOtp(request.getEmail(), request.getOtp(), Boolean.TRUE.equals(request.getRememberMe()));
+            rememberToken = otpService.verifyOtp(request.getEmail(), request.getOtp(), Boolean.TRUE.equals(request.getRememberMe()));
         } catch (IllegalArgumentException iae) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AccessTokenResponseDto(null));
         } catch (IllegalStateException ise) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AccessTokenResponseDto(null));
+        }
+
+        if (rememberToken != null) {
+            ResponseCookie rememberCookie = ResponseCookie.from("remember_token", rememberToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/sy4")
+                    .maxAge(30L * 24 * 60 * 60) // 30 วัน
+                    .sameSite("Strict")
+                    .build();
+            response.addHeader("Set-Cookie", rememberCookie.toString());
         }
 
         UsersAccount user = authenticationService.getUserByEmail(request.getEmail());
