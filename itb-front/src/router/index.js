@@ -21,7 +21,8 @@ import ForgotPassword from '@/components/Accounts/ForgotPassword.vue'
 import ResetPassword from '@/components/Accounts/ResetPassword.vue'
 import ChangePassword from '@/components/Profiles/ChangePassword.vue'
 import SellerOrder from '@/components/Orders/SellerOrder.vue'
-import AboutCookie from '@/components/AboutCookie.vue'
+import CookiePolicy from '@/components/CookiePolicy.vue'
+import About from '@/components/About.vue'
 
 const routes = [
   {
@@ -147,9 +148,14 @@ const routes = [
   meta: { requiresSeller: true }
 },
 {
-  path: '/about-cookie',
-  name: 'aboutCookie',
-  component: AboutCookie,
+  path: '/cookie-policy',
+  name: 'cookiePolicy',
+  component: CookiePolicy,
+},
+{
+  path: '/about',
+  name: 'About',
+  component: About,
 },
 ]
 

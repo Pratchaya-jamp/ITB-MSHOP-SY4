@@ -84,6 +84,7 @@ onMounted(() => {
       <router-link to="/sale-items" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Phones</router-link>
       <a href="#" @click.prevent="scrollTo(services)" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Services</a>
       <a href="#" @click.prevent="scrollTo(contact)" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">Contact</a>
+      <router-link to="/about" class="hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">About Us</router-link>
     </nav>
     
     <div class="flex items-center space-x-4">

@@ -39,7 +39,7 @@ const declineCookies = () => {
 
 // 3. ฟังก์ชันเมื่อผู้ใช้กด "More Info"
 const goToCookiePolicy = () => {
-  router.push('/about-cookie');
+  router.push('/cookie-policy');
   // ✨ FIX: 7. ไม่ต้องซ่อน Bar ที่นี่ (Computed property จะจัดการเอง)
 };
 
