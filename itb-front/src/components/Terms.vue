@@ -18,7 +18,7 @@ const themeClass = computed(() => {
     <div class="container mx-auto px-6 py-12 max-w-4xl animate-fade-in-up">
 
       <div class="mb-12">
-        <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+        <h1 class="text-4xl font-extrabold tracking-tight" :class="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">
           Terms of Service
         </h1>
         <p class="mt-4 text-xl" :class="theme === 'dark' ? 'text-slate-400' : 'text-slate-500'">
